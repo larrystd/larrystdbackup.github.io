@@ -1,0 +1,330 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0078E7"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>cpp对象模型 | 文瑞的小站</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#0078E7"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"www.yunyoujun.cn","root":"/","title":"文瑞的小站","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://el-bot-api.vercel.app/api/words/young"},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="文瑞的小站" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="C语言中，数据和处理数据的操作（函数)是分开声明的，不支持数据函数之间的关联性，称之为程序性的(procedural)。  1. 对象类型">
+<meta property="og:type" content="article">
+<meta property="og:title" content="cpp对象模型">
+<meta property="og:url" content="https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-15-1%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/index.html">
+<meta property="og:site_name" content="文瑞的小站">
+<meta property="og:description" content="C语言中，数据和处理数据的操作（函数)是分开声明的，不支持数据函数之间的关联性，称之为程序性的(procedural)。  1. 对象类型">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/assets/images/2021-1-6/1.jpg">
+<meta property="og:image" content="https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/assets/images/2021-1-6/2.jpg">
+<meta property="og:image" content="https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/assets/images/2021-1-6/3.jpg">
+<meta property="og:image" content="https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/assets/images/return_stack.png">
+<meta property="article:published_time" content="2021-01-14T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-14T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/assets/images/2021-1-6/1.jpg"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for dawn.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">文瑞的小站</a><sub class="site-subtitle"></sub><div class="site-desciption">努力明年给小马哥干活</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">3</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">1</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">1</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%AF%B9%E8%B1%A1%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.</span> <span class="toc-text">1. 对象类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%8C%87%E9%92%88%E7%B1%BB%E5%9E%8B"><span class="toc-number">2.</span> <span class="toc-text">2. 指针类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Default-constructor"><span class="toc-number">3.</span> <span class="toc-text">Default constructor</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Copy-Constructor"><span class="toc-number">4.</span> <span class="toc-text">Copy Constructor</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%98%8E%E7%A1%AE%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-number">5.</span> <span class="toc-text">明确的初始化</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8%E8%BF%87%E7%A8%8B"><span class="toc-number">5.1.</span> <span class="toc-text">对象方法调用过程</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-15-1%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="文瑞的小站"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">cpp对象模型<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/cpp对象模型/2021-01-15-1对象模型.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-01-15 00:00:00" itemprop="dateCreated datePublished" datetime="2021-01-15T00:00:00+08:00">2021-01-15</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">2.4k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">10m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">cpp对象模型</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">cpp</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#0078E7;"><blockquote>
+<p>C语言中，数据和处理数据的操作（函数)是分开声明的，不支持数据函数之间的关联性，称之为程序性的(procedural)。</p>
+</blockquote>
+<h3 id="1-对象类型"><a href="#1-对象类型" class="headerlink" title="1. 对象类型"></a>1. 对象类型</h3><span id="more"></span>
+<p>C++中可以通过独立抽象数据类型实现。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Point3d</span> 
+<span class="token punctuation">&#123;</span> 
+<span class="token keyword">public</span><span class="token operator">:</span>  
+    <span class="token function">Point3d</span><span class="token punctuation">(</span> <span class="token keyword">float</span> x <span class="token operator">=</span> <span class="token number">0.0</span><span class="token punctuation">,</span> <span class="token keyword">float</span> y <span class="token operator">=</span> <span class="token number">0.0</span><span class="token punctuation">,</span> <span class="token keyword">float</span> z <span class="token operator">=</span> <span class="token number">0.0</span> <span class="token punctuation">)</span><span class="token operator">:</span> 
+<span class="token function">_x</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">_y</span><span class="token punctuation">(</span>y<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">_z</span><span class="token punctuation">(</span>z<span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token punctuation">&#125;</span> 
+ 
+    <span class="token keyword">float</span> <span class="token function">x</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> _x<span class="token punctuation">;</span><span class="token punctuation">&#125;</span> 
+    <span class="token keyword">float</span> <span class="token function">y</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> _y<span class="token punctuation">;</span><span class="token punctuation">&#125;</span> 
+    <span class="token keyword">float</span> <span class="token function">z</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> _z<span class="token punctuation">;</span><span class="token punctuation">&#125;</span> 
+ 
+<span class="token keyword">private</span><span class="token operator">:</span> 
+    <span class="token keyword">float</span> _x<span class="token punctuation">;</span> 
+    <span class="token keyword">float</span> _y<span class="token punctuation">;</span> 
+    <span class="token keyword">float</span> _z<span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span> 
+ 
+<span class="token comment">// 类外部inline函数 </span>
+<span class="token keyword">inline</span> ostream<span class="token operator">&amp;</span> 
+<span class="token keyword">operator</span> <span class="token operator">&lt;&lt;</span> <span class="token punctuation">(</span>opstream <span class="token operator">&amp;</span>os<span class="token punctuation">,</span> <span class="token keyword">const</span> Point3d <span class="token operator">&amp;</span>pt <span class="token punctuation">)</span> 
+<span class="token punctuation">&#123;</span> 
+    os <span class="token operator">&lt;&lt;</span> <span class="token string">"("</span> <span class="token operator">&lt;&lt;</span> pt<span class="token punctuation">.</span><span class="token function">x</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token string">", "</span> <span class="token operator">&lt;&lt;</span> pt<span class="token punctuation">.</span><span class="token function">y</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token string">","</span> <span class="token operator">&lt;&lt;</span> pt<span class="token punctuation">.</span><span class="token function">z</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token string">")"</span> <span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span> </code></pre>
+<p>或以一个双层的class体系</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Point</span> <span class="token punctuation">&#123;</span> 
+<span class="token keyword">public</span><span class="token operator">:</span> 
+    <span class="token function">Point</span> <span class="token punctuation">(</span><span class="token keyword">float</span> x <span class="token operator">=</span> <span class="token number">0.0</span><span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token function">_x</span><span class="token punctuation">(</span> x <span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> 
+    <span class="token keyword">float</span> <span class="token function">x</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> _x<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span> 
+    <span class="token keyword">void</span> <span class="token function">x</span> <span class="token punctuation">(</span> <span class="token keyword">float</span> xval <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>_x <span class="token operator">=</span> xval<span class="token punctuation">;</span><span class="token punctuation">)</span> 
+<span class="token keyword">protected</span><span class="token operator">:</span>  
+    <span class="token keyword">float</span> _x<span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span> 
+ 
+<span class="token keyword">class</span> <span class="token class-name">Point2d</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">Point</span></span> <span class="token punctuation">&#123;</span> 
+<span class="token keyword">public</span><span class="token operator">:</span> 
+    <span class="token function">Point2d</span><span class="token punctuation">(</span> <span class="token keyword">float</span> x <span class="token operator">=</span> <span class="token number">0.0</span><span class="token punctuation">,</span> <span class="token keyword">float</span> y <span class="token operator">=</span> <span class="token number">0.0</span> <span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token function">Point</span><span class="token punctuation">(</span> x <span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">_y</span><span class="token punctuation">(</span> y <span class="token punctuation">)</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> 
+    <span class="token keyword">float</span> <span class="token function">y</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> _y <span class="token punctuation">&#125;</span> 
+    <span class="token keyword">void</span> <span class="token function">y</span><span class="token punctuation">(</span> <span class="token keyword">float</span> yval <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> _y <span class="token operator">=</span> yval<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span> 
+<span class="token keyword">protected</span><span class="token operator">:</span> 
+    <span class="token keyword">float</span> _y<span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span> </code></pre>
+<p>显然在C++中实现3D坐标点，比在C中复杂，尤其是在使用template的情况下。</p>
+<p>加上了封装之后，布局成本增加了多少？答案是 <strong>没有增加成本</strong> ，像C struct的情况一样， member<br>function虽然含在class的声明之内，却不出现在object之中。每一个non-inline member<br>function只会产生一个函数实体（实体不属于对象，不增加对象空间）， inline<br>function则在每个模块身上产生一个函数实体（可看作表达式，直接嵌入到调用函数中，降低执行时间）。</p>
+<p>C++在布局以及存取时间上主要的额外负担由vitual引起，包括</p>
+<ul>
+<li>Virtual function : 用于支持一个有效率的“执行其绑定” </li>
+<li>Virtual function : 用以实现多重继承base class只有单一的实体存在于后代中。 </li>
+</ul>
+<p>没有理由说C++比C庞大而迟缓。</p>
+<p>C++中，有两种class data member: <strong>static 和 nonstatic</strong> ，三种 class member functions:<br>static, nonstatic, virtual。</p>
+<p>以下代码为例：</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Point</span> <span class="token punctuation">&#123;</span> 
+<span class="token keyword">public</span><span class="token operator">:</span> 
+    <span class="token function">Point</span><span class="token punctuation">(</span> <span class="token keyword">float</span> xval<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    <span class="token keyword">virtual</span> <span class="token operator">~</span><span class="token function">Point</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+ 
+    <span class="token keyword">float</span> <span class="token function">x</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span> 
+    <span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">PointCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+ 
+<span class="token keyword">protected</span><span class="token operator">:</span> 
+    <span class="token keyword">virtual</span> ostream<span class="token operator">&amp;</span> <span class="token function">print</span> <span class="token punctuation">(</span>ostream <span class="token operator">&amp;</span>os <span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span> 
+    <span class="token keyword">float</span> _x<span class="token punctuation">;</span> 
+    <span class="token keyword">static</span> <span class="token keyword">int</span> _point_count<span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span> </code></pre>
+<p>C++对象模型中， Non-static data members配置在class object之内， static和 non-static<br>function member则放在class object之外。</p>
+<ol>
+<li>每个class产生一堆指向virtual function的指针，放在表格之中。该表格称为virtual table (vtbl)，注意只指向虚函数。 </li>
+<li>每个class object被添加指针，指向virtual table，该指针称为vptr。vptr的设置，重置都由class的constructor, destructor, copy assignment运算符自动完成。每个class关联的type_info object（用以支持RTTI)也经由virtual table放在第一个slot处。 </li>
+</ol>
+<p><img src="../assets/images/2021-1-6/1.jpg" alt="avatar" loading="lazy"></p>
+<p>C++中，多态只存在于public<br>class体系中，即对象指针px可能指向自我类型的一个object，或指向public派生而来的一个类型。Nonpublic的派生行为并没有被语言明白地的支持，往往需要通过转型操作来管理。<br>多态的实现方式如下：</p>
+<ol>
+<li>经过一组隐含的转化操作，例如把一个derived class指针转化为一个指向其public base type的指针: shape *ps = new circle; </li>
+<li>经由virtual function机制： ps -&gt; rotate(); </li>
+<li>经由dynamic_case转型 if (circle *pc = dynamic_cast&lt; circle *&gt; (ps) ) </li>
+</ol>
+<p>例</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token function">rotate</span><span class="token punctuation">(</span> X datum<span class="token punctuation">,</span> <span class="token keyword">const</span> X <span class="token operator">*</span>pointer<span class="token punctuation">,</span> <span class="token keyword">const</span> X <span class="token operator">&amp;</span>reference <span class="token punctuation">)</span> 
+<span class="token punctuation">&#123;</span> 
+    <span class="token comment">// 注意： (*pointer)，reference在运行期之前无法确定调用rotate()的对象类型，可以是X类型，也可以是派生类型 </span>
+    <span class="token comment">// 本例中调Z.rotate()，显然Z应是X的派生类型。  </span>
+    <span class="token punctuation">(</span><span class="token operator">*</span>pointer<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">rotate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    reference<span class="token punctuation">.</span><span class="token function">rotate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    <span class="token comment">// datum.rotate(); 必然是X类型的.rotate() </span>
+    datum<span class="token punctuation">.</span><span class="token function">rotate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span> 
+ 
+<span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> 
+    Z z<span class="token punctuation">;</span> 
+    <span class="token function">rotate</span><span class="token punctuation">(</span> z<span class="token punctuation">,</span> <span class="token operator">&amp;</span>z<span class="token punctuation">,</span> z<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span> </code></pre>
+<h3 id="2-指针类型"><a href="#2-指针类型" class="headerlink" title="2. 指针类型"></a>2. 指针类型</h3><p> <strong>指针的类型，表征为指针的涵盖地址范围</strong><br>。例如一个指向地址1000的整数指针，32机器上int占4个字节。所以指针涵盖地址空间1000~1003。而void*<br>指针只能含有一个地址没有指定地址空间，因此不能对void*解指针操作object。</p>
+<p>转型cast其实是一种编译器指令，大部分情况下不改变指针真正地址，只影响“指向内存大小和内容”的解释方式。对object定义指针必须要知道对象大小，作为指针的地址范围。这种情况往往会带了麻烦，例如编译依赖。</p>
+<p>加上多态之后 、</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">ZooAnimal</span> <span class="token punctuation">&#123;</span> 
+<span class="token keyword">public</span><span class="token operator">:</span> 
+    <span class="token function">ZooAnimal</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    <span class="token keyword">virtual</span> <span class="token operator">~</span><span class="token function">ZooAnimal</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">rotate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+<span class="token keyword">protected</span><span class="token operator">:</span> 
+    <span class="token keyword">int</span> loc<span class="token punctuation">;</span> 
+    string name<span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span> 
+ 
+<span class="token keyword">class</span> <span class="token class-name">Bear</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">ZooAnimal</span></span> <span class="token punctuation">&#123;</span> 
+<span class="token keyword">public</span><span class="token operator">:</span> 
+    <span class="token function">Bear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    <span class="token operator">~</span><span class="token function">Bear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    <span class="token keyword">void</span> <span class="token function">rotate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">dance</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+<span class="token keyword">protected</span><span class="token operator">:</span> 
+    <span class="token keyword">enum</span> <span class="token class-name">Dances</span> <span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span> 
+    Dances dances_known<span class="token punctuation">;</span> 
+    <span class="token keyword">int</span> cell_block<span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span> 
+ 
+ZooAnimal <span class="token function">za</span><span class="token punctuation">(</span><span class="token string">"Zoey"</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+ZooAnimal <span class="token operator">*</span>pza <span class="token operator">=</span> <span class="token operator">&amp;</span>za<span class="token punctuation">;</span> 
+ 
+Bear <span class="token function">b</span><span class="token punctuation">(</span><span class="token string">"Yogi"</span><span class="token punctuation">)</span> 
+Bear <span class="token operator">*</span>pb <span class="token operator">=</span> <span class="token operator">&amp;</span>b<span class="token punctuation">;</span> 
+Bear <span class="token operator">*</span>rb <span class="token operator">=</span> <span class="token operator">*</span>pb<span class="token punctuation">;</span> </code></pre>
+<p>ZooAnimal的object布局和pointer布局</p>
+<p>注意到string是一个对象，成员包括String::len和char* String::str</p>
+<p><img src="../assets/images/2021-1-6/2.jpg" alt="avatar" loading="lazy"></p>
+<p><img src="../assets/images/2021-1-6/3.jpg" alt="avatar" loading="lazy"></p>
+<p>其中前三项继承至ZooAnimal。而Bear指针和ZooAnimal指针都指向相同地址，即Bear<br>object的第一个字节。差别是pb涵盖地址范围包含整个bear object, pz只包含Bear object中的ZooAnimal部分。</p>
+<p>此外，pz不能处理Bear独有members，唯一例外是通过virtual机制。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">pz<span class="token operator">-></span>cell_block<span class="token punctuation">;</span>  <span class="token comment">//不合法，pz范围到不了Bear独有成员 </span>
+<span class="token punctuation">(</span><span class="token punctuation">(</span>Bear<span class="token operator">*</span> <span class="token punctuation">)</span>pz<span class="token punctuation">)</span> <span class="token operator">-></span> cellblock<span class="token punctuation">;</span>  <span class="token comment">// 经过一个downcast，改变指针范围，操作没问题 </span>
+ 
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>Bear<span class="token operator">*</span> <span class="token punctuation">)</span>pb2 <span class="token operator">=</span> <span class="token generic-function"><span class="token function">dynamic_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span> Bear<span class="token operator">*</span> <span class="token operator">></span></span></span><span class="token punctuation">(</span>pz<span class="token punctuation">)</span><span class="token punctuation">)</span> 
+    pb2<span class="token operator">-></span>cell_block<span class="token punctuation">;</span> <span class="token comment">// 这个比较好，但作为run-time operation成本较高 </span>
+ 
+pb <span class="token operator">-></span> cell_block<span class="token punctuation">;</span> <span class="token comment">//这个ok </span></code></pre>
+<p>注意到pointer或reference之所以支持多态，因为他们只是改变指向内存大小和解释方式。使用virtual的多态也称为OO（Object<br>oriented)操作，而不是用virtual称为OB(Object<br>based)。OO有弹性，但OB有效率，后者所有函数引发操作均在编译时期解析完成，且不需要承担支持virtual机制需要的额外负荷。</p>
+<h3 id="Default-constructor"><a href="#Default-constructor" class="headerlink" title="Default constructor"></a>Default constructor</h3><p>编译器根据需要合成constructor，被合成的constructor只执行编译器所需的行动。这说明以下两点均错误（1）任何class如果没有定义default<br>constructor，就会被合成出一个来。（错误！！！按需合成）(2) 编译器合成出来的dafault<br>constructor会明确设定class内每一个data member的默认值 （错误，一般不会赋初值）</p>
+<p>什么时候需要 <strong>合成default constructor</strong> ，有四种情况</p>
+<ol>
+<li>成员有 <strong>类对象(Member class object)，且该类对象有default construct。</strong></li>
+</ol>
+<p>例，</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Foo</span> <span class="token punctuation">&#123;</span> <span class="token keyword">public</span><span class="token operator">:</span> <span class="token function">Foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">Foo</span><span class="token punctuation">(</span> <span class="token keyword">int</span> <span class="token punctuation">)</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span> 
+<span class="token keyword">class</span> <span class="token class-name">Bar</span> <span class="token punctuation">&#123;</span> <span class="token keyword">public</span><span class="token operator">:</span> Foo foo<span class="token punctuation">;</span> <span class="token keyword">char</span> <span class="token operator">*</span>str<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span> 
+ 
+<span class="token keyword">void</span> <span class="token function">foo_bar</span><span class="token punctuation">(</span><span class="token punctuation">)</span> 
+<span class="token punctuation">&#123;</span> 
+    Bar bar<span class="token punctuation">;</span> 
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>str<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token punctuation">&#125;</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> 
+<span class="token punctuation">&#125;</span> </code></pre>
+<p>执行Bar bar需要初始化Foo foo，但不会初始化Bar ::<br>str。因为为了保证运行，编译器需要初始化Bar::foo，但初始化Bar::str与否不影响运行，是程序员的责任。</p>
+<p>为了保证程序正常运行，需要手工对str进行初始化。</p>
+<p>2. 当一个没有constructor的class <strong>派生一个有default constructor的base class</strong> ，该derived<br>class的default constructor会被合成，且调用base class 的default constructor</p>
+<p>3. 当class <strong>声明或继承一个virtual function</strong> 。会合成default<br>constructor，且下面两个扩张操作会在编译期间发生</p>
+<ul>
+<li>一个virtual function table (vtbl)会被编译器产生，内含class的virtual function地址 </li>
+<li>每一个class object中，一个额外的pointer member (vptr)被编译器合成，内含class vtbl的地址。 </li>
+</ul>
+<p>4. 具有virtual base class的类。需要建立default constructor实现一些功能，例如执行期存取操作。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">X</span> <span class="token punctuation">&#123;</span> <span class="token keyword">public</span><span class="token operator">:</span> <span class="token keyword">int</span> i<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span> 
+<span class="token keyword">class</span> <span class="token class-name">A</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token keyword">virtual</span> <span class="token class-name">X</span></span> <span class="token punctuation">&#123;</span> <span class="token keyword">public</span><span class="token operator">:</span> <span class="token keyword">int</span> j<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span> 
+<span class="token keyword">class</span> <span class="token class-name">B</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token keyword">virtual</span> <span class="token class-name">X</span></span> <span class="token punctuation">&#123;</span> <span class="token keyword">public</span> <span class="token operator">:</span> <span class="token keyword">double</span> d<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span> 
+<span class="token keyword">class</span> <span class="token class-name">C</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">A</span><span class="token punctuation">,</span> <span class="token keyword">public</span> <span class="token class-name">B</span></span> <span class="token punctuation">&#123;</span> <span class="token keyword">public</span><span class="token operator">:</span> <span class="token keyword">int</span> k<span class="token punctuation">&#125;</span><span class="token punctuation">;</span> 
+ 
+<span class="token comment">// 无法编译期确定pa->X::i的位置，因为pa类型可以是A，也可以是C </span>
+<span class="token keyword">void</span> <span class="token function">foo</span> <span class="token punctuation">(</span><span class="token keyword">const</span> A<span class="token operator">*</span> pa<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> pa <span class="token operator">-></span> i <span class="token operator">=</span> <span class="token number">1024</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span> </code></pre>
+<h3 id="Copy-Constructor"><a href="#Copy-Constructor" class="headerlink" title="Copy Constructor"></a>Copy Constructor</h3><p>三种情况下，一个object的内容作为另一个class object的初值，导致拷贝构造函数的调用。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// 第一种情况，明确赋值 </span>
+<span class="token keyword">class</span> <span class="token class-name">X</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span> 
+X x<span class="token punctuation">;</span> 
+X xx <span class="token operator">=</span> x<span class="token punctuation">;</span>  <span class="token comment">// 明确以object内容作为另一个object的初值 </span>
+ 
+<span class="token comment">// 第二种情况，当object作为实参交给形参时 </span>
+<span class="token keyword">extern</span> <span class="token keyword">void</span> <span class="token function">foo</span> <span class="token punctuation">(</span>X x<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+X xx<span class="token punctuation">;</span> 
+<span class="token function">foo</span><span class="token punctuation">(</span>xx<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+ 
+<span class="token comment">// 第三种情况 return 一个class object </span>
+<span class="token function">foo_bar</span><span class="token punctuation">(</span><span class="token punctuation">)</span> 
+<span class="token punctuation">&#123;</span> 
+    X xx<span class="token punctuation">;</span> 
+    <span class="token keyword">return</span> xx<span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span> </code></pre>
+<p>并非所有对object赋值的情况都会导致拷贝构造，对于简单的情况会使用 <strong>Bitwise copy Semantic</strong><br>（位逐次拷贝），挨个变量赋值，并不生成default copy constructor。</p>
+<p>与default constructor类似，有四种情况下需要合成default copy constructor:</p>
+<ul>
+<li>class内部有一个member object，且后者class声明有copy constructor。需生成default copy constructor实现member object赋值逻辑 </li>
+<li>class继承一个base class, 且后者class声明有copy constructor。因为derived class包含 base class的成员。</li>
+<li>class声明virtual function，因为需用copy constructor 对vtbl赋值 </li>
+<li>class派生一个继承链，其中有virtual base class. </li>
+</ul>
+<h3 id="明确的初始化"><a href="#明确的初始化" class="headerlink" title="明确的初始化"></a>明确的初始化</h3><pre class="language-cpp" data-language="cpp"><code class="language-cpp">X x0<span class="token punctuation">;</span> 
+<span class="token keyword">void</span> <span class="token function">foo_bar</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> 
+    X <span class="token function">x1</span><span class="token punctuation">(</span>x0<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    X x2 <span class="token operator">=</span> x0<span class="token punctuation">;</span> 
+    X x3 <span class="token operator">=</span> <span class="token function">X</span><span class="token punctuation">(</span>x0<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span> 
+ 
+<span class="token comment">//实际上调用 </span>
+X x1<span class="token punctuation">;</span> 
+x1<span class="token punctuation">.</span><span class="token class-name">X</span><span class="token double-colon punctuation">::</span><span class="token function">X</span><span class="token punctuation">(</span> x0 <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//表现为调用copy constructor X::X( const X&amp; xx ); </span>
+<span class="token comment">// x2,x3亦然 </span></code></pre>
+<p>一般的，在实参到形参，返回值时都会产生临时对象，用copy constructor赋值给临时对象。但有时编译器优化会跳过临时对象这步。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// 优化前 </span>
+vector _temp0<span class="token punctuation">;</span> 
+<span class="token function">add</span> <span class="token punctuation">(</span>_temp0，a<span class="token punctuation">,</span>b<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+vector <span class="token function">c</span><span class="token punctuation">(</span>_temp0<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+ 
+<span class="token comment">// 优化后 </span>
+vector c<span class="token punctuation">;</span> 
+<span class="token function">add</span> <span class="token punctuation">(</span>c<span class="token punctuation">,</span>a<span class="token punctuation">,</span>b<span class="token punctuation">)</span><span class="token punctuation">;</span> </code></pre>
+<p>成员初始化序列</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// 如下这种风格最有效率 </span>
+<span class="token class-name">Word</span><span class="token double-colon punctuation">::</span><span class="token function">Word</span><span class="token punctuation">(</span><span class="token punctuation">)</span> 
+<span class="token operator">:</span> <span class="token function">_cnt</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">_name</span><span class="token punctuation">(</span> <span class="token number">0</span> <span class="token punctuation">)</span> 
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> 
+<span class="token comment">// 不要这样写,显然会执行，创建临时对象，拷贝构造，析构临时对象 </span>
+<span class="token function">Word</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> 
+    _name <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> 
+    _cnt <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span> 
+<span class="token comment">// 上面代码等价于 </span>
+_name <span class="token punctuation">.</span><span class="token class-name">String</span><span class="token double-colon punctuation">::</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+String temp <span class="token operator">=</span> <span class="token function">String</span><span class="token punctuation">(</span> <span class="token number">0</span> <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 构建临时对象 </span>
+_name<span class="token punctuation">.</span>String<span class="token double-colon punctuation">::</span><span class="token keyword">operator</span><span class="token operator">=</span><span class="token punctuation">(</span> temp <span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//赋值 </span>
+temp<span class="token punctuation">.</span><span class="token class-name">String</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//摧毁临时对象 </span></code></pre>
+<p>注意： <strong>list的次序按照class member声明次序决定，与initialization list的排列顺序无关。</strong></p>
+<h4 id="对象方法调用过程"><a href="#对象方法调用过程" class="headerlink" title="对象方法调用过程"></a>对象方法调用过程</h4><p>当调用对象函数时, 对象不会入栈, 入栈的是this指针, 通过this指针找到对象方法。</p>
+<p>调用类的成员函数时，可以通过查看this指针来查看具体是哪个对象在调用。<strong>This指针首先入栈，然后成员函数的参数从右向左进行入栈(实际参数)，最后函数返回地址入栈</strong>。形式参数已经保存在寄存器中。</p>
+<p><img src="../assets/images/return_stack.png" alt="avatar" loading="lazy"></p>
+</div><ul class="post-copyright"><li class="post-copyright-author"><strong>本文作者：</strong>larry</li><li class="post-copyright-link"><strong>本文链接：</strong><a href="https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-15-1%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/" title="cpp对象模型">https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-15-1%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/</a></li><li class="post-copyright-license"><strong>版权声明：</strong>本博客所有文章除特别声明外，均默认采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><svg class="icon"><use xlink:href="#icon-creative-commons-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-by-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-nc-line"></use></svg><svg class="icon"><use xlink:href="#icon-creative-commons-sa-line"></use></svg></a> 许可协议。</li></ul></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-18-2Data%E5%92%8Cfunction/" rel="prev" title="cpp对象模型:Data和function"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">cpp对象模型:Data和function</span></a></div><div class="post-nav-item"></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-15-1%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2016 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#0078E7" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>
