@@ -1,0 +1,627 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>glibc常用函数 | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="glibc是C语言的库函数, 持有系统调用的底层接口和常用处理函数。cpp也许不常用malloc, 但字符串函数常常在cpp使用  string 字符串实际上是使用 null 字符 \0 终止的一维字符数组。  char site1[7] &#x3D; &amp;#123;&#39;R&#39;, &#39;U&#39;, &#39;N&#39;, &#39;O&#39;, &#39;O&#39;, &#39;B&#39;, &#39;\0&#39;&amp;#125;; &#x2F;&#x2F;&#x2F; 等价于 char site2[] &#x3D; &quot;RUNOO">
+<meta property="og:type" content="article">
+<meta property="og:title" content="glibc常用函数">
+<meta property="og:url" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-18-glibc%E5%B8%B8%E7%94%A8%E5%BA%93%E5%87%BD%E6%95%B0/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="glibc是C语言的库函数, 持有系统调用的底层接口和常用处理函数。cpp也许不常用malloc, 但字符串函数常常在cpp使用  string 字符串实际上是使用 null 字符 \0 终止的一维字符数组。  char site1[7] &#x3D; &amp;#123;&#39;R&#39;, &#39;U&#39;, &#39;N&#39;, &#39;O&#39;, &#39;O&#39;, &#39;B&#39;, &#39;\0&#39;&amp;#125;; &#x2F;&#x2F;&#x2F; 等价于 char site2[] &#x3D; &quot;RUNOO">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-09-17T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-17T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="glibc">
+<meta name="twitter:card" content="summary"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#string"><span class="toc-number">1.</span> <span class="toc-text">string</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#strcpy"><span class="toc-number">1.1.</span> <span class="toc-text">strcpy</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#strlen"><span class="toc-number">1.2.</span> <span class="toc-text">strlen</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#strncmp"><span class="toc-number">1.3.</span> <span class="toc-text">strncmp</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#strpbrk-%E4%BB%8Es%E4%B8%AD%E6%89%BE%E5%88%B0s%E5%9C%A8accept%E4%B8%AD%E7%9A%84%E5%AD%97%E7%AC%A6-%E8%BF%94%E5%9B%9E%E7%AC%AC%E4%B8%80%E4%B8%AA%E7%9A%84%E5%9C%B0%E5%9D%80"><span class="toc-number">1.4.</span> <span class="toc-text">strpbrk 从s中找到s在accept中的字符, 返回第一个的地址,</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#strstr%E5%92%8Cstrrchr"><span class="toc-number">1.5.</span> <span class="toc-text">strstr和strrchr</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#strtok-%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%88%86%E5%89%B2"><span class="toc-number">1.6.</span> <span class="toc-text">strtok 字符串分割</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E4%B8%B2%E8%BD%AC%E5%9E%8B"><span class="toc-number">1.7.</span> <span class="toc-text">字符串转型</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Memory"><span class="toc-number">2.</span> <span class="toc-text">Memory</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#memcopy"><span class="toc-number">2.1.</span> <span class="toc-text">memcopy</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#memcpy"><span class="toc-number">2.2.</span> <span class="toc-text">memcpy</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#memmove"><span class="toc-number">2.3.</span> <span class="toc-text">memmove</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#memset"><span class="toc-number">2.4.</span> <span class="toc-text">memset</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E7%B1%BB%E5%9E%8B%E5%88%A4%E6%96%AD"><span class="toc-number">3.</span> <span class="toc-text">字符类型判断</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B6%E4%BB%96"><span class="toc-number">4.</span> <span class="toc-text">其他</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#stat%E5%87%BD%E6%95%B0"><span class="toc-number">4.1.</span> <span class="toc-text">stat函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#mmap"><span class="toc-number">4.2.</span> <span class="toc-text">mmap</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-18-glibc%E5%B8%B8%E7%94%A8%E5%BA%93%E5%87%BD%E6%95%B0/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">glibc常用函数<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/cpp基础/2021-09-18-glibc常用库函数.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-09-18 00:00:00" itemprop="dateCreated datePublished" datetime="2021-09-18T00:00:00+08:00">2021-09-18</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">2.9k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">14m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/cpp-base/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">cpp base</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/glibc/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">glibc</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><blockquote>
+<p>glibc是C语言的库函数, 持有系统调用的底层接口和常用处理函数。cpp也许不常用malloc, 但字符串函数常常在cpp使用</p>
+</blockquote>
+<h3 id="string"><a href="#string" class="headerlink" title="string"></a>string</h3><ul>
+<li>字符串实际上是使用 null 字符 \0 终止的一维字符数组。</li>
+</ul>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token keyword">char</span> site1<span class="token punctuation">[</span><span class="token number">7</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token string">'R'</span><span class="token punctuation">,</span> <span class="token string">'U'</span><span class="token punctuation">,</span> <span class="token string">'N'</span><span class="token punctuation">,</span> <span class="token string">'O'</span><span class="token punctuation">,</span> <span class="token string">'O'</span><span class="token punctuation">,</span> <span class="token string">'B'</span><span class="token punctuation">,</span> <span class="token string">'\0'</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token comment">/// 等价于</span>
+<span class="token keyword">char</span> site2<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"RUNOOB"</span><span class="token punctuation">;</span>
+<span class="token keyword">char</span> <span class="token operator">*</span>site3 <span class="token operator">=</span> <span class="token string">"RUNOOB"</span><span class="token punctuation">;</span>
+
+<span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>site1<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>site2<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token operator">*</span>site3<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">/// 输出</span>
+<span class="token number">7</span>
+<span class="token number">7</span>
+<span class="token number">1</span>
+<span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> <span class="token function">strlen</span><span class="token punctuation">(</span>site1<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> <span class="token function">strlen</span><span class="token punctuation">(</span>site2<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"%d\n"</span><span class="token punctuation">,</span> <span class="token function">strlen</span><span class="token punctuation">(</span><span class="token operator">*</span>site3<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">/// 输出</span>
+<span class="token number">6</span>
+<span class="token number">6</span>
+Segmentation fault</code></pre>
+
+<h4 id="strcpy"><a href="#strcpy" class="headerlink" title="strcpy"></a>strcpy</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/* Copy SRC to DEST.  */</span>
+<span class="token keyword">char</span> <span class="token operator">*</span>
+<span class="token function">strcpy</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>dest<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>src<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">char</span> c<span class="token punctuation">;</span>
+  <span class="token keyword">char</span> <span class="token operator">*</span>s <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span><span class="token punctuation">)</span> src<span class="token punctuation">;</span>
+  <span class="token comment">/// 直接找dest和src的地址差</span>
+  <span class="token keyword">const</span> ptrdiff_t off <span class="token operator">=</span> dest <span class="token operator">-</span> s <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">do</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">/// 根据一个s指针就可以实现copy, 借助地址差</span>
+      c <span class="token operator">=</span> <span class="token operator">*</span>s<span class="token operator">++</span><span class="token punctuation">;</span>
+      s<span class="token punctuation">[</span>off<span class="token punctuation">]</span> <span class="token operator">=</span> c<span class="token punctuation">;</span> <span class="token comment">/// 通过地址差, s[off]就是dest</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>c <span class="token operator">!=</span> <span class="token string">'\0'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">/// 字符串结尾是 \0</span>
+
+  <span class="token keyword">return</span> dest<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="strlen"><a href="#strlen" class="headerlink" title="strlen"></a>strlen</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp">size_t
+<span class="token function">strlen</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>str<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>char_ptr<span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">int</span> <span class="token operator">*</span>longword_ptr<span class="token punctuation">;</span>
+  <span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">int</span> longword<span class="token punctuation">,</span> himagic<span class="token punctuation">,</span> lomagic<span class="token punctuation">;</span>
+
+  <span class="token comment">/* Handle the first few characters by reading one character at a time.
+     Do this until CHAR_PTR is aligned on a longword boundary.  */</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span>char_ptr <span class="token operator">=</span> str<span class="token punctuation">;</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">int</span><span class="token punctuation">)</span> char_ptr
+			<span class="token operator">&amp;</span> <span class="token punctuation">(</span><span class="token keyword">sizeof</span> <span class="token punctuation">(</span>longword<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+       <span class="token operator">++</span>char_ptr<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>char_ptr <span class="token operator">==</span> <span class="token string">'\0'</span><span class="token punctuation">)</span>
+      <span class="token keyword">return</span> char_ptr <span class="token operator">-</span> str<span class="token punctuation">;</span></code></pre>
+
+<h4 id="strncmp"><a href="#strncmp" class="headerlink" title="strncmp"></a>strncmp</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span>
+<span class="token function">STRNCMP</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s1<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s2<span class="token punctuation">,</span> size_t n<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">unsigned</span> <span class="token keyword">char</span> c1 <span class="token operator">=</span> <span class="token string">'\0'</span><span class="token punctuation">;</span>
+  <span class="token keyword">unsigned</span> <span class="token keyword">char</span> c2 <span class="token operator">=</span> <span class="token string">'\0'</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>n <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      c1 <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">char</span><span class="token punctuation">)</span> <span class="token operator">*</span>s1<span class="token operator">++</span><span class="token punctuation">;</span>
+      c2 <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">char</span><span class="token punctuation">)</span> <span class="token operator">*</span>s2<span class="token operator">++</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>c1 <span class="token operator">==</span> <span class="token string">'\0'</span> <span class="token operator">||</span> c1 <span class="token operator">!=</span> c2<span class="token punctuation">)</span>
+	<span class="token keyword">return</span> c1 <span class="token operator">-</span> c2<span class="token punctuation">;</span>
+      n<span class="token operator">--</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">return</span> c1 <span class="token operator">-</span> c2<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="strpbrk-从s中找到s在accept中的字符-返回第一个的地址"><a href="#strpbrk-从s中找到s在accept中的字符-返回第一个的地址" class="headerlink" title="strpbrk 从s中找到s在accept中的字符, 返回第一个的地址,"></a>strpbrk 从s中找到s在accept中的字符, 返回第一个的地址,</h4><ul>
+<li>当s为字符时可以充当匹配, 如<code>strpbrk(&quot;a&quot;, &quot;abc&quot;);</code></li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/* Find the first occurrence in S of any character in ACCEPT.  */</span>
+<span class="token keyword">char</span> <span class="token operator">*</span>
+<span class="token function">STRPBRK</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>accept<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">*</span>s <span class="token operator">!=</span> <span class="token string">'\0'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>a <span class="token operator">=</span> accept<span class="token punctuation">;</span>
+      <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">*</span>a <span class="token operator">!=</span> <span class="token string">'\0'</span><span class="token punctuation">)</span>
+	<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>a<span class="token operator">++</span> <span class="token operator">==</span> <span class="token operator">*</span>s<span class="token punctuation">)</span>
+	  <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span><span class="token punctuation">)</span> s<span class="token punctuation">;</span>
+      <span class="token operator">++</span>s<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="strstr和strrchr"><a href="#strstr和strrchr" class="headerlink" title="strstr和strrchr"></a>strstr和strrchr</h4><ul>
+<li>找到最后一次出现的字符</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">
+<span class="token comment">/* Return the first occurrence of NEEDLE in HAYSTACK.  Return HAYSTACK
+   if NEEDLE is empty, otherwise NULL if NEEDLE is not found in
+   HAYSTACK.  */</span>
+<span class="token keyword">char</span> <span class="token operator">*</span>
+<span class="token function">STRSTR</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>haystack_start<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>needle_start<span class="token punctuation">)</span>
+
+<span class="token comment">/* Find the last occurrence of C in S.  */</span>
+<span class="token keyword">char</span> <span class="token operator">*</span>
+<span class="token function">STRRCHR</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>s<span class="token punctuation">,</span> <span class="token keyword">int</span> c<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>found<span class="token punctuation">,</span> <span class="token operator">*</span>p<span class="token punctuation">;</span>
+
+  c <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">char</span><span class="token punctuation">)</span> c<span class="token punctuation">;</span>
+
+  <span class="token comment">/* Since strchr is fast, we use it rather than the obvious loop.  */</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>c <span class="token operator">==</span> <span class="token string">'\0'</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token function">strchr</span> <span class="token punctuation">(</span>s<span class="token punctuation">,</span> <span class="token string">'\0'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  found <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>p <span class="token operator">=</span> <span class="token function">strchr</span> <span class="token punctuation">(</span>s<span class="token punctuation">,</span> c<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      found <span class="token operator">=</span> p<span class="token punctuation">;</span>
+      s <span class="token operator">=</span> p <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span><span class="token punctuation">)</span> found<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="strtok-字符串分割"><a href="#strtok-字符串分割" class="headerlink" title="strtok 字符串分割"></a>strtok 字符串分割</h4><ul>
+<li><p>当strtok()在参数s 的字符串中发现到参数delim 的分割字符时则会将该字符改为\0 字符。在第一次调用时，<strong>strtok()必需给予参数s 字符串，往后的调用则将参数s 设置成NULL。每次调用成功则返回下一个分割后的字符串指针</strong>。</p>
+</li>
+<li><p>匹配的字符设置为<code>\0</code></p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/* Parse S into tokens separated by characters in DELIM.
+   If S is NULL, the last string strtok() was called with is
+   used.  For example:
+	char s[] = "-abc-=-def";
+	x = strtok(s, "-");		// x = "abc"
+	x = strtok(NULL, "-=");		// x = "def"
+	x = strtok(NULL, "=");		// x = NULL
+		// s = "abc\0=-def\0"
+*/</span>
+<span class="token keyword">char</span> <span class="token operator">*</span>
+<span class="token function">STRTOK</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>s<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>delim<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">char</span> <span class="token operator">*</span>token<span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>s <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span>
+    s <span class="token operator">=</span> olds<span class="token punctuation">;</span>
+
+  <span class="token comment">/* Scan leading delimiters.  */</span>
+  <span class="token comment">///  strspn 检索字符串 str1 中第一个不在字符串 str2 中出现的字符下标。</span>
+  s <span class="token operator">+=</span> <span class="token function">strspn</span> <span class="token punctuation">(</span>s<span class="token punctuation">,</span> delim<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 下一次s就指向 不匹配的第一个下标</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>s <span class="token operator">==</span> <span class="token string">'\0'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      olds <span class="token operator">=</span> s<span class="token punctuation">;</span>
+      <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">/* Find the end of the token.  */</span>
+  token <span class="token operator">=</span> s<span class="token punctuation">;</span>
+  s <span class="token operator">=</span> <span class="token function">strpbrk</span> <span class="token punctuation">(</span>token<span class="token punctuation">,</span> delim<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">/// 第一个delim出现位置, 就算delim -m, 可以单独和m匹配</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>s <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span>
+    <span class="token comment">/* This token finishes the string.  */</span>
+    olds <span class="token operator">=</span> <span class="token function">__rawmemchr</span> <span class="token punctuation">(</span>token<span class="token punctuation">,</span> <span class="token string">'\0'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">else</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">/* Terminate the token and make OLDS point past it.  */</span>
+      <span class="token operator">*</span>s <span class="token operator">=</span> <span class="token string">'\0'</span><span class="token punctuation">;</span>
+      olds <span class="token operator">=</span> s <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> token<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+</code></pre>
+
+<ul>
+<li>C++的<code>find</code>可以起到寻找字符串的作用, 可以查找子串和字符.<code>string::npos</code>用来表示不存在的位置</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">string <span class="token function">s1</span><span class="token punctuation">(</span><span class="token string">"Source Code"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> n<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>n <span class="token operator">=</span> s1<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token string">'u'</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">!=</span> string<span class="token double-colon punctuation">::</span>npos<span class="token punctuation">)</span> <span class="token comment">//查找 u 出现的位置</span>
+        cout <span class="token operator">&lt;&lt;</span> <span class="token string">"1) "</span> <span class="token operator">&lt;&lt;</span> n <span class="token operator">&lt;&lt;</span> <span class="token string">","</span> <span class="token operator">&lt;&lt;</span> s1<span class="token punctuation">.</span><span class="token function">substr</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> endl<span class="token punctuation">;</span>
+    <span class="token comment">//输出 l)2,urce Code</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>n <span class="token operator">=</span> s1<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token string">"Source"</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> string<span class="token double-colon punctuation">::</span>npos<span class="token punctuation">)</span>
+        <span class="token comment">//从下标3开始查找"Source"，找不到</span>
+        cout <span class="token operator">&lt;&lt;</span> <span class="token string">"2) "</span> <span class="token operator">&lt;&lt;</span> <span class="token string">"Not Found"</span> <span class="token operator">&lt;&lt;</span> endl<span class="token punctuation">;</span>  <span class="token comment">//输出 2) Not Found</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>n <span class="token operator">=</span> s1<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token string">"Co"</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">!=</span> string<span class="token double-colon punctuation">::</span>npos<span class="token punctuation">)</span>
+        <span class="token comment">//查找子串"Co"。能找到，返回"Co"的位置</span>
+        cout <span class="token operator">&lt;&lt;</span> <span class="token string">"3) "</span> <span class="token operator">&lt;&lt;</span> n <span class="token operator">&lt;&lt;</span> <span class="token string">", "</span> <span class="token operator">&lt;&lt;</span> s1<span class="token punctuation">.</span><span class="token function">substr</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> endl<span class="token punctuation">;</span></code></pre>
+
+<h4 id="字符串转型"><a href="#字符串转型" class="headerlink" title="字符串转型"></a>字符串转型</h4><ul>
+<li><p><code>double atof(const char* str)</code>:字符串转浮点数</p>
+</li>
+<li><p><code>int atoi/atol/atoll(const char* str)</code>:字符串转整型</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span>
+<span class="token function">atoi</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>nptr<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">// /* Convert a string to a long integer.  */</span>
+  <span class="token comment">// 调用完strtol之后转型为int</span>
+  <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span> <span class="token function">strtol</span> <span class="token punctuation">(</span>nptr<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span><span class="token operator">*</span><span class="token punctuation">)</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h3 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h3><h4 id="memcopy"><a href="#memcopy" class="headerlink" title="memcopy"></a>memcopy</h4><ul>
+<li>该文件用宏定义定义了字节拷贝和字拷贝</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">typedef</span> <span class="token keyword">unsigned</span> <span class="token keyword">char</span> byte<span class="token punctuation">;</span> <span class="token comment">// byte用unsigned char表示</span>
+
+<span class="token comment">/* Copy exactly NBYTES bytes from SRC_BP to DST_BP,
+   without any assumptions about alignment of the pointers.  */</span>
+<span class="token comment">/// 前向拷贝, 也就是从src起始一个字节一个字节拷贝到dst中</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name function">BYTE_COPY_FWD</span><span class="token expression"><span class="token punctuation">(</span>dst_bp<span class="token punctuation">,</span> src_bp<span class="token punctuation">,</span> nbytes<span class="token punctuation">)</span>				      </span><span class="token punctuation">\</span>
+  <span class="token expression"><span class="token keyword">do</span>									      </span><span class="token punctuation">\</span>
+    <span class="token expression"><span class="token punctuation">&#123;</span>									      </span><span class="token punctuation">\</span>
+      <span class="token expression">size_t __nbytes <span class="token operator">=</span> <span class="token punctuation">(</span>nbytes<span class="token punctuation">)</span><span class="token punctuation">;</span>					      </span><span class="token punctuation">\</span>
+      <span class="token expression"><span class="token keyword">while</span> <span class="token punctuation">(</span>__nbytes <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>						      </span><span class="token punctuation">\</span>
+	<span class="token expression"><span class="token punctuation">&#123;</span>								      </span><span class="token punctuation">\</span>
+	  <span class="token expression">byte __x <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>byte <span class="token operator">*</span><span class="token punctuation">)</span> src_bp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>				      </span><span class="token punctuation">\</span>
+	  <span class="token expression">src_bp <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span>							      </span><span class="token punctuation">\</span>
+	  <span class="token expression">__nbytes <span class="token operator">-=</span> <span class="token number">1</span><span class="token punctuation">;</span>						      </span><span class="token punctuation">\</span>
+	  <span class="token expression"><span class="token punctuation">(</span><span class="token punctuation">(</span>byte <span class="token operator">*</span><span class="token punctuation">)</span> dst_bp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> __x<span class="token punctuation">;</span>					      </span><span class="token punctuation">\</span>
+	  <span class="token expression">dst_bp <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span>							      </span><span class="token punctuation">\</span>
+	<span class="token expression"><span class="token punctuation">&#125;</span>								      </span><span class="token punctuation">\</span>
+    <span class="token expression"><span class="token punctuation">&#125;</span> <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>   </span><span class="token comment">/// dowhile, 不满足条件也至少执行一次</span></span>
+
+<span class="token comment">/* Copy exactly NBYTES_TO_COPY bytes from SRC_END_PTR to DST_END_PTR,
+   beginning at the bytes right before the pointers and continuing towards
+   smaller addresses.  Don't assume anything about alignment of the
+   pointers.  */</span>
+<span class="token comment">/// 后向拷贝</span>
+<span class="token comment">/// 也就是从src结尾处一个字节一个字节拷贝到dst中</span>
+<span class="token comment">/// 传入的src_ep, dst_ep应该是结尾地址</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name function">BYTE_COPY_BWD</span><span class="token expression"><span class="token punctuation">(</span>dst_ep<span class="token punctuation">,</span> src_ep<span class="token punctuation">,</span> nbytes<span class="token punctuation">)</span>				      </span><span class="token punctuation">\</span>
+  <span class="token expression"><span class="token keyword">do</span>									      </span><span class="token punctuation">\</span>
+    <span class="token expression"><span class="token punctuation">&#123;</span>									      </span><span class="token punctuation">\</span>
+      <span class="token expression">size_t __nbytes <span class="token operator">=</span> <span class="token punctuation">(</span>nbytes<span class="token punctuation">)</span><span class="token punctuation">;</span>					      </span><span class="token punctuation">\</span>
+      <span class="token expression"><span class="token keyword">while</span> <span class="token punctuation">(</span>__nbytes <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>						      </span><span class="token punctuation">\</span>
+	<span class="token expression"><span class="token punctuation">&#123;</span>								      </span><span class="token punctuation">\</span>
+	  <span class="token expression">byte __x<span class="token punctuation">;</span>							      </span><span class="token punctuation">\</span>
+	  <span class="token expression">src_ep <span class="token operator">-=</span> <span class="token number">1</span><span class="token punctuation">;</span>							      </span><span class="token punctuation">\</span>
+	  <span class="token expression">__x <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>byte <span class="token operator">*</span><span class="token punctuation">)</span> src_ep<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>					      </span><span class="token punctuation">\</span>
+	  <span class="token expression">dst_ep <span class="token operator">-=</span> <span class="token number">1</span><span class="token punctuation">;</span>							      </span><span class="token punctuation">\</span>
+	  <span class="token expression">__nbytes <span class="token operator">-=</span> <span class="token number">1</span><span class="token punctuation">;</span>						      </span><span class="token punctuation">\</span>
+	  <span class="token expression"><span class="token punctuation">(</span><span class="token punctuation">(</span>byte <span class="token operator">*</span><span class="token punctuation">)</span> dst_ep<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> __x<span class="token punctuation">;</span>					      </span><span class="token punctuation">\</span>
+	<span class="token expression"><span class="token punctuation">&#125;</span>								      </span><span class="token punctuation">\</span>
+    <span class="token expression"><span class="token punctuation">&#125;</span> <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span></span></span>
+
+<span class="token comment">/* Copy *up to* NBYTES bytes from SRC_BP to DST_BP, with
+   the assumption that DST_BP is aligned on an OPSIZ multiple.  If
+   not all bytes could be easily copied, store remaining number of bytes
+   in NBYTES_LEFT, otherwise store 0.  */</span>
+<span class="token keyword">extern</span> <span class="token keyword">void</span> <span class="token function">_wordcopy_fwd_aligned</span> <span class="token punctuation">(</span><span class="token keyword">long</span> <span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">long</span> <span class="token keyword">int</span><span class="token punctuation">,</span> size_t<span class="token punctuation">)</span> __THROW<span class="token punctuation">;</span>
+<span class="token keyword">extern</span> <span class="token keyword">void</span> <span class="token function">_wordcopy_fwd_dest_aligned</span> <span class="token punctuation">(</span><span class="token keyword">long</span> <span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">long</span> <span class="token keyword">int</span><span class="token punctuation">,</span> size_t<span class="token punctuation">)</span> __THROW<span class="token punctuation">;</span>
+<span class="token comment">/// 字拷贝, 注意会设置nbytes_left</span>
+<span class="token comment">/// 宏定义就是替换, 没有调用函数的过程</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name function">WORD_COPY_FWD</span><span class="token expression"><span class="token punctuation">(</span>dst_bp<span class="token punctuation">,</span> src_bp<span class="token punctuation">,</span> nbytes_left<span class="token punctuation">,</span> nbytes<span class="token punctuation">)</span>		      </span><span class="token punctuation">\</span>
+  <span class="token expression"><span class="token keyword">do</span>									      </span><span class="token punctuation">\</span>
+    <span class="token expression"><span class="token punctuation">&#123;</span>									      </span><span class="token punctuation">\</span>
+      <span class="token expression"><span class="token keyword">if</span> <span class="token punctuation">(</span>src_bp <span class="token operator">%</span> OPSIZ <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>						      </span><span class="token punctuation">\</span>
+	<span class="token expression"><span class="token function">_wordcopy_fwd_aligned</span> <span class="token punctuation">(</span>dst_bp<span class="token punctuation">,</span> src_bp<span class="token punctuation">,</span> <span class="token punctuation">(</span>nbytes<span class="token punctuation">)</span> <span class="token operator">/</span> OPSIZ<span class="token punctuation">)</span><span class="token punctuation">;</span>	      </span><span class="token punctuation">\</span>
+      <span class="token expression"><span class="token keyword">else</span>								      </span><span class="token punctuation">\</span>
+	<span class="token expression"><span class="token function">_wordcopy_fwd_dest_aligned</span> <span class="token punctuation">(</span>dst_bp<span class="token punctuation">,</span> src_bp<span class="token punctuation">,</span> <span class="token punctuation">(</span>nbytes<span class="token punctuation">)</span> <span class="token operator">/</span> OPSIZ<span class="token punctuation">)</span><span class="token punctuation">;</span>	      </span><span class="token punctuation">\</span>
+      <span class="token expression">src_bp <span class="token operator">+=</span> <span class="token punctuation">(</span>nbytes<span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token operator">-</span>OPSIZ<span class="token punctuation">;</span>					      </span><span class="token punctuation">\</span>
+      <span class="token expression">dst_bp <span class="token operator">+=</span> <span class="token punctuation">(</span>nbytes<span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token operator">-</span>OPSIZ<span class="token punctuation">;</span>					      </span><span class="token punctuation">\</span>
+      <span class="token expression"><span class="token punctuation">(</span>nbytes_left<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token punctuation">(</span>nbytes<span class="token punctuation">)</span> <span class="token operator">%</span> OPSIZ<span class="token punctuation">;</span>					      </span><span class="token punctuation">\</span>
+    <span class="token expression"><span class="token punctuation">&#125;</span> <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span></span></span></code></pre>
+
+<h4 id="memcpy"><a href="#memcpy" class="headerlink" title="memcpy"></a>memcpy</h4><ul>
+<li>先拷贝大块, 剩余字节用小块拷贝</li>
+<li>返回目的地起始地址</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token operator">*</span>
+<span class="token function">memcpy</span> <span class="token punctuation">(</span>dstpp<span class="token punctuation">,</span> srcpp<span class="token punctuation">,</span> len<span class="token punctuation">)</span>
+     <span class="token keyword">void</span> <span class="token operator">*</span>dstpp<span class="token punctuation">;</span>
+     <span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>srcpp<span class="token punctuation">;</span>
+     size_t len<span class="token punctuation">;</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">int</span> dstp <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">long</span> <span class="token keyword">int</span><span class="token punctuation">)</span> dstpp<span class="token punctuation">;</span>
+  <span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">int</span> srcp <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">long</span> <span class="token keyword">int</span><span class="token punctuation">)</span> srcpp<span class="token punctuation">;</span>
+
+  <span class="token comment">/* Copy from the beginning to the end.  */</span>
+
+  <span class="token comment">/* If there not too few bytes to copy, use word copy.  */</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>len <span class="token operator">>=</span> OP_T_THRES<span class="token punctuation">)</span>  <span class="token comment">// #define	OP_T_THRES	16</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">/* Copy just a few bytes to make DSTP aligned.  */</span>
+      <span class="token comment">/*
+      #define	op_t	unsigned long int 8字节
+      #define OPSIZ	(sizeof(op_t))
+      */</span>
+      len <span class="token operator">-=</span> <span class="token punctuation">(</span><span class="token operator">-</span>dstp<span class="token punctuation">)</span> <span class="token operator">%</span> OPSIZ<span class="token punctuation">;</span> <span class="token comment">// len满足word的倍数</span>
+      <span class="token function">BYTE_COPY_FWD</span> <span class="token punctuation">(</span>dstp<span class="token punctuation">,</span> srcp<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token operator">-</span>dstp<span class="token punctuation">)</span> <span class="token operator">%</span> OPSIZ<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">/// 不满足字长的先拷贝</span>
+
+      <span class="token comment">/* Copy whole pages from SRCP to DSTP by virtual address manipulation,
+	 as much as possible.  */</span>
+
+      <span class="token function">PAGE_COPY_FWD_MAYBE</span> <span class="token punctuation">(</span>dstp<span class="token punctuation">,</span> srcp<span class="token punctuation">,</span> len<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/// 拷贝大块的时候会用</span>
+
+      <span class="token comment">/* Copy from SRCP to DSTP taking advantage of the known alignment of
+	 DSTP.  Number of bytes remaining is put in the third argument,
+	 i.e. in LEN.  This number may vary from machine to machine.  */</span>
+
+      <span class="token function">WORD_COPY_FWD</span> <span class="token punctuation">(</span>dstp<span class="token punctuation">,</span> srcp<span class="token punctuation">,</span> len<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/// 拷贝word, len变为nbytes_left</span>
+
+      <span class="token comment">/* Fall out and copy the tail.  */</span>
+    <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">/* There are just a few bytes to copy.  Use byte memory operations.  */</span>
+  <span class="token function">BYTE_COPY_FWD</span> <span class="token punctuation">(</span>dstp<span class="token punctuation">,</span> srcp<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// 按字节拷贝</span>
+
+  <span class="token keyword">return</span> dstpp<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="memmove"><a href="#memmove" class="headerlink" title="memmove"></a>memmove</h4><ul>
+<li>memmove不是移动, 只是在memcpy基础上, 可以防止地址段重叠前向拷贝造成的覆盖问题。</li>
+<li>当内存发生局部重叠的时候，memmove保证拷贝的结果是正确的，memcpy不保证拷贝的结果的正确</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">ifndef</span> <span class="token expression">MEMMOVE</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">MEMMOVE</span> <span class="token expression">memmove</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span></span>
+
+rettype
+inhibit_loop_to_libcall
+<span class="token function">MEMMOVE</span> <span class="token punctuation">(</span>a1<span class="token punctuation">,</span> a2<span class="token punctuation">,</span> len<span class="token punctuation">)</span>
+     a1const <span class="token keyword">void</span> <span class="token operator">*</span>a1<span class="token punctuation">;</span>
+     a2const <span class="token keyword">void</span> <span class="token operator">*</span>a2<span class="token punctuation">;</span>
+     size_t len<span class="token punctuation">;</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">int</span> dstp <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">long</span> <span class="token keyword">int</span><span class="token punctuation">)</span> dest<span class="token punctuation">;</span>
+  <span class="token keyword">unsigned</span> <span class="token keyword">long</span> <span class="token keyword">int</span> srcp <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">long</span> <span class="token keyword">int</span><span class="token punctuation">)</span> src<span class="token punctuation">;</span>
+
+  <span class="token comment">/* This test makes the forward copying code be used whenever possible.
+     Reduces the working set.  */</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>dstp <span class="token operator">-</span> srcp <span class="token operator">>=</span> len<span class="token punctuation">)</span>	<span class="token comment">/* 地址差>len, 不会发生重叠  */</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">/* Copy from the beginning to the end.  */</span>
+
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>len <span class="token operator">>=</span> OP_T_THRES<span class="token punctuation">)</span>    <span class="token comment">/// 正常拷贝, 从大块到小块</span>
+	<span class="token punctuation">&#123;</span>
+	  <span class="token comment">/* Copy just a few bytes to make DSTP aligned.  */</span>
+	  len <span class="token operator">-=</span> <span class="token punctuation">(</span><span class="token operator">-</span>dstp<span class="token punctuation">)</span> <span class="token operator">%</span> OPSIZ<span class="token punctuation">;</span>
+	  <span class="token function">BYTE_COPY_FWD</span> <span class="token punctuation">(</span>dstp<span class="token punctuation">,</span> srcp<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token operator">-</span>dstp<span class="token punctuation">)</span> <span class="token operator">%</span> OPSIZ<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	  <span class="token function">PAGE_COPY_FWD_MAYBE</span> <span class="token punctuation">(</span>dstp<span class="token punctuation">,</span> srcp<span class="token punctuation">,</span> len<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	  <span class="token function">WORD_COPY_FWD</span> <span class="token punctuation">(</span>dstp<span class="token punctuation">,</span> srcp<span class="token punctuation">,</span> len<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	  <span class="token comment">/* Fall out and copy the tail.  */</span>
+	<span class="token punctuation">&#125;</span>
+
+      <span class="token comment">/* There are just a few bytes to copy.  Use byte memory operations.  */</span>
+      <span class="token function">BYTE_COPY_FWD</span> <span class="token punctuation">(</span>dstp<span class="token punctuation">,</span> srcp<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token keyword">else</span>  <span class="token comment">// 可能发生重叠, 全部后向拷贝。(起始可以直接后向拷贝, 不用判断)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">/* Copy from the end to the beginning.  */</span>
+      srcp <span class="token operator">+=</span> len<span class="token punctuation">;</span>
+      dstp <span class="token operator">+=</span> len<span class="token punctuation">;</span>
+
+      <span class="token comment">/* If there not too few bytes to copy, use word copy.  */</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>len <span class="token operator">>=</span> OP_T_THRES<span class="token punctuation">)</span>
+	<span class="token punctuation">&#123;</span>
+	  <span class="token comment">/* Copy just a few bytes to make DSTP aligned.  */</span>
+	  len <span class="token operator">-=</span> dstp <span class="token operator">%</span> OPSIZ<span class="token punctuation">;</span>
+
+    <span class="token comment">/// 后向拷贝, 防止覆盖</span>
+	  <span class="token function">BYTE_COPY_BWD</span> <span class="token punctuation">(</span>dstp<span class="token punctuation">,</span> srcp<span class="token punctuation">,</span> dstp <span class="token operator">%</span> OPSIZ<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	  <span class="token comment">/* Copy from SRCP to DSTP taking advantage of the known
+	     alignment of DSTP.  Number of bytes remaining is put
+	     in the third argument, i.e. in LEN.  This number may
+	     vary from machine to machine.  */</span>
+
+	  <span class="token function">WORD_COPY_BWD</span> <span class="token punctuation">(</span>dstp<span class="token punctuation">,</span> srcp<span class="token punctuation">,</span> len<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	  <span class="token comment">/* Fall out and copy the tail.  */</span>
+	<span class="token punctuation">&#125;</span>
+      <span class="token comment">/* There are just a few bytes to copy.  Use byte memory operations.  */</span>
+      <span class="token function">BYTE_COPY_BWD</span> <span class="token punctuation">(</span>dstp<span class="token punctuation">,</span> srcp<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+  <span class="token function">RETURN</span> <span class="token punctuation">(</span>dest<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="memset"><a href="#memset" class="headerlink" title="memset"></a>memset</h4><ul>
+<li>使用方法<code>memset(a, 0, sizeof(a))</code>, 块状赋值, 因此只能初始化为0, 不能初始化成别的数</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// memset(a, 1, sizeof(a))</span>
+<span class="token comment">/// len为字节数</span>
+<span class="token keyword">void</span> <span class="token operator">*</span>
+inhibit_loop_to_libcall
+<span class="token function">memset</span> <span class="token punctuation">(</span>dstpp<span class="token punctuation">,</span> c<span class="token punctuation">,</span> len<span class="token punctuation">)</span>
+     <span class="token keyword">void</span> <span class="token operator">*</span>dstpp<span class="token punctuation">;</span>
+     <span class="token keyword">int</span> c<span class="token punctuation">;</span>
+     size_t len<span class="token punctuation">;</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">long</span> <span class="token keyword">int</span> dstp <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">long</span> <span class="token keyword">int</span><span class="token punctuation">)</span> dstpp<span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>len <span class="token operator">>=</span> <span class="token number">8</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      size_t xlen<span class="token punctuation">;</span>
+      op_t cccc<span class="token punctuation">;</span>  <span class="token comment">/// #define	op_t	unsigned long int</span>
+
+        <span class="token comment">/// 赋值的块为opt, 也就是unsigned long int, 64位表示8字节</span>
+      cccc <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">char</span><span class="token punctuation">)</span> c<span class="token punctuation">;</span> <span class="token comment">/// c表示一个字节， 如果c=1, cccc = 0x 00000001 四个字节</span>
+      cccc <span class="token operator">|=</span> cccc <span class="token operator">&lt;&lt;</span> <span class="token number">8</span><span class="token punctuation">;</span>
+      cccc <span class="token operator">|=</span> cccc <span class="token operator">&lt;&lt;</span> <span class="token number">16</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>OPSIZ <span class="token operator">></span> <span class="token number">4</span><span class="token punctuation">)</span>
+	<span class="token comment">/* Do the shift in two steps to avoid warning if long has 32 bits.  */</span>
+	cccc <span class="token operator">|=</span> <span class="token punctuation">(</span>cccc <span class="token operator">&lt;&lt;</span> <span class="token number">16</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token number">16</span><span class="token punctuation">;</span>
+
+      <span class="token comment">/* There are at least some bytes to set.
+	 No need to test for LEN == 0 in this alignment loop.  */</span>
+      <span class="token keyword">while</span> <span class="token punctuation">(</span>dstp <span class="token operator">%</span> OPSIZ <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#123;</span>
+	  <span class="token punctuation">(</span><span class="token punctuation">(</span>byte <span class="token operator">*</span><span class="token punctuation">)</span> dstp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> c<span class="token punctuation">;</span>
+	  dstp <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+	  len <span class="token operator">-=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+
+      <span class="token comment">/* Write 8 `op_t' per iteration until less than 8 `op_t' remain.  */</span>
+      xlen <span class="token operator">=</span> len <span class="token operator">/</span> <span class="token punctuation">(</span>OPSIZ <span class="token operator">*</span> <span class="token number">8</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/// unsigned long int</span>
+      <span class="token keyword">while</span> <span class="token punctuation">(</span>xlen <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>
+	<span class="token punctuation">&#123;</span>
+	  <span class="token punctuation">(</span><span class="token punctuation">(</span>op_t <span class="token operator">*</span><span class="token punctuation">)</span> dstp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> cccc<span class="token punctuation">;</span> <span class="token comment">/// 每一个代表一个unsigned long int, 都赋给一个00000c0000c0000c这种, 显然只有c=0时才能起到初始化效果</span>
+	  <span class="token punctuation">(</span><span class="token punctuation">(</span>op_t <span class="token operator">*</span><span class="token punctuation">)</span> dstp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> cccc<span class="token punctuation">;</span>
+	  <span class="token punctuation">(</span><span class="token punctuation">(</span>op_t <span class="token operator">*</span><span class="token punctuation">)</span> dstp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">=</span> cccc<span class="token punctuation">;</span>
+	  <span class="token punctuation">(</span><span class="token punctuation">(</span>op_t <span class="token operator">*</span><span class="token punctuation">)</span> dstp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span> <span class="token operator">=</span> cccc<span class="token punctuation">;</span>
+	  <span class="token punctuation">(</span><span class="token punctuation">(</span>op_t <span class="token operator">*</span><span class="token punctuation">)</span> dstp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span> <span class="token operator">=</span> cccc<span class="token punctuation">;</span>
+	  <span class="token punctuation">(</span><span class="token punctuation">(</span>op_t <span class="token operator">*</span><span class="token punctuation">)</span> dstp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">5</span><span class="token punctuation">]</span> <span class="token operator">=</span> cccc<span class="token punctuation">;</span>
+	  <span class="token punctuation">(</span><span class="token punctuation">(</span>op_t <span class="token operator">*</span><span class="token punctuation">)</span> dstp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">6</span><span class="token punctuation">]</span> <span class="token operator">=</span> cccc<span class="token punctuation">;</span>
+	  <span class="token punctuation">(</span><span class="token punctuation">(</span>op_t <span class="token operator">*</span><span class="token punctuation">)</span> dstp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">7</span><span class="token punctuation">]</span> <span class="token operator">=</span> cccc<span class="token punctuation">;</span>
+	  dstp <span class="token operator">+=</span> <span class="token number">8</span> <span class="token operator">*</span> OPSIZ<span class="token punctuation">;</span>
+	  xlen <span class="token operator">-=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+  <span class="token comment">/* Write the last few bytes.  */</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>len <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token punctuation">(</span><span class="token punctuation">(</span>byte <span class="token operator">*</span><span class="token punctuation">)</span> dstp<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> c<span class="token punctuation">;</span>
+      dstp <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+      len <span class="token operator">-=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">return</span> dstpp<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h3 id="字符类型判断"><a href="#字符类型判断" class="headerlink" title="字符类型判断"></a>字符类型判断</h3><p>字符串类型判断的函数包含在 &lt; ctype.h&gt;头文件中，其中主要定义了判断一个字符的类型的函数。</p>
+<ul>
+<li><code>int isalnum(int ch)</code>判断所给字符是否是字母（包括数字/大写字母和小写字母）。</li>
+<li><code>int isalpha(int ch)</code>判断所给字符是否是拼音（包括大写和小写字母）。</li>
+<li><code>int islower/isupper(int ch)</code>判断所给字符是否是大/小写字母。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span>
+<span class="token function">tolower</span> <span class="token punctuation">(</span><span class="token keyword">int</span> c<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> c <span class="token operator">>=</span> <span class="token operator">-</span><span class="token number">128</span> <span class="token operator">&amp;&amp;</span> c <span class="token operator">&lt;</span> <span class="token number">256</span> <span class="token operator">?</span> __ctype_tolower<span class="token punctuation">[</span>c<span class="token punctuation">]</span> <span class="token operator">:</span> c<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">int</span>
+<span class="token function">toupper</span> <span class="token punctuation">(</span><span class="token keyword">int</span> c<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> c <span class="token operator">>=</span> <span class="token operator">-</span><span class="token number">128</span> <span class="token operator">&amp;&amp;</span> c <span class="token operator">&lt;</span> <span class="token number">256</span> <span class="token operator">?</span> __ctype_toupper<span class="token punctuation">[</span>c<span class="token punctuation">]</span> <span class="token operator">:</span> c<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+</code></pre>
+
+<ul>
+<li><code>int isdigit(int ch)</code> 判断所给字符是否是数字</li>
+<li><code>int iscntrl(int ch)</code>判断所给字符是否是控制字符</li>
+<li><code>int isspace(int ch)</code> 判断所给字符是否是空格</li>
+</ul>
+<h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><h4 id="stat函数"><a href="#stat函数" class="headerlink" title="stat函数"></a><code>stat</code>函数</h4><p>位于头文件,  </p>
+<pre class="language-none"><code class="language-none">#include &lt;sys&#x2F;stat.h&gt;
+#include &lt;unistd.h&gt;
+
+int stat(const char *file_name, struct stat *buf);</code></pre>
+
+<ul>
+<li>通过文件名filename获取文件信息，并保存在buf所指的结构体stat中</li>
+<li>返回值: 执行成功则返回0，失败返回-1，错误代码存于errno</li>
+</ul>
+<pre class="language-none"><code class="language-none">struct stat &#123;
+    dev_t         st_dev;       &#x2F;&#x2F;文件的设备编号
+    ino_t         st_ino;       &#x2F;&#x2F;节点
+    mode_t        st_mode;      &#x2F;&#x2F;文件的类型和存取的权限
+    nlink_t       st_nlink;     &#x2F;&#x2F;连到该文件的硬连接数目，刚建立的文件值为1
+    uid_t         st_uid;       &#x2F;&#x2F;用户ID
+    gid_t         st_gid;       &#x2F;&#x2F;组ID
+    dev_t         st_rdev;      &#x2F;&#x2F;(设备类型)若此文件为设备文件，则为其设备编号
+    off_t         st_size;      &#x2F;&#x2F;文件字节数(文件大小)
+    unsigned long st_blksize;   &#x2F;&#x2F;块大小(文件系统的I&#x2F;O 缓冲区大小)
+    unsigned long st_blocks;    &#x2F;&#x2F;块数
+    time_t        st_atime;     &#x2F;&#x2F;最后一次访问时间
+    time_t        st_mtime;     &#x2F;&#x2F;最后一次修改时间
+    time_t        st_ctime;     &#x2F;&#x2F;最后一次改变时间(指属性)
+&#125;;
+</code></pre>
+
+<ul>
+<li>errno错误码<pre class="language-none"><code class="language-none">0 为 success
+
+        #defineEPERM 1 &#x2F;* Operation not permitted *&#x2F;操作不允许
+
+　　#define ENOENT 2 &#x2F;* Nosuch file or directory *&#x2F;文件&#x2F;路径不存在
+
+　　#define ESRCH 3 &#x2F;* Nosuch process *&#x2F;进程不存在
+
+　　#define EINTR 4 &#x2F;*Interrupted system call *&#x2F;中断的系统调用
+
+　　#define EIO 5 &#x2F;* I&#x2F;Oerror *&#x2F;I&#x2F;O错误
+
+　　#define ENXIO 6 &#x2F;* Nosuch device or address *&#x2F;设备&#x2F;地址不存在
+
+　　#define E2BIG 7 &#x2F;* Arglist too long *&#x2F;参数列表过长
+
+　　#define ENOEXEC 8 &#x2F;*Exec format error *&#x2F;执行格式错误
+
+　　#define EBADF 9 &#x2F;* Badfile number *&#x2F;错误文件编号
+
+　　#define ECHILD 10 &#x2F;* Nochild processes *&#x2F;子进程不存在
+
+　　#define EAGAIN 11 &#x2F;* Tryagain *&#x2F;重试
+...</code></pre></li>
+</ul>
+<h4 id="mmap"><a href="#mmap" class="headerlink" title="mmap"></a>mmap</h4><ul>
+<li><p><code>void * mmap(void *start, size_t length, int prot , int flags, int fd, off_t offset)</code>mmap()用来将某个文件内容映射到内存中，对该内存区域的存取即是直接对该文件内容的读写。</p>
+</li>
+<li><p>成功执行时，mmap()返回被映射区的指针, 通过该地址可以直接访问文件。</p>
+</li>
+</ul>
+<pre class="language-none"><code class="language-none">m_file_address &#x3D; (char *)mmap(0, m_file_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0);</code></pre>
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E6%95%B0%E5%AD%A6/2021-09-18-%E5%AF%86%E7%A0%81%E5%AD%A6%E7%AE%80%E8%A6%81/" rel="prev" title="密码学简要"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">密码学简要</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-09-18-http/" rel="next" title="http和tcp"><span class="post-nav-text">http和tcp</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/cpp%E5%9F%BA%E7%A1%80/2021-09-18-glibc%E5%B8%B8%E7%94%A8%E5%BA%93%E5%87%BD%E6%95%B0/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

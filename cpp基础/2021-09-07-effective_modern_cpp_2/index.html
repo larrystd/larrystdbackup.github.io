@@ -1,0 +1,421 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>modern_cpp_2:智能指针 | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="small points使用智能指针需要包含头文件include &lt;memory&gt; item18 独占资源使用std::unique_ptr 拷贝操作不被std::unique_ptr允许, 默认情况下std::unique_ptr等同于原始指针, 且对于大多数操作执行的指令完全相同。 离开作用域后, 自动释放unique_ptr包装对象的资源。  &#x2F;&#x2F; 创建一个unique_ptr实">
+<meta property="og:type" content="article">
+<meta property="og:title" content="modern_cpp_2:智能指针">
+<meta property="og:url" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-07-effective_modern_cpp_2/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="small points使用智能指针需要包含头文件include &lt;memory&gt; item18 独占资源使用std::unique_ptr 拷贝操作不被std::unique_ptr允许, 默认情况下std::unique_ptr等同于原始指针, 且对于大多数操作执行的指令完全相同。 离开作用域后, 自动释放unique_ptr包装对象的资源。  &#x2F;&#x2F; 创建一个unique_ptr实">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/cpp/1.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/cpp/2.png">
+<meta property="article:published_time" content="2021-09-06T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-06T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="cpp">
+<meta property="article:tag" content="modern cpp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/assets/images/cpp/1.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#small-points"><span class="toc-number">1.</span> <span class="toc-text">small points</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#item18-%E7%8B%AC%E5%8D%A0%E8%B5%84%E6%BA%90%E4%BD%BF%E7%94%A8std-unique-ptr"><span class="toc-number">1.1.</span> <span class="toc-text">item18 独占资源使用std::unique_ptr</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#std-unique-ptr%E5%B8%B8%E8%A7%81%E7%94%A8%E6%B3%95%E6%98%AF%E7%BB%A7%E6%89%BF%E7%BB%93%E6%9E%84%E7%9A%84%E5%B7%A5%E5%8E%82%E5%87%BD%E6%95%B0"><span class="toc-number">1.1.1.</span> <span class="toc-text">std::unique_ptr常见用法是继承结构的工厂函数</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#item-19-%E5%AF%B9%E4%BA%8E%E5%85%B1%E4%BA%AB%E5%AF%B9%E8%B1%A1%E4%BD%BF%E7%94%A8std-shared-ptr"><span class="toc-number">1.2.</span> <span class="toc-text">item 19 对于共享对象使用std::shared_ptr</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%94%80%E6%AF%81%E5%99%A8%E7%B1%BB%E5%9E%8B%E4%B8%8D%E6%98%AFshared-ptr%E7%B1%BB%E5%9E%8B%E7%9A%84%E4%B8%80%E9%83%A8%E5%88%86-%E8%BF%99%E6%9C%89%E5%88%AB%E4%BA%8Eunique-ptr"><span class="toc-number">1.2.1.</span> <span class="toc-text">销毁器类型不是shared_ptr类型的一部分, 这有别于unique_ptr</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#shared-ptr%E8%87%AA%E5%AE%9A%E4%B9%89%E5%88%A0%E9%99%A4%E5%99%A8%E5%8F%AF%E8%83%BD%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-number">1.2.2.</span> <span class="toc-text">shared_ptr自定义删除器可能的问题</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#this%E5%8E%9F%E5%A7%8B%E6%8C%87%E9%92%88%E4%BD%9C%E4%B8%BAstd-shared-ptr%E5%AE%B9%E6%98%93%E5%AF%BC%E8%87%B4%E5%88%9B%E5%BB%BA%E5%A4%9A%E4%B8%AA%E6%8E%A7%E5%88%B6%E5%9D%97"><span class="toc-number">1.2.3.</span> <span class="toc-text">this原始指针作为std::shared_ptr容易导致创建多个控制块</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BD%93std-shared-ptr%E5%8F%AF%E8%83%BD%E6%82%AC%E7%A9%BA%E6%97%B6%E4%BD%BF%E7%94%A8std-weak-ptr"><span class="toc-number">1.3.</span> <span class="toc-text">当std::shared_ptr可能悬空时使用std::weak_ptr</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#std-weak-ptr%E9%98%B2%E6%AD%A2%E7%8E%AF%E5%BD%A2%E5%BC%95%E7%94%A8"><span class="toc-number">1.3.1.</span> <span class="toc-text">std::weak_ptr防止环形引用</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE21-%E4%BC%98%E5%85%88%E8%80%83%E8%99%91%E4%BD%BF%E7%94%A8std-make-unique-std-make-shared%E8%80%8C%E9%9D%9Enew"><span class="toc-number">1.4.</span> <span class="toc-text">条款21 优先考虑使用std::make_unique, std::make_shared而非new</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE22-%E5%9F%BA%E4%BA%8Eshared-ptr%E4%BD%BF%E7%94%A8Pimpl-pointer-to-implement-%E5%9C%A8%E6%96%87%E4%BB%B6%E4%B8%AD%E5%AE%9A%E4%B9%89%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0"><span class="toc-number">1.5.</span> <span class="toc-text">条款22 基于shared_ptr使用Pimpl(pointer to implement), 在文件中定义特殊成员函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E7%9A%84pImpl"><span class="toc-number">1.5.1.</span> <span class="toc-text">移动构造函数的pImpl</span></a></li></ol></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-07-effective_modern_cpp_2/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">modern_cpp_2:智能指针<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/cpp基础/2021-09-07-effective_modern_cpp_2.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-09-07 00:00:00" itemprop="dateCreated datePublished" datetime="2021-09-07T00:00:00+08:00">2021-09-07</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">3.3k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">13m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/cpp-base/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">cpp base</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">cpp</span></a><a class="tag-item" href="/tags/modern-cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">modern cpp</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h2 id="small-points"><a href="#small-points" class="headerlink" title="small points"></a>small points</h2><p>使用智能指针需要包含头文件<code>include &lt;memory&gt;</code></p>
+<h3 id="item18-独占资源使用std-unique-ptr"><a href="#item18-独占资源使用std-unique-ptr" class="headerlink" title="item18 独占资源使用std::unique_ptr"></a>item18 独占资源使用<code>std::unique_ptr</code></h3><ul>
+<li>拷贝操作不被<code>std::unique_ptr</code>允许, 默认情况下<code>std::unique_ptr</code>等同于原始指针, 且对于大多数操作执行的指令完全相同。</li>
+<li>离开作用域后, 自动释放<code>unique_ptr</code>包装对象的资源。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// 创建一个unique_ptr实例</span>
+unique_ptr<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token function">pInt</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 无法进行拷贝构造和赋值</span>
+unique_ptr<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token function">pInt2</span><span class="token punctuation">(</span>pInt<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 报错</span>
+unique_ptr<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> pInt3 <span class="token operator">=</span> pInt<span class="token punctuation">;</span>   <span class="token comment">// 报错</span>
+
+<span class="token comment">/// 可以移动构造</span>
+unique_ptr<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> pInt2 <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>pInt<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 转移所有权</span>
+
+<span class="token comment">/// 容器中保存指针</span>
+unique_ptr<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token function">p</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token keyword">int</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+vec<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>p<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 使用移动语义</span>
+
+<span class="token comment">/// 释放资源</span>
+std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>T<span class="token punctuation">,</span>D<span class="token operator">></span> <span class="token function">up</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span>d<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/// D为删除器类型</span>
+
+up <span class="token operator">=</span> <span class="token keyword">nullptr</span><span class="token punctuation">;</span><span class="token comment">//置为空，释放up指向的对象</span>
+up<span class="token punctuation">.</span><span class="token function">release</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//放弃控制权，返回裸指针，并将up置为空</span>
+up<span class="token punctuation">.</span><span class="token function">reset</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//释放up指向的对象</span></code></pre>
+
+<span id="more"></span>
+
+<h4 id="std-unique-ptr常见用法是继承结构的工厂函数"><a href="#std-unique-ptr常见用法是继承结构的工厂函数" class="headerlink" title="std::unique_ptr常见用法是继承结构的工厂函数"></a><code>std::unique_ptr</code>常见用法是继承结构的工厂函数</h4><p>如下继承结构</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Investment</span> <span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">class</span> <span class="token class-name">Sock</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">Investment</span></span> <span class="token punctuation">&#123;</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">class</span> <span class="token class-name">Bond</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">Investment</span></span> <span class="token punctuation">&#123;</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">class</span> <span class="token class-name">RealEstate</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">Investment</span></span> <span class="token punctuation">&#123;</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>工厂返回的对象完美符合<code>std::unique_ptr</code>的规则, 因为调用者对对象资源负责且对象不可复制, 只能从工厂返回。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> Ts<span class="token operator">></span>
+std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>Investment<span class="token operator">></span> <span class="token function">makeInvestment</span><span class="token punctuation">(</span>Ts<span class="token operator">&amp;&amp;</span><span class="token punctuation">.</span><span class="token punctuation">.</span> params<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// 若干通用引用参数列表 params</span>
+
+<span class="token comment">/// 获得std::unique_ptr包装的对象</span>
+<span class="token keyword">auto</span> pInvestment <span class="token operator">=</span> <span class="token function">makeInvestment</span><span class="token punctuation">(</span>arguments<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+
+<ul>
+<li>工厂函数下<code>std::unique_ptr</code>的逻辑</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">auto</span> delInvmt <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">(</span>Investment<span class="token operator">*</span> pInvestment<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">makeLogEntry</span><span class="token punctuation">(</span>pInvestment<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">delete</span> pInvestment<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">/// 工厂函数, 返回`unique_ptr`绑定的对象</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> Ts<span class="token operator">></span>
+std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>Investment<span class="token punctuation">,</span> <span class="token keyword">decltype</span><span class="token punctuation">(</span>delInvmt<span class="token punctuation">)</span><span class="token operator">></span> <span class="token function">makeInvestment</span><span class="token punctuation">(</span>Ts<span class="token operator">&amp;&amp;</span> params<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// 注册删除器为delInvmt</span>
+    std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>Investment<span class="token punctuation">,</span> <span class="token keyword">decltype</span><span class="token punctuation">(</span>delInvmt<span class="token punctuation">)</span><span class="token operator">></span> <span class="token function">pInv</span><span class="token punctuation">(</span><span class="token keyword">nullptr</span><span class="token punctuation">,</span> delInvmt<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token comment">/* stock object should be created*/</span> <span class="token punctuation">)</span>
+        pInv<span class="token punctuation">.</span><span class="token function">reset</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token function">Stock</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span>Ts<span class="token operator">></span></span></span><span class="token punctuation">(</span>params<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">return</span> pInv<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li><p><code>std::unique_ptr</code>可以转换为<code>std::shared_ptr</code>, 这说明即使工厂函数返回的是<code>std::unque_ptr</code>, 不妨碍使用者用<code>std::shared_ptr</code>替换它。</p>
+</li>
+<li><p>此外, <code>Pimpl Idiom</code>也常用<code>unique_ptr</code>, 例如muduo中大量不可拷贝的对象, 例如<code>Channel</code>,<code>Poller</code>, 也用<code>std::unique_ptr</code>实现<code>Pimpl Idiom</code>机制。该进制只在头文件中存储指针, 与前向声明类型结合, 只在实现文件中<code>#include</code>类型和实现, 可以降低头文件传递性编译依赖。</p>
+</li>
+</ul>
+<h3 id="item-19-对于共享对象使用std-shared-ptr"><a href="#item-19-对于共享对象使用std-shared-ptr" class="headerlink" title="item 19 对于共享对象使用std::shared_ptr"></a>item 19 对于共享对象使用<code>std::shared_ptr</code></h3><p><code>shared_ptr</code>使用引用计数确保是最后一个指向资源的指针, 引用计数为1时执行<code>reset</code>将会释放该资源。注意赋值运算符,<code>sp1=sp2</code>如果指向不同资源, 这导致<code>sp1</code>指向了<code>sp2</code>的资源, 因此<code>sp1</code>对象引用计数减1, <code>sp2</code>引用计数+1。</p>
+<ul>
+<li><p><code>shared_ptr</code>大小是原始指针两倍, 因为包含一个引用计数值(引用计数对象应该是全局多个<code>shared_ptr</code>共享的)</p>
+</li>
+<li><p>由于引用计数对象应该是全局多个<code>shared_ptr</code>共享, 因此应该动态分配, 且递增递减必须是原子的(防止多个<code>shared_ptr</code>修改的竞态)</p>
+</li>
+<li><p>用老的<code>std::shared_ptr</code>移动构造新的<code>shared_ptr</code>结果是, 旧的<code>shared_ptr</code>置空, 新的<code>shared_ptr</code>取代旧的, 这样并不会改变引用计数(是一个全局变量), 因此移动赋值比拷贝赋值要快, 拷贝复制会增加引用计数。</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">auto</span> loggintDel <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">(</span>Widget<span class="token operator">*</span> pw<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">makeLogEntry</span><span class="token punctuation">(</span>pw<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">delete</span> pw<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>Widget<span class="token punctuation">,</span> <span class="token keyword">decltype</span><span class="token punctuation">(</span>loggingDel<span class="token punctuation">)</span><span class="token operator">></span> <span class="token function">upw</span><span class="token punctuation">(</span><span class="token keyword">new</span> Widget<span class="token punctuation">,</span> loggingDel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">></span> <span class="token function">spw</span><span class="token punctuation">(</span><span class="token keyword">new</span> Widget<span class="token punctuation">,</span> loggingDel<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+
+<h4 id="销毁器类型不是shared-ptr类型的一部分-这有别于unique-ptr"><a href="#销毁器类型不是shared-ptr类型的一部分-这有别于unique-ptr" class="headerlink" title="销毁器类型不是shared_ptr类型的一部分, 这有别于unique_ptr"></a>销毁器类型不是<code>shared_ptr</code>类型的一部分, 这有别于<code>unique_ptr</code></h4><p>这使<code>shared_ptr</code>更加灵活,考虑有两个<code>shared_ptr</code>,每个自带不同的销毁器。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">auto</span> customDeleter1 <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">(</span>Widget<span class="token operator">*</span> pw<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span>
+<span class="token keyword">auto</span> customDeleter2 <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">(</span>Widget<span class="token operator">*</span> pw<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span>
+std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">></span> <span class="token function">pw1</span><span class="token punctuation">(</span><span class="token keyword">new</span> Widget<span class="token punctuation">,</span> customDeleter1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">></span> <span class="token function">pw2</span><span class="token punctuation">(</span><span class="token keyword">new</span> Widget<span class="token punctuation">,</span> customDeleter2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// pw1和pw2相同的类型, 可以放在一个容器中, 也能相互赋值</span>
+std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">>></span> vpw<span class="token punctuation">&#123;</span>pw1<span class="token punctuation">,</span> pw2<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>以上如果是<code>unique_ptr</code>则不能放在一个容器中, 也能相互赋值, 因为<strong>删除器也是<code>unique_ptr</code>类型的一部分, 而两者删除器并不相同</strong>。</p>
+<h4 id="shared-ptr自定义删除器可能的问题"><a href="#shared-ptr自定义删除器可能的问题" class="headerlink" title="shared_ptr自定义删除器可能的问题"></a>shared_ptr自定义删除器可能的问题</h4><p>一般的, <code>shared_ptr</code>里面有两个指针，大小永远是8个字节。其中一个指针指向包装对象，另一个指向引用计数对象。</p>
+<p>引用计数对象实际是一个数据结构，称之为控制块, 遵循如下规则</p>
+<ol>
+<li><code>std::make_shared</code>总是会创建一个控制块</li>
+<li>从<code>unique_ptr</code>构造<code>shared_ptr</code>时会创建控制块, 独占指针<code>unique_ptr</code>没有控制块。创建后<code>unique_ptr</code>置空。</li>
+<li>从原始指针构造<code>shared_ptr</code>也会创建控制块。</li>
+</ol>
+<p><img src="../../assets/images/cpp/1.png" alt="avatar" loading="lazy"></p>
+<p>控制块可能包含多种引用计数, 每一种引用计数置零都会析构对象, 这增加了重复析构的风险。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">auto</span> pw <span class="token operator">=</span> <span class="token keyword">new</span> Widget<span class="token punctuation">;</span>                           <span class="token comment">//pw是原始指针</span>
+…
+std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">></span> <span class="token function">spw1</span><span class="token punctuation">(</span>pw<span class="token punctuation">,</span> loggingDel<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">//为*pw创建控制块</span>
+…
+std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">></span> <span class="token function">spw2</span><span class="token punctuation">(</span>pw<span class="token punctuation">,</span> loggingDel<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">//为*pw创建第二个控制块</span></code></pre>
+<p>以上, 两个shared_ptr有两个控制块同时指向一个对象, 当两个控制块同时置零后<code>pw</code>会被销毁两次, 第二次就是未定义行为。</p>
+<p>防止以上行为做法是, 直接返回<code>new</code>返回的结果, 不要传指针变量</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// 直接用new的结果</span>
+std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">></span> <span class="token function">spw1</span><span class="token punctuation">(</span><span class="token keyword">new</span> Widget<span class="token punctuation">,</span> loggingDel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>widget<span class="token operator">></span> <span class="token function">spw2</span><span class="token punctuation">(</span>spw1<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// spw2将和spw1使用一样的控制块</span></code></pre>
+
+<h4 id="this原始指针作为std-shared-ptr容易导致创建多个控制块"><a href="#this原始指针作为std-shared-ptr容易导致创建多个控制块" class="headerlink" title="this原始指针作为std::shared_ptr容易导致创建多个控制块"></a>this原始指针作为<code>std::shared_ptr</code>容易导致创建多个控制块</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// 加入对象</span>
+std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">>></span> processedWidgets<span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">void</span> <span class="token function">process</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">void</span> <span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token function">process</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    processedWidget<span class="token punctuation">.</span><span class="token function">emplace_back</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 这里传入的this指针, 实际上增加了Widget对象的控制块</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p><code>std::shared_ptr</code>为指向的Widget（*this）创建一个控制块。但成员函数外面可能早已存在指向那个Widget对象的指针, 于是乎多个控制块问题。</p>
+<ul>
+<li>解决以上问题方式是通过<code>std::enable_shared_from_this</code>, <code>shared_from_this</code>将会查找当前对象控制块, 然后创建一个新的<code>std::shared_ptr</code>指向该控制块。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// Widget需要继承public std::enable_shared_from_this&lt;Widget></span>
+<span class="token keyword">class</span> <span class="token class-name">Widget</span><span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> std<span class="token double-colon punctuation">::</span><span class="token class-name">enable_shared_from_this</span><span class="token operator">&lt;</span><span class="token class-name">Widget</span><span class="token operator">></span></span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    …
+    <span class="token keyword">void</span> <span class="token function">process</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    …
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">void</span> <span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token function">process</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token comment">//把指向当前对象的std::shared_ptr加入processedWidgets</span>
+    processedWidgets<span class="token punctuation">.</span><span class="token function">emplace_back</span><span class="token punctuation">(</span><span class="token function">shared_from_this</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li><p><code>shared_from_this</code>必须要求已经有了<code>shared_ptr</code>指向当前对象, 否则行为是未定义的, 抛出异常。换句话说, 需要防止在调<code>shared_ptr</code>之前调用<code>enabled_from_this</code></p>
+</li>
+<li><p>解决办法是使用工厂类, 将构造函数设置为private, 工厂类返回一个<code>shared_ptr</code>, 这样调用<code>enable_shared_from_this</code>前提就是拥有了一个<code>shared_ptr</code>封装的工厂返回对象</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Widget</span><span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> std<span class="token double-colon punctuation">::</span><span class="token class-name">enable_shared_from_this</span><span class="token operator">&lt;</span><span class="token class-name">Widget</span><span class="token operator">></span></span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token comment">//完美转发参数给private构造函数的工厂函数, 返回shared_ptr封装对象</span>
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> Ts<span class="token operator">></span>
+    <span class="token keyword">static</span> std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">></span> <span class="token function">create</span><span class="token punctuation">(</span>Ts<span class="token operator">&amp;&amp;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> params<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    …
+    <span class="token keyword">void</span> <span class="token function">process</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>     
+    …
+<span class="token keyword">private</span><span class="token operator">:</span>
+    <span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>                   <span class="token comment">//构造函数</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<ul>
+<li><p>如果使用继承, 控制块内还有虚函数, 确保继承对象可以顺利销毁。类似于虚析构函数, cpp如果使用<code>Base *pTest = new Derived</code>, 会同时创建基类和子类对象, 若析构函数不为虚函数, 则<code>delete pTest</code>只会小销毁基类对象而不会涉及子类对象</p>
+</li>
+<li><p>在通常情况下，使用默认删除器和默认分配器，使用<code>std::make_shared</code>创建<code>std::shared_ptr</code>，产生的控制块只需三个word大小。它的分配基本上是无开销的。开销被并入了指向的对象的分配成本里。此外, 避免从原始指针变量上创建<code>std::shared_ptr</code>。</p>
+</li>
+</ul>
+<h3 id="当std-shared-ptr可能悬空时使用std-weak-ptr"><a href="#当std-shared-ptr可能悬空时使用std-weak-ptr" class="headerlink" title="当std::shared_ptr可能悬空时使用std::weak_ptr"></a>当<code>std::shared_ptr</code>可能悬空时使用<code>std::weak_ptr</code></h3><ul>
+<li>std::weak_ptr通常从std::shared_ptr上创建。从std::shared_ptr上创建std::weak_ptr时两者指向相同的对象，但是std::weak_ptr不会影响所指对象的引用计数</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">auto</span> spw <span class="token operator">=</span>                      <span class="token comment">//spw创建之后，指向的Widget的</span>
+    std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">make_shared</span><span class="token generic class-name"><span class="token operator">&lt;</span>Widget<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//引用计数为1</span>
+std<span class="token double-colon punctuation">::</span>weak_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">></span> <span class="token function">wpw</span><span class="token punctuation">(</span>spw<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//wpw指向与spw所指相同的Widget。引用计数仍为1</span>
+spw <span class="token operator">=</span> <span class="token keyword">nullptr</span><span class="token punctuation">;</span>                  <span class="token comment">//RC变为0，Widget被销毁。</span>
+                                <span class="token comment">//wpw现在悬空</span>
+
+wpw<span class="token punctuation">.</span><span class="token function">expired</span><span class="token punctuation">(</span><span class="token punctuation">)</span>   <span class="token comment">// expired()返回true说明已经悬空</span></code></pre>
+
+<p>当多线程情况时, 该对象可能被其他线程销毁。这时候需要一个<strong>原子操作检查对象是否已经过期</strong>，如果没有过期就访问所指对象。一种形式是<code>std::weak_ptr::lock</code>，返回一个<code>std::shared_ptr</code>，过期则<code>std::shared_ptr</code>为空。</p>
+<h4 id="std-weak-ptr防止环形引用"><a href="#std-weak-ptr防止环形引用" class="headerlink" title="std::weak_ptr防止环形引用"></a><code>std::weak_ptr</code>防止环形引用</h4><p><img src="../../assets/images/cpp/2.png" alt="avatar" loading="lazy"></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">></span> spw1 <span class="token operator">=</span> wpw<span class="token punctuation">.</span><span class="token function">lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">//如果wpw过期，spw1就为空</span>
+ 											
+<span class="token keyword">auto</span> spw2 <span class="token operator">=</span> wpw<span class="token punctuation">.</span><span class="token function">lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>       
+
+std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">></span> <span class="token function">spw3</span><span class="token punctuation">(</span>wpw<span class="token punctuation">)</span><span class="token punctuation">;</span>          <span class="token comment">//如果wpw过期，抛出std::bad_weak_ptr异常</span></code></pre>
+
+<p>有三种选择：</p>
+<ul>
+<li>原始指针。如果A被销毁，但是C继续指向B，B就会有一个指向A的悬空指针。<strong>B不知道指针已经悬空</strong>，所以B可能会继续访问，就会导致未定义行为。</li>
+<li>std::shared_ptr。A和B都互相持有对方的std::shared_ptr，导致的std::shared_ptr环状结构（A指向B，B指向A）阻止A和B的销毁。甚至A和B无法从其他数据结构访问了（比如，C不再指向B），每个的引用计数都还是1, 如此A和B都被泄漏：即程序无法访问它们，但是资源并没有被回收。</li>
+<li>std::weak_ptr。这避免了上述两个问题。如果A被销毁，B指向它的指针悬空，但是<strong>B可以检测到这件事</strong>。尤其是，尽管A和B互相指向对方，B的指针不会影响A的引用计数，</li>
+</ul>
+<p>但注意在严格分层的数据结构, 比如树，子节点只被父节点持有, 子节点的生命周期肯定短于父节点。当父节点被销毁时，子节点就被销毁。父到子链接关系可以使用<code>std::unique_ptr</code>结构(父亲被销毁, 子也就被销毁了),从子到父的反向连接可以使用原始指针安全实现(子未被销毁, 父会一直存活)，没有子节点解引用一个悬垂的父节点指针这样的风险。</p>
+<h3 id="条款21-优先考虑使用std-make-unique-std-make-shared而非new"><a href="#条款21-优先考虑使用std-make-unique-std-make-shared而非new" class="headerlink" title="条款21 优先考虑使用std::make_unique, std::make_shared而非new"></a>条款21 优先考虑使用<code>std::make_unique</code>, <code>std::make_shared</code>而非<code>new</code></h3><p><code>std::make_shared</code>是C++11标准的一部分，<code>std::make_unique</code>则从C++14开始加入标准库。</p>
+<p><code>std::make_unique</code>的基础版本如下</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token punctuation">,</span> <span class="token keyword">typename</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> Ts<span class="token operator">></span>
+std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>T<span class="token operator">></span> <span class="token function">make_unique</span><span class="token punctuation">(</span>Ts<span class="token operator">&amp;&amp;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> params<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">unique_ptr</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token function">T</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span>Ts<span class="token operator">></span></span></span><span class="token punctuation">(</span>params<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<ul>
+<li><p><code>make_unique</code>只是将参数完美转发到索要创建对象的构造函数。</p>
+</li>
+<li><p><code>std::make_unique</code>和<code>std::make_shared</code>是make三个步骤中的两个：<strong>接收任意的多参数集合，完美转发到构造函数去动态分配一个对象初始化，然后返回这个指向这个对象的指针</strong>。剩下一个步骤是<code>std::allocate_shared</code>是用来动态分配内存的allocator对象。</p>
+</li>
+<li><p><code>std::make_shared</code>相比<code>new</code>实现了效率提升</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Widget<span class="token operator">></span> <span class="token function">spw</span><span class="token punctuation">(</span><span class="token keyword">new</span> Widget<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>直接使用new执行了两次内存分配, 先为Widget分配一次, 再为控制块分配一次。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">auto</span> spw <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">make_shared_ptr</span><span class="token generic class-name"><span class="token operator">&lt;</span>Widget<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>只分配一次内存, 容纳<code>Widget</code>和控制块。</p>
+<ul>
+<li>当自定义删除器, 自带内存管理时, 不建议使用<code>make</code></li>
+</ul>
+<h3 id="条款22-基于shared-ptr使用Pimpl-pointer-to-implement-在文件中定义特殊成员函数"><a href="#条款22-基于shared-ptr使用Pimpl-pointer-to-implement-在文件中定义特殊成员函数" class="headerlink" title="条款22 基于shared_ptr使用Pimpl(pointer to implement), 在文件中定义特殊成员函数"></a>条款22 基于<code>shared_ptr</code>使用Pimpl(pointer to implement), 在文件中定义特殊成员函数</h3><ul>
+<li><p>针对<code>unique_ptr</code>实现的pimpl, 往往需要带一个默认删除器(删除器是<code>unique_ptr</code>类型的一部分), 显然删除<code>unique_ptr</code>时会调用这个默认删除器, 但这个默认删除器会调用<code>static_assert</code>函数检查指向的对象是否为完成类型(显然<code>pimpl</code>是未完成类型, 需要链接时连上), 遂导致错误。</p>
+</li>
+<li><p>解决该问题的方法是, 在生成销毁<code>std::unique_ptr&lt;Widget::Impl&gt;</code>代码之前(也就是析构), <code>Widget::Impl</code>已经是完整类型。<strong>成功编译的关键, 是在析构函数之前, 定义<code>Widget::Impl</code></strong></p>
+</li>
+<li><p>特殊成员在头文件中仅声明, 而在.cc文件中定义, 且在<code>Widget::Impl</code>之后, 可以设置为<code>=default</code></p>
+</li>
+<li><p>由于删除器不是<code>shared_ptr</code>的一部分, 因此**在析构函数之前, 定义<code>Widget::Impl</code>**的规则不适用于其, 但还是无论<code>unique_ptr</code>还是<code>shared_ptr</code>都这样做, 防止出错。</p>
+</li>
+</ul>
+<p>cpp98的Pimpl</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// Widget.h</span>
+<span class="token keyword">class</span> <span class="token class-name">Widget</span>                        
+<span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token operator">~</span><span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>              
+<span class="token keyword">private</span><span class="token operator">:</span>
+    <span class="token keyword">struct</span> <span class="token class-name">Impl</span><span class="token punctuation">;</span>                    <span class="token comment">//声明一个 实现结构体</span>
+    Impl <span class="token operator">*</span>pImpl<span class="token punctuation">;</span>                    <span class="token comment">//以及指向它的指针</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">/// Widget.cc</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"widget.h"</span>             </span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"gadget.h"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;string></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;vector></span></span>
+
+<span class="token keyword">struct</span> <span class="token class-name">Widget</span><span class="token operator">:</span><span class="token base-clause"><span class="token operator">:</span><span class="token class-name">Impl</span></span> <span class="token punctuation">&#123;</span>           <span class="token comment">//Widget::Impl类型的定义</span>
+    std<span class="token double-colon punctuation">::</span>string name<span class="token punctuation">;</span>           
+    std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">double</span><span class="token operator">></span> data<span class="token punctuation">;</span>
+    Gadget g1<span class="token punctuation">,</span>g2<span class="token punctuation">,</span>g3<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span>                <span class="token comment">//为此Widget对象分配数据成员</span>
+<span class="token operator">:</span> <span class="token function">pImpl</span><span class="token punctuation">(</span><span class="token keyword">new</span> Impl<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+
+<span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span>               <span class="token comment">//销毁数据成员</span>
+<span class="token punctuation">&#123;</span> <span class="token keyword">delete</span> pImpl<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span></code></pre>
+
+
+<p>cpp11中的pImpl</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">///Widget.h</span>
+<span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span>                
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token operator">~</span><span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>                  <span class="token comment">//只有声明语句</span>
+<span class="token keyword">private</span><span class="token operator">:</span>                        
+    <span class="token keyword">struct</span> <span class="token class-name">Impl</span><span class="token punctuation">;</span>
+    std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>Impl<span class="token operator">></span> pImpl<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">/// Widget.cc</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"widget.h"</span>           </span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"gadget.h"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;string></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;vector></span></span>
+
+<span class="token keyword">struct</span> <span class="token class-name">Widget</span><span class="token operator">:</span><span class="token base-clause"><span class="token operator">:</span><span class="token class-name">Impl</span></span> <span class="token punctuation">&#123;</span>               <span class="token comment">//定义Widget::Impl</span>
+    std<span class="token double-colon punctuation">::</span>string name<span class="token punctuation">;</span>
+    std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">double</span><span class="token operator">></span> data<span class="token punctuation">;</span>
+    Gadget g1<span class="token punctuation">,</span>g2<span class="token punctuation">,</span>g3<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span>                 
+<span class="token operator">:</span> <span class="token function">pImpl</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">make_unique</span><span class="token generic class-name"><span class="token operator">&lt;</span>Impl<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 在 Widget::Impl后面定义</span>
+<span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span>                   <span class="token comment">//但不需要delete pImpl了, 因为unique_ptr控制生命周期</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="移动构造函数的pImpl"><a href="#移动构造函数的pImpl" class="headerlink" title="移动构造函数的pImpl"></a>移动构造函数的pImpl</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// Widget</span>
+<span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span>                          
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token operator">~</span><span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">Widget</span><span class="token punctuation">(</span>Widget<span class="token operator">&amp;&amp;</span> rhs<span class="token punctuation">)</span><span class="token punctuation">;</span>               <span class="token comment">//只有声明</span>
+    Widget<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">=</span><span class="token punctuation">(</span>Widget<span class="token operator">&amp;&amp;</span> rhs<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    …
+
+<span class="token keyword">private</span><span class="token operator">:</span>                               
+    <span class="token keyword">struct</span> <span class="token class-name">Impl</span><span class="token punctuation">;</span>
+    std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>Impl<span class="token operator">></span> pImpl<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">/// Widget.cc</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;string></span>   </span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"Widget.h"</span></span>
+
+<span class="token keyword">struct</span> <span class="token class-name">Widget</span><span class="token operator">:</span><span class="token base-clause"><span class="token operator">:</span><span class="token class-name">Impl</span></span> <span class="token punctuation">&#123;</span> … <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>          <span class="token comment">//跟之前一样</span>
+
+<span class="token comment">/// 特殊函数都定义在Impl之后</span>
+<span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span>                  
+<span class="token operator">:</span> <span class="token function">pImpl</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">make_unique</span><span class="token generic class-name"><span class="token operator">&lt;</span>Impl<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+
+<span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">Widget</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span>   
+
+<span class="token comment">///拷贝构造</span>
+<span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token function">Widget</span><span class="token punctuation">(</span><span class="token keyword">const</span> Widget<span class="token operator">&amp;</span> rhs<span class="token punctuation">)</span>   <span class="token comment">//拷贝构造函数</span>
+<span class="token operator">:</span> <span class="token function">pImpl</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">make_unique</span><span class="token generic class-name"><span class="token operator">&lt;</span>Impl<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token operator">*</span>rhs<span class="token punctuation">.</span>pImpl<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+
+Widget<span class="token operator">&amp;</span> Widget<span class="token double-colon punctuation">::</span><span class="token keyword">operator</span><span class="token operator">=</span><span class="token punctuation">(</span><span class="token keyword">const</span> Widget<span class="token operator">&amp;</span> rhs<span class="token punctuation">)</span>    <span class="token comment">//拷贝operator=</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token operator">*</span>pImpl <span class="token operator">=</span> <span class="token operator">*</span>rhs<span class="token punctuation">.</span>pImpl<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 析构, 移动构造    </span>
+<span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token function">Widget</span><span class="token punctuation">(</span>Widget<span class="token operator">&amp;&amp;</span> rhs<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span>             <span class="token comment">//这里定义</span>
+Widget<span class="token operator">&amp;</span> Widget<span class="token double-colon punctuation">::</span><span class="token keyword">operator</span><span class="token operator">=</span><span class="token punctuation">(</span>Widget<span class="token operator">&amp;&amp;</span> rhs<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span></code></pre></div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/cpp%E5%9F%BA%E7%A1%80/2021-09-08-effective_modern_cpp_3%20%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E4%B8%8Elambda%E8%A1%A8%E8%BE%BE%E5%BC%8F/" rel="prev" title="modern_cpp_3:右值引用与lambda"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">modern_cpp_3:右值引用与lambda</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-09-06-redis%E6%BA%90%E7%A0%81%2001network/" rel="next" title="redis源码 01network"><span class="post-nav-text">redis源码 01network</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/cpp%E5%9F%BA%E7%A1%80/2021-09-07-effective_modern_cpp_2/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

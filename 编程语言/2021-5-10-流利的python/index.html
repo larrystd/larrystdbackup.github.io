@@ -1,0 +1,400 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>流畅的python | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="库hashlib ssl 函数range使用&gt;&gt;&gt;range(10)        # 从 0 开始到 10 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] &gt;&gt;&gt; range(1, 11)     # 从 1 开始到 11 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] &gt;&gt;&gt; range(0, 30, 5)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="流畅的python">
+<meta property="og:url" content="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-5-10-%E6%B5%81%E5%88%A9%E7%9A%84python/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="库hashlib ssl 函数range使用&gt;&gt;&gt;range(10)        # 从 0 开始到 10 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] &gt;&gt;&gt; range(1, 11)     # 从 1 开始到 11 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] &gt;&gt;&gt; range(0, 30, 5)">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/assets/images/python/1.png">
+<meta property="og:image" content="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/assets/images/python/2.png">
+<meta property="article:published_time" content="2021-04-30T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-04-30T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/assets/images/python/1.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BA%93"><span class="toc-number">1.</span> <span class="toc-text">库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%BD%E6%95%B0"><span class="toc-number">2.</span> <span class="toc-text">函数</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#range%E4%BD%BF%E7%94%A8"><span class="toc-number">2.1.</span> <span class="toc-text">range使用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#random"><span class="toc-number">2.2.</span> <span class="toc-text">random</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#threading"><span class="toc-number">2.3.</span> <span class="toc-text">threading</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#bytes-string"><span class="toc-number">2.4.</span> <span class="toc-text">bytes string</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#numpy"><span class="toc-number">3.</span> <span class="toc-text">numpy</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#python%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-number">4.</span> <span class="toc-text">python数据类型</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%89%B9%E6%AE%8A%E6%96%B9%E6%B3%95"><span class="toc-number">4.1.</span> <span class="toc-text">特殊方法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BA%8F%E5%88%97%E5%92%8C%E6%95%B0%E7%BB%84"><span class="toc-number">4.2.</span> <span class="toc-text">序列和数组</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%83%E7%BB%84"><span class="toc-number">4.3.</span> <span class="toc-text">元组</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%87%E7%89%87"><span class="toc-number">4.4.</span> <span class="toc-text">切片</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8E%92%E5%BA%8F"><span class="toc-number">4.5.</span> <span class="toc-text">排序</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%B0%E7%BB%84"><span class="toc-number">4.6.</span> <span class="toc-text">数组</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%97%E5%85%B8"><span class="toc-number">4.7.</span> <span class="toc-text">字典</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9B%86%E5%90%88"><span class="toc-number">4.8.</span> <span class="toc-text">集合</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%87%E6%9C%AC%E5%92%8C%E5%AD%97%E8%8A%82%E5%BA%8F%E5%88%97"><span class="toc-number">4.9.</span> <span class="toc-text">文本和字节序列</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-5-10-%E6%B5%81%E5%88%A9%E7%9A%84python/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">流畅的python<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/编程语言/2021-5-10-流利的python.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-05-01 00:00:00" itemprop="dateCreated datePublished" datetime="2021-05-01T00:00:00+08:00">2021-05-01</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">2.9k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">13m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/language/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">language</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/python/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">python</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h3 id="库"><a href="#库" class="headerlink" title="库"></a>库</h3><p>hashlib</p>
+<p>ssl</p>
+<h3 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h3><h4 id="range使用"><a href="#range使用" class="headerlink" title="range使用"></a>range使用</h4><pre class="language-py" data-language="py"><code class="language-py">&gt;&gt;&gt;range(10)        # 从 0 开始到 10
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+&gt;&gt;&gt; range(1, 11)     # 从 1 开始到 11
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+&gt;&gt;&gt; range(0, 30, 5)  # 步长为 5
+[0, 5, 10, 15, 20, 25]
+&gt;&gt;&gt; range(0, 10, 3)  # 步长为 3
+[0, 3, 6, 9]
+&gt;&gt;&gt; range(0, -10, -1) # 负数
+[0, -1, -2, -3, -4, -5, -6, -7, -8, -9]</code></pre>
+<span id="more"></span>
+
+<h4 id="random"><a href="#random" class="headerlink" title="random"></a>random</h4><pre class="language-py" data-language="py"><code class="language-py">import random
+
+print( random.randint(1,10) )        # 产生 1 到 10 的一个整数型随机数  
+print( random.random() )             # 产生 0 到 1 之间的随机浮点数
+print( random.uniform(1.1,5.4) )     # 产生  1.1 到 5.4 之间的随机浮点数，区间可以不是整数
+print( random.choice(&#39;tomorrow&#39;) )   # 从序列中随机选取一个元素
+print( random.randrange(1,100,2) )   # 生成从1到100的间隔为2的随机整数
+
+a&#x3D;[1,3,5,6,7]                # 将序列a中的元素顺序打乱
+random.shuffle(a)
+print(a)</code></pre>
+
+<h4 id="threading"><a href="#threading" class="headerlink" title="threading"></a>threading</h4><p>创建 Thread 对象,然后让它们运行，每个 Thread 对象代表一个线程</p>
+<p>Thread 的构造方法中，最重要的参数是 target，所以我们需要将一个 callable 对象赋值给它，线程才能正常运行。</p>
+<p>如果要让一个 Thread 对象启动，调用它的 start() 方法。</p>
+<pre class="language-py" data-language="py"><code class="language-py">import threading
+import time
+
+def test():
+
+    for i in range(5):
+        print(&#39;test &#39;,i)
+        time.sleep(1)
+
+
+thread &#x3D; threading.Thread(target&#x3D;test)
+thread.start()</code></pre>
+<h4 id="bytes-string"><a href="#bytes-string" class="headerlink" title="bytes string"></a>bytes string</h4><p>python3字符串和二进制数据流做了明确的区分。文本总是Unicode，由str类型表示，二进制数据则由bytes类型表示。Python 3不会以任意隐式的方式混用str和bytes，你不能拼接字符串和字节流，也无法在字节流里搜索字符串（反之亦然），也不能将字符串传入参数为字节流的函数（反之亦然）。<br>编码，<strong>编码就是把一个字符用一个二进制来表示</strong>。ASCII码，一种8位即1个字节的编码规范,UTF-8编码应运而生，它规定英文字母系列用1个字节表示，汉字用3个字节表示。   </p>
+<pre class="language-py" data-language="py"><code class="language-py">&gt;&gt;&gt; s &#x3D; &quot;中文&quot;
+&gt;&gt;&gt; s
+&#39;中文&#39;
+&gt;&gt;&gt; type(s)
+&lt;class &#39;str&#39;&gt;
+&gt;&gt;&gt; b &#x3D; bytes(s, encoding&#x3D;&#39;utf-8&#39;)
+&gt;&gt;&gt; b
+b&#39;\xe4\xb8\xad\xe6\x96\x87&#39;
+&gt;&gt;&gt; type(b)
+&lt;class &#39;bytes&#39;&gt;</code></pre>
+<p>字符串类str里有一个encode()方法，它是从字符串向比特流的编码过程。而bytes类型恰好有个decode()方法，它是从比特流向字符串解码的过程。</p>
+<pre class="language-py" data-language="py"><code class="language-py">&gt;&gt;&gt; b
+b&#39;\xe4\xb8\xad\xe6\x96\x87&#39;
+&gt;&gt;&gt; type(b)
+&lt;class &#39;bytes&#39;&gt;
+&gt;&gt;&gt; s1 &#x3D; str(b)
+&gt;&gt;&gt; s1
+&quot;b&#39;\\xe4\\xb8\\xad\\xe6\\x96\\x87&#39;&quot;
+&gt;&gt;&gt; type(s1)
+&lt;class &#39;str&#39;&gt;
+&gt;&gt;&gt; s1 &#x3D; str(b, encoding&#x3D;&#39;utf-8&#39;)
+&gt;&gt;&gt; s1
+&#39;中文&#39;
+&gt;&gt;&gt; type(s1)
+&lt;class &#39;str&#39;&gt;</code></pre>
+
+<p><strong>必须时刻注意，某个函数处理的是字符串本身还是编码后的二进制</strong>。一般的，数据需要传输或者保存用bytes，数据处理则用str。所以一般的操作是，当数据持久化或网络传输前需要转成bytes。而导出则需要转成字符串。</p>
+<h3 id="numpy"><a href="#numpy" class="headerlink" title="numpy"></a>numpy</h3><pre class="language-py" data-language="py"><code class="language-py">np.random.normal(2, 0.5, size&#x3D;[16, 1])  # 正态分布，[16,1]的向量
+
+Y.flatten() #折叠成一个一维的数组
+&gt;&gt;&gt;a
+array([[1,2],[3,4],[5,6]])
+ 
+&gt;&gt;&gt;a.flatten()
+array([1,2,3,4,5,6])
+
+np.append(arr, values)
+a&#x3D;[1,2,3]
+b&#x3D;[4,5]
+c&#x3D;[[6,7],[8,9]]
+d&#x3D;[[10,11],[12,13]]
+print(&#39;在一维数组a后添加values,结果如下：&#123;&#125;&#39;.format(np.append(a,b,axis&#x3D;0)))
+print(&#39;沿二维数组c的列方向添加values结果如下：&#39;.format(np.append(c,d,axis&#x3D;1)))
+
+[1 2 3 4 5]
+沿二维数组c的列方向添加values结果如下：
+[[ 6  7 10 11]
+ [ 8  9 12 13]]</code></pre>
+
+<h3 id="python数据类型"><a href="#python数据类型" class="headerlink" title="python数据类型"></a>python数据类型</h3><h4 id="特殊方法"><a href="#特殊方法" class="headerlink" title="特殊方法"></a>特殊方法</h4><p> python风格的<code>__getitem__</code>和<code>__len__</code>特殊方法。<br> <pre class="language-py" data-language="py"><code class="language-py">import collections
+
+Card &#x3D; collections.namedturple(&#39;Card&#39;, [&#39;rank&#39;, &#39;suit&#39;])
+
+class FrenchDeck:
+   ranks &#x3D; [str(n) for n in range(2,11)] + list(&#39;JQKA&#39;)
+   suits &#x3D; &#39;spades diamonds clubs hearts&#39;.split()
+
+   def __init__(self):
+       self._cards &#x3D; [Card(rank, suit) for suit in self.suits for rank in self.ranks]
+   
+   def __len__(self):
+       return len(self._cards)
+   
+   def __getitem__(self, position):
+       return self._cards[position]</code></pre></p>
+<p> 以上, <code>namedturple</code>构建<code>Card</code>对象，显然，<code>len()</code>方法是<code>__len__</code>提供的，索引则是由<code>__getitem__</code>方法提供的。</p>
+<p> python这种数据模型好处</p>
+<ul>
+<li>不必记住方法，例如.size()等、</li>
+<li>方便兼容标准库</li>
+</ul>
+<p> 特殊方法是被python解释器调用，因此不应该调用<code>my_object.__len__()</code>而是<code>len(my_object)</code>。<br> 特殊方法的调用可能是隐式的，例如<code>for i in x:</code>语句背后是<code>iter(x)</code>，即<code>__iter__()</code>方法。</p>
+ <pre class="language-py" data-language="py"><code class="language-py">class Vector:
+    def __init__(self, x&#x3D;0, y&#x3D;0):
+         self.x &#x3D; x
+         self.y &#x3D; y
+    
+    def __repr__(self):
+        return &#39;Vector(%r, %r)&#39; % (self.x, self.y)
+    
+    def __add__(self, other):
+        x &#x3D; self.x + other.x
+        y &#x3D; self.y + other.y
+        return Vector(x,y)
+
+v1 &#x3D; Vector(1,2)
+v2 &#x3D; Vector(2,3)
+v3 &#x3D; v1+v2
+
+print(v3)
+
+# 输出
+Vector(3, 5)</code></pre>
+
+<p><code>__repr__</code>可以输出字符串表示形式，类似于java的tostring(), 如果没有实现，以上输出结果<code>&lt;__main__.Vector object at 0x7fef95f2b240&gt;</code><br>类似的，<code>__str__</code>特殊方法在str()函数或者print()中调用。</p>
+<p><code>__add__</code>,<code>__mul__</code>特殊方法相当于cpp中的<code>operator+()</code>, <code>operator*()</code>。</p>
+<p>特殊方法一览</p>
+<ul>
+<li>字符串/序列表示，<code>__repr__</code>, <code>__str__</code>, <code>__format__</code>, <code>__bytes__</code></li>
+<li>数值转换 <code>__abs__</code>, <code>__bool__</code>, <code>__int__</code>, <code>__float__</code>, <code>__hash__</code></li>
+<li>集合模拟 <code>__len__</code>, <code>__getitem__</code>, <code>__setitem__</code>, <code>__contains__</code></li>
+<li>迭代枚举 <code>__iter__</code>, <code>__reversed__</code>, <code>__next__</code></li>
+<li>调用模拟 <code>__call__</code></li>
+<li>上下文管理 <code>__enter</code>, <code>__exit__</code></li>
+<li>实例创建和销毁 <code>__new__</code>, <code>__init__</code>, <code>__del__</code></li>
+<li>属性管理  <code>__getattr__</code>, <code>__setattr__</code>, <code>__dir__</code></li>
+<li>算术运算符 <code>__add__</code>, <code>__mul__</code>, <code>__and__</code>等</li>
+<li>比较运算符 <code>__lt__</code>, 小于&lt; <code>__le__</code> &lt;=, <code>__eq__</code> ==, <code>__ne__</code> !=</li>
+<li>位运算 <code>__invert__</code> ~, <code>__lshift__</code>&lt;&lt;,  <code>__and__</code> &amp;, <code>__or__</code>, <code>__xor__</code> ^ </li>
+</ul>
+<h4 id="序列和数组"><a href="#序列和数组" class="headerlink" title="序列和数组"></a>序列和数组</h4><ul>
+<li>可变序列 <code>list</code>, <code>array</code>, <code>collections.deque</code></li>
+<li>不可变序列 <code>turple</code>, <code>str</code>, <code>bytes</code></li>
+</ul>
+<p><img src="../assets/images/python/1.png" alt="avatar" loading="lazy"></p>
+<p>列表推导, 构建list的快捷方式</p>
+<pre class="language-py" data-language="py"><code class="language-py">dummy &#x3D;[x for x in &#39;ABC&#39;]
+colors &#x3D; [&#39;black&#39;, &#39;white&#39;]
+sizes &#x3D; [&#39;S&#39;, &#39;M&#39;, &#39;L&#39;]
+tshirts &#x3D; [(color, size) for color in colors for size in sizes]
+
+[(&#39;black&#39;, &#39;S&#39;),
+ (&#39;black&#39;, &#39;M&#39;),
+ (&#39;black&#39;, &#39;L&#39;),
+ (&#39;white&#39;, &#39;S&#39;),
+ (&#39;white&#39;, &#39;M&#39;),
+ (&#39;white&#39;, &#39;L&#39;)]</code></pre>
+
+<p>生成器表达式，构建list之外的其他类型<br>生成器表达式语法相比于列表推导，只是把方括号换成圆括号</p>
+<pre class="language-py" data-language="py"><code class="language-py"># 用生成器初始化元组
+symbols &#x3D; &#39;abcde&#39;
+tuple(ord(symbol) for symbol in symbols)
+
+(97, 98, 99, 100, 101)</code></pre>
+<h4 id="元组"><a href="#元组" class="headerlink" title="元组"></a>元组</h4><p>元组tuple用括号表示，与list的最大区别是元组不可改变，不可修改值。<br>元组拆包</p>
+<pre class="language-py" data-language="py"><code class="language-py">lax_coordinates &#x3D; (33.9425, -118.408056)
+latitude, longitude &#x3D; lax_coordinates
+
+# 使用collections.namedtuple构建带字段名的元组
+
+from collections import namedtuple
+# 类名+ 类的各个字段的名字
+City &#x3D; namedtuple(&#39;City&#39;, &#39;name country coordinates&#39;)
+tokyo &#x3D; City(&#39;Tokyo&#39;, &#39;JP&#39;, (35.68, 139.69))
+
+City(name&#x3D;&#39;Tokyo&#39;, country&#x3D;&#39;JP&#39;, coordinates&#x3D;(35.68, 139.69))</code></pre>
+
+<p>元组常用方法</p>
+<ul>
+<li><code>s.__add__(s2)</code> s + s2拼接</li>
+<li><code>s.__iadd__(s2)</code> s += s2 就地拼接</li>
+<li><code>s.append(e)</code>， 尾部添加元素</li>
+<li><code>s.clear()</code> 删除所有元素</li>
+<li><code>s.__contains__(e)</code>， 是否包含e</li>
+<li><code>s.count(e)</code> 出现的次数</li>
+<li><code>s.__delitem__(p)</code> 位于p的元素删除</li>
+<li><code>s.__getitem__(p)</code> 即s[p]</li>
+<li><code>s.index(e)</code> 第一次出现的位置</li>
+<li><code>s.insert(p, e)</code> 位置p之前插入元素e</li>
+<li><code>s.__iter__()</code> 获取迭代器</li>
+<li><code>s.__len__()</code> len(s)</li>
+<li><code>s.pop(p)</code> 删除p位置元素并返回</li>
+<li><code>s.remove(e)</code> 删除第一次出现的e</li>
+<li><code>s.reverse()</code> 倒序排列</li>
+<li><code>s.__setitem__(p,e)</code>, 即s[p] = e</li>
+<li><code>s.sort([key], [reverse])</code>, 排序，参数为键key, 是否倒序reverse</li>
+</ul>
+<h4 id="切片"><a href="#切片" class="headerlink" title="切片"></a>切片</h4><p>切片区间为左闭右开区间</p>
+<p><code>s[a:b:c]</code>表示以c为间隔取值，c为负表示反向取值。而事实上，当使用<code>seq[start:stop:step]</code>时，python会调用<code>seq.__getitem__(slice(start, stop, step))</code></p>
+<pre class="language-py" data-language="py"><code class="language-py">s &#x3D; &#39;bicycle&#39;
+s[::3]
+s[::-1]
+
+&#39;bye&#39;
+&#39;elcycib&#39;</code></pre>
+<p>使用<code>a[i, j]</code>时，python调用<code>a.__getitem__((i, j))</code></p>
+<h4 id="排序"><a href="#排序" class="headerlink" title="排序"></a>排序</h4><p><code>list.sort</code>方法会就地排序，不会把原列表复制一份，返回值为None。而<code>sorted</code>相反，会新建一个列表作为返回值。</p>
+<p>两者有两可选参数</p>
+<ul>
+<li>reverse, 默认为False, <strong>设置为True则元素降序输出</strong></li>
+<li>key, 这个函数会作用在序列的每一个元素上，返回的结果时是对比关键字，可以用lambda表达式，也可以设置<code>key = len</code>这种基于字符串长度的排序</li>
+</ul>
+<pre class="language-py" data-language="py"><code class="language-py">fruits &#x3D; [&#39;grape&#39;, &#39;raspberry&#39;, &#39;apple&#39;, &#39;banana&#39;]
+sorted(fruits, key &#x3D; len, reverse &#x3D; True)
+fruits.sort()
+fruits
+
+[&#39;raspberry&#39;, &#39;banana&#39;, &#39;grape&#39;, &#39;apple&#39;]
+[&#39;apple&#39;, &#39;banana&#39;, &#39;grape&#39;, &#39;raspberry&#39;]</code></pre>
+
+<h4 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h4><p>如果需要一个只包含数字的列表，则<code>array.array</code>比<code>list</code>更高效，因为数组背后存储的不是float对象，而是字节表述，这与C语言一样。</p>
+<p>python数组创建需要一个类型码，表示底层C语言存放数据类型，例如<code>b</code>代表有符号字符<code>signed char</code></p>
+<pre class="language-py" data-language="py"><code class="language-py">from array import array
+from random import random
+
+floats &#x3D; array(&#39;d&#39;, (random() for i in range(1000)))
+floats[-1]
+
+fp &#x3D; open(&#39;floats.bin&#39;, &#39;wb&#39;)
+floats.tofile(fp)
+fp.close()
+
+floats2 &#x3D; array(&#39;d&#39;)
+fp &#x3D; open(&#39;floats.bin&#39;, &#39;rb&#39;)
+floats2.fromfile(fp, 1000)
+
+floats2 &#x3D;&#x3D; floats</code></pre>
+
+<p>快速序列化数字类型还可以用 pickle, 几乎与array.tofile一样块, 但可以处理几乎所有的内置数字类型，包括嵌套集合等。</p>
+<p>当然序列类型还有Numpy, SciPy, Pandas等，其高效性归功于背后的C和Fortran代码。</p>
+<h4 id="字典"><a href="#字典" class="headerlink" title="字典"></a>字典</h4><p>泛映射类型<br><img src="../assets/images/python/2.png" alt="avatar" loading="lazy"></p>
+<pre class="language-py" data-language="py"><code class="language-py">import collections.abc as abc
+my_dict &#x3D; &#123;&#125;
+isinstance(my_dict, abc.Mapping)
+
+True</code></pre>
+
+<p>可散列的数据类型，在这个对象的生命周期中，散列值是不变的，而且这个对象需要实现<code>__hash__</code>方法，以及<code>__qe__()</code>方法根其他键比较。<br>如果两个对象是相等的，他们的散列值也一定是相等的。</p>
+<p>一般默认用户自定义类型对象可散列，散列值为id()函数的返回值(其实就是10进制表示的内存地址)，因此所有这些对象比较时都是不相等的。</p>
+<p><code>dict</code>的构造方法</p>
+<pre class="language-py" data-language="py"><code class="language-py">a &#x3D; dict(one&#x3D;1, two&#x3D;2, three&#x3D;3)
+b &#x3D; &#123;&#39;one&#39;:1, &#39;two&#39;:2, &#39;three&#39;:3&#125;
+c &#x3D; dict(zip([&#39;one&#39;,&#39;two&#39;, &#39;three&#39;], [1, 2, 3]))
+d &#x3D; dict([(&#39;one&#39;,1), (&#39;two&#39;,2), (&#39;three&#39;, 3)])</code></pre>
+
+<p>字典推导</p>
+<pre class="language-py" data-language="py"><code class="language-py">DIAL_CODES &#x3D; [
+    (86, &#39;China&#39;),
+    (91, &#39;India&#39;)
+]
+# 键为country, 值为code
+country_code &#x3D; &#123;country:code for code, country in DIAL_CODES&#125;</code></pre>
+
+<p>常见映射方法</p>
+<ul>
+<li><code>d.clear()</code> 移除所有元素</li>
+<li><code>d.__contains__(k)</code> k是否在d中</li>
+<li><code>d.__delitem__(k)</code> del d[k] 删除键为k的元素</li>
+<li><code>d.get(k,[default])</code>, 返回键对应的值</li>
+<li><code>d.__getitem__(k)</code>, 支持d[k]返回值</li>
+<li><code>d.items()</code>， 返回所有键值对</li>
+<li><code>d.keys()</code> 获取所有的键</li>
+<li><code>d.__len__()</code> 支持len(d)</li>
+<li><code>d.setdefault(k, [default])</code>, 若字典里有键k则设置值为default，若无则设置d[k] = default,返回default</li>
+<li><code>d.__setitem__(k, v)</code>实现d[k] = v操作</li>
+<li><code>d.values()</code>返回所有值</li>
+<li><code>d.pop(k, [default])</code>返回键k对应的值然后移除这个键值对</li>
+<li><code>d.__missing__(k)</code>，当<code>__getitem__</code>找不到对应键，该方法被调用<br>``</li>
+</ul>
+<h4 id="集合"><a href="#集合" class="headerlink" title="集合"></a>集合</h4><pre class="language-py" data-language="py"><code class="language-py">l &#x3D; [&#39;spam&#39;, &#39;spam&#39;, &#39;eggs&#39;]
+set(l)
+# &#123;&#39;eggs&#39;. &#39;spam&#39;&#125;
+list(set(l))
+# [&#39;eggs&#39;. &#39;spam&#39;]</code></pre>
+
+<p>注意创建空集合用<code>set()</code>，<code>&#123;&#125;</code>创建的是空字典。<br>dict和set背后的散列表效率很高，速度是以牺牲空间为代价换来的。</p>
+<h4 id="文本和字节序列"><a href="#文本和字节序列" class="headerlink" title="文本和字节序列"></a>文本和字节序列</h4><ul>
+<li>编码： str对象编码为bytes</li>
+<li>解码: bytes-&gt; str<pre class="language-py" data-language="py"><code class="language-py">s &#x3D; &#39;kong瑞&#39;
+b &#x3D; s.encode(&#39;utf8&#39;)
+# b&#39;kong\xe7\x91\x9e&#39;
+b.decode(&#39;utf8)
+# 解码成str对象&#39;kong瑞&#39;</code></pre>
+bytes对象的元素是0~255的整数。</li>
+</ul>
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/cpp%E5%9F%BA%E7%A1%80/2021-5-24-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80/" rel="prev" title="汇编"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">汇编</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E7%BC%96%E7%A8%8Btools/2021-05-01%E8%8B%B1%E8%AF%AD%E5%8D%95%E8%AF%8D/" rel="next" title="英语单词与命名"><span class="post-nav-text">英语单词与命名</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-5-10-%E6%B5%81%E5%88%A9%E7%9A%84python/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

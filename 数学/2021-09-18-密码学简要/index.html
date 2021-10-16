@@ -1,0 +1,372 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>密码学简要 | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="这周做了些密码学的题,记之避免忘记  AESAES(Advanced Encryption Standard), 又称Rijndael加密法AES中s-box生成, 行移位, 列混淆, 轮密钥加等都是可逆的, 仿射变换(乘矩阵)是可逆的, 因此解密就是逆运算。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="密码学简要">
+<meta property="og:url" content="https://larrystd.github.io/%E6%95%B0%E5%AD%A6/2021-09-18-%E5%AF%86%E7%A0%81%E5%AD%A6%E7%AE%80%E8%A6%81/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="这周做了些密码学的题,记之避免忘记  AESAES(Advanced Encryption Standard), 又称Rijndael加密法AES中s-box生成, 行移位, 列混淆, 轮密钥加等都是可逆的, 仿射变换(乘矩阵)是可逆的, 因此解密就是逆运算。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/10.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/1.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/2.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/3.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/9.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/4.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/5.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/6.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/7.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/8.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/11.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/13.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/12.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/ciper/14.png">
+<meta property="article:published_time" content="2021-09-17T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-17T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="Cryptography">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/assets/images/ciper/10.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#AES"><span class="toc-number">1.</span> <span class="toc-text">AES</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B"><span class="toc-number">1.1.</span> <span class="toc-text">流程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#s-box"><span class="toc-number">1.2.</span> <span class="toc-text">s-box</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B9%98%E6%B3%95%E9%80%86%E5%85%83"><span class="toc-number">1.3.</span> <span class="toc-text">乘法逆元</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BF%85%E8%A6%81%E6%95%B0%E8%AE%BA"><span class="toc-number">2.</span> <span class="toc-text">必要数论</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%AC%A7%E6%8B%89%E5%87%BD%E6%95%B0"><span class="toc-number">2.1.</span> <span class="toc-text">欧拉函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A6%BB%E6%95%A3%E5%AF%B9%E6%95%B0"><span class="toc-number">2.2.</span> <span class="toc-text">离散对数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%B4%A0%E6%A0%B9"><span class="toc-number">2.3.</span> <span class="toc-text">素根</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86"><span class="toc-number">3.</span> <span class="toc-text">非对称加密</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#RSA"><span class="toc-number">3.1.</span> <span class="toc-text">RSA</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ElGamal-%E7%AE%97%E6%B3%95"><span class="toc-number">3.2.</span> <span class="toc-text">ElGamal 算法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Diffie-Hellman%E5%AF%86%E9%92%A5%E4%BA%A4%E6%8D%A2%E7%AE%97%E6%B3%95"><span class="toc-number">3.3.</span> <span class="toc-text">Diffie-Hellman密钥交换算法</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E6%95%B0%E5%AD%A6/2021-09-18-%E5%AF%86%E7%A0%81%E5%AD%A6%E7%AE%80%E8%A6%81/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">密码学简要<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/数学/2021-09-18-密码学简要.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-09-18 00:00:00" itemprop="dateCreated datePublished" datetime="2021-09-18T00:00:00+08:00">2021-09-18</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">1.9k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">8m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/math/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">math</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/Cryptography/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">Cryptography</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><blockquote>
+<p>这周做了些密码学的题,记之避免忘记</p>
+</blockquote>
+<h3 id="AES"><a href="#AES" class="headerlink" title="AES"></a>AES</h3><p>AES(Advanced Encryption Standard), 又称Rijndael加密法<br>AES中s-box生成, 行移位, 列混淆, 轮密钥加等都是可逆的, 仿射变换(乘矩阵)是可逆的, 因此解密就是逆运算。</p>
+<p><img src="../../../../assets/images/ciper/10.png" alt="avatar" loading="lazy"></p>
+<span id="more"></span>
+
+<h4 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h4><ul>
+<li><p>AES一共10轮，每一轮的基本流程是字节代换, 行移位, 列混淆, 轮密钥加、</p>
+</li>
+<li><p>字节代换, 将上一轮输出结果作为位置, 对s-box值进行代换</p>
+</li>
+</ul>
+<p><img src="../../../../assets/images/ciper/1.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li>行移位, 第1,2,3,4行分别不移动, 左移1, 左移2, 左移3。目的是扩散</li>
+</ul>
+<p><img src="../../../../assets/images/ciper/2.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li>列混淆, 遵循伽罗瓦域乘法, 在GF(2^8)中</li>
+</ul>
+<p><img src="../../../../assets/images/ciper/3.png" alt="avatar" loading="lazy"></p>
+<p>列混淆的乘积多项式</p>
+<p><img src="../../../../assets/images/ciper/9.png" alt="avatar" loading="lazy"></p>
+<p>乘法逻辑遵循有限域乘法逻辑。</p>
+<ul>
+<li>轮密钥加(密钥只在这里起作用), 按位置与密钥值进行异或操作。</li>
+</ul>
+<p><img src="../../../../assets/images/ciper/4.png" alt="avatar" loading="lazy"></p>
+<h4 id="s-box"><a href="#s-box" class="headerlink" title="s-box"></a>s-box</h4><p>字节代换是将明文用s-box的对应元素代换, s-box不是随机生成的, 而是特定的。换句话说, 所有AES加密用的s-box都是一致的。</p>
+<p>s-box的生成大致分为两步</p>
+<ol>
+<li>找关于GF(2^8)的乘法逆元, GF(2^8)的素多项式可以表示为<code>x^8+x^4+x^3+x+1</code>, 也就是<code>1 0001 1011</code>。换句话说, 找明文模<code>1 0001 1011</code>的乘法逆元。这步可用扩展欧几里得算法完成。</li>
+<li>将乘法逆元进行一个仿射变换<br><img src="../../../../assets/images/ciper/5.png" alt="avatar" loading="lazy"><br>注意最后异或的多项式, <code>0110 0011</code>也就是63, 正好是<code>00</code>对应的s-box值。</li>
+</ol>
+<p><img src="../../../../assets/images/ciper/6.png" alt="avatar" loading="lazy"></p>
+<ol start="3">
+<li>注意以上是在GF(2^8)伽罗瓦域(有限域)中进行的, 乘除操作遵循有限域多项式, 加减操作变成异或。包括扩展欧几里得求解也是伽罗瓦域的求解。</li>
+</ol>
+<ul>
+<li>多项式除法<br><img src="../../../../assets/images/ciper/7.png" alt="avatar" loading="lazy"></li>
+</ul>
+<p>如上, <code>1000 1000 0100</code>在GF(2^8) 除<code>1 0001 1011</code>的结果为<code>1 0001</code>, 余数为<code>0010 1111</code>。</p>
+<h4 id="乘法逆元"><a href="#乘法逆元" class="headerlink" title="乘法逆元"></a>乘法逆元</h4><ul>
+<li>欧几里得算法, 欧几里得算法的目的是找出两个整数的最大公因数, 即<code>gcd(a,b)=gcd(b, a mod b)</code>。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> <span class="token function">gcd</span><span class="token punctuation">(</span><span class="token keyword">int</span> r0<span class="token punctuation">,</span> <span class="token keyword">int</span> r1<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> r<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span><span class="token punctuation">(</span>r1 <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        r <span class="token operator">=</span> r0 <span class="token operator">%</span> r1<span class="token punctuation">;</span>
+        r0 <span class="token operator">=</span> r1<span class="token punctuation">;</span>
+        r1 <span class="token operator">=</span> r<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> r0<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li>扩展欧几里得算法, 扩展欧几里得算法的作用是给定整数<code>r0,r1</code>, 它计算如下公式, 其中<code>s,t</code>均为整数。</li>
+</ul>
+<p><img src="../../../../assets/images/ciper/8.png" alt="avatar" loading="lazy"></p>
+<p>当<code>gcd(r0,r1)=1</code>时, 这个公式等价于<code>t*r1 = 1 mod r0</code>, 因此求解得到的<code>t</code>是<code>r1 mod r0</code>的乘法逆元。</p>
+<p>在s-box生成时, 第一步就是计算乘法逆元。<code>r0</code>是GF(2^8)的素多项式<code>1 0001 1011</code>， 当输入值r1=<code>1001</code>时, 也就是求<code>1001 mod 1 0001 1011</code>的乘法逆元, 这可以用扩展欧几里得算法求解。</p>
+<p>所谓素多项式, 也就是和域内其他多项式表征的数互素。一般都是指定的</p>
+<p>一般的扩展欧几里得算法求逆元</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> <span class="token function">EEA</span><span class="token punctuation">(</span><span class="token keyword">int</span> r0<span class="token punctuation">,</span> <span class="token keyword">int</span> r1<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> mod <span class="token operator">=</span> r0<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> r <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> t0 <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> t1 <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> t <span class="token operator">=</span> t1<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> q <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+ 
+    <span class="token comment">//0不存在乘法逆元</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>r1 <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+ 
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>r1 <span class="token operator">!=</span> <span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        q <span class="token operator">=</span> r0 <span class="token operator">/</span> r1<span class="token punctuation">;</span>
+ 
+        r <span class="token operator">=</span> r0 <span class="token operator">-</span> q <span class="token operator">*</span> r1<span class="token punctuation">;</span>
+ 
+        t <span class="token operator">=</span> t0 <span class="token operator">-</span> q <span class="token operator">*</span> t1<span class="token punctuation">;</span>
+ 
+        r0 <span class="token operator">=</span> r1<span class="token punctuation">;</span>
+        r1 <span class="token operator">=</span> r<span class="token punctuation">;</span>
+        t0 <span class="token operator">=</span> t1<span class="token punctuation">;</span>
+        t1 <span class="token operator">=</span> t<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+ 
+    <span class="token comment">//结果为负数</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>t <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        t <span class="token operator">=</span> t <span class="token operator">+</span> mod<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+ 
+    <span class="token keyword">return</span> t<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<p>GF(2^8)上的扩展欧几里得算法求逆元</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//获取最高位</span>
+<span class="token keyword">int</span> <span class="token function">GetHighestPosition</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">short</span> Number<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>Number<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        i<span class="token operator">++</span><span class="token punctuation">;</span>
+        Number <span class="token operator">=</span> Number <span class="token operator">>></span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> i<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+ 
+ 
+<span class="token comment">//GF(2^8)的多项式除法</span>
+<span class="token keyword">unsigned</span> <span class="token keyword">char</span> <span class="token function">Division</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">short</span> Num_L<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">short</span> Num_R<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">short</span> <span class="token operator">*</span>Remainder<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">short</span> r0 <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">char</span>  q <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> bitCount <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+ 
+    r0 <span class="token operator">=</span> Num_L<span class="token punctuation">;</span>
+ 
+    bitCount <span class="token operator">=</span> <span class="token function">GetHighestPosition</span><span class="token punctuation">(</span>r0<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token function">GetHighestPosition</span><span class="token punctuation">(</span>Num_R<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>bitCount <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        q <span class="token operator">=</span> q <span class="token operator">|</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">&lt;&lt;</span> bitCount<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        r0 <span class="token operator">=</span> r0 <span class="token operator">^</span> <span class="token punctuation">(</span>Num_R <span class="token operator">&lt;&lt;</span> bitCount<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        bitCount <span class="token operator">=</span> <span class="token function">GetHighestPosition</span><span class="token punctuation">(</span>r0<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token function">GetHighestPosition</span><span class="token punctuation">(</span>Num_R<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token operator">*</span>Remainder <span class="token operator">=</span> r0<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> q<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+ 
+ 
+ 
+<span class="token comment">//GF(2^8)多项式乘法</span>
+<span class="token keyword">short</span> <span class="token function">Multiplication</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">char</span> Num_L<span class="token punctuation">,</span> <span class="token keyword">unsigned</span> <span class="token keyword">char</span> Num_R<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token comment">//定义变量</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">short</span> Result <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>      <span class="token comment">//伽罗瓦域内乘法计算的结果</span>
+ 
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">8</span><span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        Result <span class="token operator">^=</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>Num_L <span class="token operator">>></span> i<span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token number">0x01</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token punctuation">(</span>Num_R <span class="token operator">&lt;&lt;</span> i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+ 
+    <span class="token keyword">return</span> Result<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+ 
+<span class="token comment">/// 伽罗瓦域的扩展欧几里得</span>
+<span class="token keyword">int</span> <span class="token function">EEA_V2</span><span class="token punctuation">(</span><span class="token keyword">int</span> r0<span class="token punctuation">,</span> <span class="token keyword">int</span> r1<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> mod <span class="token operator">=</span> r0<span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">short</span> r <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> t0 <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> t1 <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> t <span class="token operator">=</span> t1<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> q <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+ 
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>r1 <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+ 
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>r1 <span class="token operator">!=</span> <span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+        <span class="token comment">//q = r0 / r1;</span>
+        <span class="token comment">/// 伽罗瓦域除法</span>
+        q <span class="token operator">=</span> <span class="token function">Division</span><span class="token punctuation">(</span>r0<span class="token punctuation">,</span> r1<span class="token punctuation">,</span> <span class="token operator">&amp;</span>r<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">/// 加减法变成异或</span>
+        r <span class="token operator">=</span> r0 <span class="token operator">^</span> <span class="token function">Multiplication</span><span class="token punctuation">(</span>q<span class="token punctuation">,</span> r1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">/// </span>
+        t <span class="token operator">=</span> t0 <span class="token operator">^</span> <span class="token function">Multiplication</span><span class="token punctuation">(</span>q<span class="token punctuation">,</span> t1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+ 
+        r0 <span class="token operator">=</span> r1<span class="token punctuation">;</span>
+        r1 <span class="token operator">=</span> r<span class="token punctuation">;</span>
+        t0 <span class="token operator">=</span> t1<span class="token punctuation">;</span>
+        t1 <span class="token operator">=</span> t<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+ 
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>t <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>   
+        <span class="token comment">/// 加减法变异或</span>
+        t <span class="token operator">=</span> t <span class="token operator">^</span> mod<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+ 
+    <span class="token keyword">return</span> t<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<p>求完逆元之后再执行依次仿射变换就可以得到对应s-box的值, 不再赘述。注意有限域元素乘法为<code>&amp;</code>, 加为<code>^</code>,其他和矩阵乘法逻辑一致。</p>
+<h3 id="必要数论"><a href="#必要数论" class="headerlink" title="必要数论"></a>必要数论</h3><h4 id="欧拉函数"><a href="#欧拉函数" class="headerlink" title="欧拉函数"></a>欧拉函数</h4><p>欧拉函数指任意给定正整数n，在小于等于n的正整数之中与n互质的个数</p>
+<p>常用</p>
+<ul>
+<li>n是质数，则 $φ(n)=n-1$</li>
+<li>如果n可以分解成两个互质的整数之积, $φ(n) = φ(p1p2) = φ(p1)φ(p2)$</li>
+<li>a的 $φ(n)-1$ 次方，就是a的模n的逆。</li>
+</ul>
+<p><img src="../../../../assets/images/ciper/11.png" alt="avatar" loading="lazy"></p>
+<h4 id="离散对数"><a href="#离散对数" class="headerlink" title="离散对数"></a>离散对数</h4><p>离散对数可以定义如下</p>
+<p><img src="../../../../assets/images/ciper/13.png" alt="avatar" loading="lazy"></p>
+<p>离散对数问题可以定义如下</p>
+<p><img src="../../../../assets/images/ciper/12.png" alt="avatar" loading="lazy"></p>
+<p>求解离散对数也是很难的, <code>The Baby step, Giant step</code>大步小步算法可以将求解复杂度降到<code>O(sqrt(p))</code>。</p>
+<h4 id="素根"><a href="#素根" class="headerlink" title="素根"></a>素根</h4><p>素根也叫原根, 若一个数g是P的原根，那么$g^i mod p$的结果两两不同，且有 <code>1&lt;g&lt;p，0&lt;i&lt;p</code>，归根到底就是$g^(P-1) = 1 (mod P)$当且仅当指数为P-1的时候成立.(这里P是素数)。</p>
+<p>一般使用最小原根。</p>
+<p>如下,2是13的最小素根<br><img src="../../../../assets/images/ciper/14.png" alt="avatar" loading="lazy"></p>
+<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><h4 id="RSA"><a href="#RSA" class="headerlink" title="RSA"></a>RSA</h4><ul>
+<li>密钥生成</li>
+</ul>
+<ol>
+<li>随机选择两个不相等的质数p和q</li>
+<li>计算p和q的乘积n。</li>
+<li>计算n的欧拉函数φ(n), 其中　$φ(n) = (p-1)(q-1)$</li>
+<li>随机选择一个整数e，条件是1&lt; e &lt; φ(n)，且e与φ(n) 互质</li>
+<li>计算e对于φ(n)的模反元素d, 即</li>
+</ol>
+<p>$e^d ≡ 1 (mod φ(n))$, 可以使用扩展欧几里得算法求解</p>
+<ol start="6">
+<li>将<code>n和e</code>封装成公钥，<code>n和d</code>封装成私钥</li>
+</ol>
+<p>思路, 很难在已知n和e的情况下，推导出d。也就是说如果n可以被因数分解(<strong>n = p*q, φ(n) = (p-1)(q-1), 已知φ(n)就可以通过扩展欧几里得算法求d, 问题是求不出φ(n), 或者说p,q</strong>)，因为大整数的因数分解，是一件非常困难的事情。</p>
+<ul>
+<li>加密用公钥 (n,e)</li>
+</ul>
+<p>$m^e ≡ c (mod n)$, 把c发出</p>
+<ul>
+<li>解密用私钥(n,d)</li>
+</ul>
+<p>$c^d ≡ m (mod n)$, 得到信息m</p>
+<h4 id="ElGamal-算法"><a href="#ElGamal-算法" class="headerlink" title="ElGamal 算法"></a>ElGamal 算法</h4><p>如同RSA算法基于<strong>大整数很难求解它的因式分解</strong>, ElGamal 算法基于<strong>离散对数问题很难被求解</strong></p>
+<ul>
+<li>密钥生成</li>
+</ul>
+<ol>
+<li><p>取一个随机的素数 p以及它的一个素根g</p>
+</li>
+<li><p>随机取一个小于p的数x，Private Key 为 <code>&lt;p,x&gt;</code>，</p>
+</li>
+<li><p>根据x算出 $y=g^x(mod p)$，Public Key 为 <code>&lt;p,g,y&gt;</code></p>
+</li>
+</ol>
+<ul>
+<li>加密, 随机选取整数r, 计算<br>$C_1=g^r(mod p)$</li>
+</ul>
+<p>$C2=m∗y^r(mod p)$, m为明文</p>
+<p>发送<code>(C1,C2)</code></p>
+<ul>
+<li>解密, 接收到了<code>(C1,C2)</code></li>
+</ul>
+<p>利用公式$C_2 / (C_1^x) (mod p) $得到明文, 可以令$K=(C_1^x) (mod p)$, $m = C2 * K^{-1} (mod p)$, $K^{-1}$为$K mod p$的逆。</p>
+<h4 id="Diffie-Hellman密钥交换算法"><a href="#Diffie-Hellman密钥交换算法" class="headerlink" title="Diffie-Hellman密钥交换算法"></a>Diffie-Hellman密钥交换算法</h4><ul>
+<li><p>前提是Alice和Bob已经达成$p$, $g$的一致, $P$为大素数, $g$为其的素根。</p>
+</li>
+<li><p>Alice 生成一个随机数 a, Alice 把 $y_A=g^a(mod p)$ 发送给Bob;</p>
+</li>
+<li><p>Bob 生成一个随机数 b, Bob 把 $y_B=g^b(mod p)$ 发送给Alice;</p>
+</li>
+<li><p>双方达成共同的密钥<br>$K_{AB}=y_B^a(mod p)=(g^b)^a(mod p) = (g^a)^b(mod p)$</p>
+</li>
+<li><p>已知$y_A$, $y_B$, 很难推导得到$y_{AB}$, 也就是$g^{ab} (mod p)$</p>
+</li>
+</ul>
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/cpp%E8%BF%9B%E9%98%B6/2021-09-19-%E6%B7%B1%E5%85%A5%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/" rel="prev" title="STL到右值引用再到static_cast"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">STL到右值引用再到static_cast</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/cpp%E5%9F%BA%E7%A1%80/2021-09-18-glibc%E5%B8%B8%E7%94%A8%E5%BA%93%E5%87%BD%E6%95%B0/" rel="next" title="glibc常用函数"><span class="post-nav-text">glibc常用函数</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E6%95%B0%E5%AD%A6/2021-09-18-%E5%AF%86%E7%A0%81%E5%AD%A6%E7%AE%80%E8%A6%81/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>TCP/IP详解 | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="linux网络常用命令&#x2F;etc&#x2F;hostshosts —— the static table lookup for host name（主机名查询静态表）。hosts文件是Linux系统上一个负责ip地址与域名快速解析的文件，以ascii格式保存在&#x2F;etc&#x2F;目录下。hosts文件包含了ip地址与主机名之间的映射，还包括主机的别名。在没有域名解析服务器的情况下，系统上的所有网络程序都通过查询该文件来">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCP&#x2F;IP详解">
+<meta property="og:url" content="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-23-TCP_IP/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="linux网络常用命令&#x2F;etc&#x2F;hostshosts —— the static table lookup for host name（主机名查询静态表）。hosts文件是Linux系统上一个负责ip地址与域名快速解析的文件，以ascii格式保存在&#x2F;etc&#x2F;目录下。hosts文件包含了ip地址与主机名之间的映射，还包括主机的别名。在没有域名解析服务器的情况下，系统上的所有网络程序都通过查询该文件来">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/assets/images/os/13.png">
+<meta property="og:image" content="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/assets/images/os/14.png">
+<meta property="og:image" content="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/assets/images/os/16.png">
+<meta property="og:image" content="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/assets/images/os/15.png">
+<meta property="article:published_time" content="2021-07-23T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-23T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="network">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/assets/images/os/13.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#linux%E7%BD%91%E7%BB%9C%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-number">1.</span> <span class="toc-text">linux网络常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#etc-hosts"><span class="toc-number">1.1.</span> <span class="toc-text">&#x2F;etc&#x2F;hosts</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ping"><span class="toc-number">1.2.</span> <span class="toc-text">ping</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#wget%E5%92%8Ccurl"><span class="toc-number">1.3.</span> <span class="toc-text">wget和curl</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#VPN"><span class="toc-number">1.4.</span> <span class="toc-text">VPN</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#pptp"><span class="toc-number">1.5.</span> <span class="toc-text">pptp</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#CDN-DNS"><span class="toc-number">1.6.</span> <span class="toc-text">CDN DNS</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ifconfig"><span class="toc-number">1.7.</span> <span class="toc-text">ifconfig</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%B7%AF%E7%94%B1route-traceroute"><span class="toc-number">1.8.</span> <span class="toc-text">路由route  traceroute</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#netstat"><span class="toc-number">1.9.</span> <span class="toc-text">netstat</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Tcpdump"><span class="toc-number">1.10.</span> <span class="toc-text">Tcpdump</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-23-TCP_IP/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">TCP/IP详解<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/计算机四大件/2021-07-23-TCP_IP.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-07-24 00:00:00" itemprop="dateCreated datePublished" datetime="2021-07-24T00:00:00+08:00">2021-07-24</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">2.4k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">9m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/network/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">network</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/network/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">network</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h3 id="linux网络常用命令"><a href="#linux网络常用命令" class="headerlink" title="linux网络常用命令"></a>linux网络常用命令</h3><h4 id="etc-hosts"><a href="#etc-hosts" class="headerlink" title="/etc/hosts"></a>/etc/hosts</h4><p>hosts —— the static table lookup for host name（主机名查询静态表）。<br>hosts文件是Linux系统上一个负责ip地址与域名快速解析的文件，以ascii格式保存在/etc/目录下。hosts文件包含了ip地址与主机名之间的映射，还包括主机的别名。在没有域名解析服务器的情况下，系统上的所有网络程序都通过查询该文件来解析对应于某个主机名的ip地址，否则就需要使用dns服务程序来解决。通过可以将常用的域名和ip地址映射加入到hosts文件中，实现快速方便的访问。<br>优先级 ： dns缓存 &gt; hosts &gt; dns服务 </p>
+<pre class="language-sh" data-language="sh"><code class="language-sh">ip地址   主机名&#x2F;域名   （主机别名）
+192.30.255.112  github.com git 
+185.31.16.184 github.global.ssl.fastly.net </code></pre>
+
+<h4 id="ping"><a href="#ping" class="headerlink" title="ping"></a>ping</h4><p>ping属于一个通信协议，是TCP/IP协议的一部分。利用“ping”命令可以检查网络是否通畅或者网络连接速度，很好地分析和判定网络故障。</p>
+<p>Ping发送一个ICMP（Internet Control Messages Protocol），即因特网信报控制协议；接收端回声消息给目的地并报告是否收到所希望的ICMPecho （ICMP回声应答）。它的原理是：利用网络上机器IP地址的唯一性，给目标IP地址发送一个数据包，通过对方回复的数据包来确定两台网络机器是否连接相通，时延是多少。ping没有通过运输层的TCP或UDP。</p>
+<p>TCPing是基于TCP协议的一种Ping命令，用来测试数据包能否通过TCP协议到到达目标主机（其实就是抄上面的描述）。他又一大特点，就是可以监听某个端口的状态，在禁Ping的时候，也可以检测网络连通率。</p>
+<span id="more"></span>
+
+
+<h4 id="wget和curl"><a href="#wget和curl" class="headerlink" title="wget和curl"></a>wget和curl</h4><p>wget命令用来从指定的URL下载文件。wget非常稳定，它在带宽很窄的情况下和不稳定网络中有很强的适应性，如果是由于网络的原因下载失败，wget会不断的尝试，直到整个文件下载完毕。如果是服务器打断下载过程，它会再次联到服务器上从停止的地方继续下载。这对从那些限定了链接时间的服务器上下载大文件非常有用。</p>
+<p>curl命令是一个利用URL规则在命令行下工作的文件传输工具。它支持文件的上传和下载，所以是综合传输工具，但按传统，习惯称curl为下载工具。作为一款强力工具，curl支持包括HTTP、HTTPS、ftp等众多协议，还支持POST、cookies、认证、从指定偏移处下载部分文件、用户代理字符串、限速、文件大小、进度条等特征。</p>
+<p>wget 是一个独立的下载程序，无需额外的资源库，它也允许你下载网页中或是 FTP 目录中的任何内容, 能享受它超凡的下载速度，简单直接。<br>curl是一个多功能工具，是libcurl这个库支持的。它可以下载网络内容，但同时它也能做更多别的事情。</p>
+<p>从用途方面，wget倾向于网络文件下载；curl倾向于网络接口调试，相当于一个无图形界面的 PostMan 工具</p>
+<pre class="language-none"><code class="language-none">
+wget [选项] URL资源
+-c：继续接着执行上次未下载完的任务
+wget --http-user&#x3D;USER --http-password&#x3D;PASS http:&#x2F;&#x2F;www.example.com&#x2F;testfile.zip
+
+curl
+-v：显示一次http通信的整个过程，包括端口连接和http request头信息
+-H &#39;kev:value&#39;：添加http请求头。例：-H &#39;Content-Type:application&#x2F;json&#39;
+-F &#39;file&#x3D;@文件&#39;：模拟http表单向服务器上传文件。
+-u &#39;user[:password]&#39;：设置服务器认证的用户名和密码。
+curl 0.0.0.0:12345
+curl -sL www.google.com</code></pre>
+
+<h4 id="VPN"><a href="#VPN" class="headerlink" title="VPN"></a>VPN</h4><p>two lines of cmds：在/.bashrc中配置</p>
+<pre class="language-none"><code class="language-none">export ALL_PROXY&#x3D;&quot;socks5:&#x2F;&#x2F;127.0.0.1080&quot;
+export all_proxy&#x3D;&quot;socks5:&#x2F;&#x2F;127.0.0.1080&quot;
+
+export http_proxy&#x3D;&quot;socks5:&#x2F;&#x2F;127.0.0.1:1080&quot;
+export https_proxy&#x3D;&quot;socks5:&#x2F;&#x2F;127.0.0.1:1080&quot;</code></pre>
+<p>这样 curl wget 是都走代理了，包括 git npm yarn .<br>SOCKS协议是传输层 (第四层)<br>ICMP协议是网络层(第三层)<br>ping ==&gt; ICMP协议<br>但可以通过http进行访问</p>
+<p>SSR是更注重流量混淆隐秘,<br>VPN则是更注重加密安全性。</p>
+<pre class="language-sh" data-language="sh"><code class="language-sh">curl -I --socks5 127.0.0.1:1090 www.google.com</code></pre>
+
+<h4 id="pptp"><a href="#pptp" class="headerlink" title="pptp"></a>pptp</h4><p>“PPTP（点到点隧道协议）是一种用于让远程用户拨号连接到本地的ISP，通过因特网安全远程访问公司资源的新型技术。它能将PPP（点到点协议）帧封装成IP数据包，以便能够在基于IP的互联网上进行传输。PPTP使用TCP（传输控制协议）连接的创建，维护，与终止隧道，并使用GRE(通用路由封装)将PPP帧封装成隧道数据。被封装后的PPP帧的有效载荷可以被加密或者压缩或者同时被加密与压缩。</p>
+<pre class="language-none"><code class="language-none">pptpsetup --create ppp0 --server 202.117.54.197 --username venray --password kongrui --encrypt --start
+&#x2F;&#x2F; 相当于增加了一个网卡，指向server
+route add default dev ppp0
+
+traceroute www.163.com 查看路由细节 如果未在预期的超时时间内确认数据包，则会显示一个星号。
+
+poff ppp0 断开vpn链接， 相当与删除了vpn路由和vpn 网卡
+pon pp0 重新链接vpn, 相当与恢复了vpn路由和vpn 网卡
+pkill pptp  &#x2F;&#x2F; 关闭vpn进程</code></pre>
+
+<h4 id="CDN-DNS"><a href="#CDN-DNS" class="headerlink" title="CDN DNS"></a>CDN DNS</h4><p>当我们向dns服务器发起解析域名的请求时，dns服务器首先会查询自己的缓存中有没有该域名，如果缓存中存在该域名，则可以直接返回ip地址。如果缓存中没有，服务器则会以递归的方式层层访问。例如，我们要访问<a target="_blank" rel="noopener" href="http://www.baidu.com,首先我们会先向全球13个根服务器发起请求,询问com域名的地址,然后再向负责com域名的名称服务器发送请求,找到baidu.com,这样层层递归,最终找到我们需要的ip地址./">www.baidu.com，首先我们会先向全球13个根服务器发起请求，询问com域名的地址，然后再向负责com域名的名称服务器发送请求，找到baidu.com，这样层层递归，最终找到我们需要的ip地址。</a></p>
+<p>在用户访问网站时，CDN利用全局负载技术将用户访问指向距离最近的工作正常的缓存服务器上，由缓存服务器直接响应用户请求。</p>
+<p>当用户请求一个资源时，cdn的工作过程如下：<br>1.dns请求当地local DNS<br>2.当地local DNS递归的查询服务器的gslb<br>3.服务器根据local DNS 分配最佳节点，返回ip<br>4.用户获得最佳接入ip，访问最佳节点。<br>5.如果该节点没有用户想要获取的内容，则通过内部路由访问上一节点，直到找到文件或到达源站为止。<br>6.cdn节点缓存该数据，下次请求该文件时可以直接返回。</p>
+<h4 id="ifconfig"><a href="#ifconfig" class="headerlink" title="ifconfig"></a>ifconfig</h4><p><img src="../assets/images/os/13.png" alt="avatar" loading="lazy"></p>
+<p>lo是表示主机的回坏地址，比如把 httpd服务器的指定到回坏地址，在浏览器输入127.0.0.1就能看到你所架WEB网站了。</p>
+<ul>
+<li>连接类型：Ethernet（以太网）HWaddr（硬件mac地址）</li>
+<li>网卡的IPv4, ipv6地址、子网、掩码。</li>
+<li>硬件mac地址</li>
+<li>接收数据包情况统计。</li>
+<li>发送数据字节数统计信息。</li>
+</ul>
+<h4 id="路由route-traceroute"><a href="#路由route-traceroute" class="headerlink" title="路由route  traceroute"></a>路由route  traceroute</h4><p>显示路由表<br><img src="../assets/images/os/14.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li>Destination列出了路由器连接的所有的网段。同一网段指的是IP地址和子网掩码相与得到相同的网络地址。想在同一网段，必须做到网络标识相同。</li>
+<li>Genmask提供这个网段的子网掩码，这基本上能够让路由器确定目的网络的地址类。</li>
+<li>Genmask网关表告诉路由器这个数据包应该转发到哪一个IP地址才能达到目的网络段。</li>
+<li>Metric衡量主机间的成本</li>
+</ul>
+<pre class="language-none"><code class="language-none">route add -net 192.168.0.0&#x2F;24 gw 192.168.0.1
+
+route add -host 192.168.1.1 dev 192.168.0.1
+
+add 增加路由    del 删除路由
+-net 设置到某个网段的路由    gw 出口网关IP地址
+-host 设置到某台主机的路由  dev 出口网关物理设备名
+增加默认路由：route add default gw 192.168.0.1</code></pre>
+
+<p>traceroute（跟踪路由）用于确定 IP 数据报访问目标所经过的路径。和ping一样是ICMP报文, 但目的不同。ping用来测试连接性, traceroute用来测试经过的路径。其用 IP 生存时间 (TTL) 字段和 ICMP 错误消息来确定从一个主机到网络上其他主机的路由。<br><img src="../assets/images/os/16.png" alt="avatar" loading="lazy"></p>
+<h4 id="netstat"><a href="#netstat" class="headerlink" title="netstat"></a>netstat</h4><p>Netstat 命令用于显示各种网络相关信息，如网络连接，路由表，接口状态<br><img src="../assets/images/os/15.png" alt="avatar" loading="lazy"></p>
+<p>Active Internet connections，称为有源TCP连接，其中”Recv-Q”和”Send-Q”指%0A的是接收队列和发送队列。</p>
+<p>Active UNIX domain sockets，称为有源Unix域套接口(和网络套接字一样，但是只能用于本机通信，性能可以提高一倍)。</p>
+<p>列出所有端口,<code>netstat -a</code></p>
+<p>列出所有 tcp 端口 <code>netstat -at</code></p>
+<p>只列出所有监听 tcp 端口  <code>netstat -lt</code></p>
+<p>显示路由表, <code>netstat -rn</code> 相当于<code>route -n</code></p>
+<h4 id="Tcpdump"><a href="#Tcpdump" class="headerlink" title="Tcpdump"></a>Tcpdump</h4><p>tcpdump是用来抓取数据非常方便，Wireshark则是用于分析抓取到的数据比较方便。</p>
+<p>Fiddler/Charles 主要面向http/https, 不但可以查看，而且可以便捷的修改，重放，重定向(到文件或者另一个 URL)。</p>
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-27-shell/" rel="prev" title="shell"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">shell</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-23-mysql%E8%BF%9B%E9%98%B6/" rel="next" title="mysql进阶"><span class="post-nav-text">mysql进阶</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-23-TCP_IP/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

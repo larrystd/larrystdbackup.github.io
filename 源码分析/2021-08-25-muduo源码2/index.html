@@ -1,0 +1,1192 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>muduo:02 BlockQueue TimeStamp Logging | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="下面还是muduo &#96;base文件夹的注释。 BlockQueue.h 阻塞队列 该队列基于std::deque&lt;T&gt;实现, 支持多线程操作队列, 因此put数据和take数据时都要加锁, 同时设置队列是否空的条件变量  template&lt;typename T&gt; class BlockingQueue : noncopyable &amp;#123;  public:   Blockin">
+<meta property="og:type" content="article">
+<meta property="og:title" content="muduo:02 BlockQueue TimeStamp Logging">
+<meta property="og:url" content="https://larrystd.github.io/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-08-25-muduo%E6%BA%90%E7%A0%812/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="下面还是muduo &#96;base文件夹的注释。 BlockQueue.h 阻塞队列 该队列基于std::deque&lt;T&gt;实现, 支持多线程操作队列, 因此put数据和take数据时都要加锁, 同时设置队列是否空的条件变量  template&lt;typename T&gt; class BlockingQueue : noncopyable &amp;#123;  public:   Blockin">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-08-24T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-08-24T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="cpp">
+<meta property="article:tag" content="muduo">
+<meta name="twitter:card" content="summary"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#BlockQueue-h-%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97"><span class="toc-number">1.</span> <span class="toc-text">BlockQueue.h 阻塞队列</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#CountDownLatch-h-%E5%80%92%E8%AE%A1%E6%97%B6"><span class="toc-number">2.</span> <span class="toc-text">CountDownLatch.h 倒计时</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Date-h-%E6%97%A5%E6%9C%9F"><span class="toc-number">3.</span> <span class="toc-text">Date.h 日期</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E6%88%B3-Timestamp-h"><span class="toc-number">4.</span> <span class="toc-text">时间戳 Timestamp.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E5%B7%A5%E5%85%B7-FileUtil-h"><span class="toc-number">5.</span> <span class="toc-text">文件工具 FileUtil.h</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A5%E5%BF%97"><span class="toc-number"></span> <span class="toc-text">日志</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#LogStream"><span class="toc-number">1.</span> <span class="toc-text">LogStream</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Logging"><span class="toc-number">2.</span> <span class="toc-text">Logging</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#LogFile-%E6%97%A5%E5%BF%97%E6%96%87%E4%BB%B6"><span class="toc-number">3.</span> <span class="toc-text">LogFile 日志文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#AsyncLogging-%E5%BC%82%E6%AD%A5%E6%97%A5%E5%BF%97"><span class="toc-number">4.</span> <span class="toc-text">AsyncLogging 异步日志</span></a></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-08-25-muduo%E6%BA%90%E7%A0%812/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">muduo:02 BlockQueue TimeStamp Logging<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/源码分析/2021-08-25-muduo源码2.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-08-25 00:00:00" itemprop="dateCreated datePublished" datetime="2021-08-25T00:00:00+08:00">2021-08-25</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">4.1k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">21m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/source-code/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">source code</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">cpp</span></a><a class="tag-item" href="/tags/muduo/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">muduo</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><p>下面还是muduo `base文件夹的注释。</p>
+<h4 id="BlockQueue-h-阻塞队列"><a href="#BlockQueue-h-阻塞队列" class="headerlink" title="BlockQueue.h 阻塞队列"></a>BlockQueue.h 阻塞队列</h4><ul>
+<li>该队列基于<code>std::deque&lt;T&gt;</code>实现, 支持多线程操作队列, 因此put数据和take数据时都要加锁, 同时设置队列是否空的条件变量</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">class</span> <span class="token class-name">BlockingQueue</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token function">BlockingQueue</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token operator">:</span> <span class="token function">mutex_</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+      <span class="token function">notEmpty_</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">,</span>
+      <span class="token function">queue_</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">void</span> <span class="token function">put</span><span class="token punctuation">(</span><span class="token keyword">const</span> T<span class="token operator">&amp;</span> x<span class="token punctuation">)</span>  <span class="token comment">// put 一个左值(引用)</span>
+  <span class="token punctuation">&#123;</span>
+    MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    queue_<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">/// 队列非空条件变量</span>
+    notEmpty_<span class="token punctuation">.</span><span class="token function">notify</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+
+  T <span class="token function">take</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// always use a while-loop, due to spurious wakeup</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>queue_<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      notEmpty_<span class="token punctuation">.</span><span class="token function">wait</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>queue_<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// front是队首元素</span>
+    T <span class="token function">front</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>queue_<span class="token punctuation">.</span><span class="token function">front</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    queue_<span class="token punctuation">.</span><span class="token function">pop_front</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 队首元素出队列</span>
+    <span class="token keyword">return</span> front<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  size_t <span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span>
+    MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> queue_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">mutable</span> MutexLock mutex_<span class="token punctuation">;</span>
+  Condition         notEmpty_ <span class="token function">GUARDED_BY</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  std<span class="token double-colon punctuation">::</span>deque<span class="token operator">&lt;</span>T<span class="token operator">></span>     queue_ <span class="token function">GUARDED_BY</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<span id="more"></span>
+
+<h4 id="CountDownLatch-h-倒计时"><a href="#CountDownLatch-h-倒计时" class="headerlink" title="CountDownLatch.h 倒计时"></a>CountDownLatch.h 倒计时</h4><ul>
+<li>wait方法, 一直等待count_==0</li>
+<li>countDown(), 调用一次, count_–, 如果count_==0, 唤醒wait()</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token class-name">CountDownLatch</span><span class="token double-colon punctuation">::</span><span class="token function">CountDownLatch</span><span class="token punctuation">(</span><span class="token keyword">int</span> count<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">mutex_</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">condition_</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">count_</span><span class="token punctuation">(</span>count<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token class-name">CountDownLatch</span><span class="token double-colon punctuation">::</span><span class="token function">wait</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 一直等待到count_==0</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>count_ <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    condition_<span class="token punctuation">.</span><span class="token function">wait</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 倒计时减1, 需要锁</span>
+<span class="token keyword">void</span> <span class="token class-name">CountDownLatch</span><span class="token double-colon punctuation">::</span><span class="token function">countDown</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token operator">--</span>count_<span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>count_ <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    condition_<span class="token punctuation">.</span><span class="token function">notifyAll</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">int</span> <span class="token class-name">CountDownLatch</span><span class="token double-colon punctuation">::</span><span class="token function">getCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+<span class="token punctuation">&#123;</span>
+  MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> count_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="Date-h-日期"><a href="#Date-h-日期" class="headerlink" title="Date.h 日期"></a>Date.h 日期</h4><ul>
+<li>使用struct 年月日结构体和julianDayNumber同时表示日期, 两者可相互转换。前者方便显示, 后者方便计算比较。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Date</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> muduo<span class="token double-colon punctuation">::</span><span class="token class-name">copyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token comment">/// 日期 年月日</span>
+  <span class="token keyword">struct</span> <span class="token class-name">YearMonthDay</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> year<span class="token punctuation">;</span> <span class="token comment">// [1900..2500]</span>
+    <span class="token keyword">int</span> month<span class="token punctuation">;</span>  <span class="token comment">// [1..12]</span>
+    <span class="token keyword">int</span> day<span class="token punctuation">;</span>  <span class="token comment">// [1..31]</span>
+  <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">int</span> kDaysPerWeek <span class="token operator">=</span> <span class="token number">7</span><span class="token punctuation">;</span>
+  <span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">int</span> kJulianDayOf1970_01_01<span class="token punctuation">;</span>
+  <span class="token comment">/// Constucts an invalid Date.</span>
+  <span class="token function">Date</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token operator">:</span> <span class="token function">julianDayNumber_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+
+  <span class="token comment">///</span>
+  <span class="token comment">/// Constucts a yyyy-mm-dd Date.</span>
+  <span class="token comment">///</span>
+  <span class="token comment">/// 1 &lt;= month &lt;= 12</span>
+  <span class="token function">Date</span><span class="token punctuation">(</span><span class="token keyword">int</span> year<span class="token punctuation">,</span> <span class="token keyword">int</span> month<span class="token punctuation">,</span> <span class="token keyword">int</span> day<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">///</span>
+  <span class="token comment">/// Constucts a Date from Julian Day Number.</span>
+  <span class="token comment">/// 直接通过Julian Day Number构造类</span>
+  <span class="token comment">///</span>
+  <span class="token keyword">explicit</span> <span class="token function">Date</span><span class="token punctuation">(</span><span class="token keyword">int</span> julianDayNum<span class="token punctuation">)</span>
+    <span class="token operator">:</span> <span class="token function">julianDayNumber_</span><span class="token punctuation">(</span>julianDayNum<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+
+  <span class="token comment">///</span>
+  <span class="token comment">/// Constucts a Date from struct tm</span>
+  <span class="token comment">///</span>
+  <span class="token keyword">explicit</span> <span class="token function">Date</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">struct</span> <span class="token class-name">tm</span><span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// default copy/assignment/dtor are Okay</span>
+  <span class="token keyword">void</span> <span class="token function">swap</span><span class="token punctuation">(</span>Date<span class="token operator">&amp;</span> that<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    std<span class="token double-colon punctuation">::</span><span class="token function">swap</span><span class="token punctuation">(</span>julianDayNumber_<span class="token punctuation">,</span> that<span class="token punctuation">.</span>julianDayNumber_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">bool</span> <span class="token function">valid</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> julianDayNumber_ <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token comment">///   格式化</span>
+  <span class="token comment">/// Converts to yyyy-mm-dd format.</span>
+  string <span class="token function">toIsoString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">struct</span> <span class="token class-name">YearMonthDay</span> <span class="token function">yearMonthDay</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">int</span> <span class="token function">year</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token function">yearMonthDay</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>year<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">int</span> <span class="token function">month</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token function">yearMonthDay</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>month<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">int</span> <span class="token function">day</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token function">yearMonthDay</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>day<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">// [0, 1, ..., 6] => [Sunday, Monday, ..., Saturday ]</span>
+  <span class="token keyword">int</span> <span class="token function">weekDay</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>julianDayNumber_<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">%</span> kDaysPerWeek<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">int</span> <span class="token function">julianDayNumber</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> julianDayNumber_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+ <span class="token comment">/// 日期number</span>
+  <span class="token keyword">int</span> julianDayNumber_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">inline</span> <span class="token keyword">bool</span> <span class="token keyword">operator</span><span class="token operator">&lt;</span><span class="token punctuation">(</span>Date x<span class="token punctuation">,</span> Date y<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> x<span class="token punctuation">.</span><span class="token function">julianDayNumber</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> y<span class="token punctuation">.</span><span class="token function">julianDayNumber</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">inline</span> <span class="token keyword">bool</span> <span class="token keyword">operator</span><span class="token operator">==</span><span class="token punctuation">(</span>Date x<span class="token punctuation">,</span> Date y<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> x<span class="token punctuation">.</span><span class="token function">julianDayNumber</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> y<span class="token punctuation">.</span><span class="token function">julianDayNumber</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+
+<span class="token comment">/// Date.cpp</span>
+<span class="token comment">/// YearMonthDay结构转为julianDayNumber</span>
+<span class="token keyword">int</span> <span class="token function">getJulianDayNumber</span><span class="token punctuation">(</span><span class="token keyword">int</span> year<span class="token punctuation">,</span> <span class="token keyword">int</span> month<span class="token punctuation">,</span> <span class="token keyword">int</span> day<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> require_32_bit_integer_at_least<span class="token punctuation">;</span> <span class="token comment">// no warning please</span>
+  <span class="token keyword">int</span> a <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">14</span> <span class="token operator">-</span> month<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">12</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> y <span class="token operator">=</span> year <span class="token operator">+</span> <span class="token number">4800</span> <span class="token operator">-</span> a<span class="token punctuation">;</span>
+  <span class="token keyword">int</span> m <span class="token operator">=</span> month <span class="token operator">+</span> <span class="token number">12</span> <span class="token operator">*</span> a <span class="token operator">-</span> <span class="token number">3</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> day <span class="token operator">+</span> <span class="token punctuation">(</span><span class="token number">153</span><span class="token operator">*</span>m <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">5</span> <span class="token operator">+</span> y<span class="token operator">*</span><span class="token number">365</span> <span class="token operator">+</span> y<span class="token operator">/</span><span class="token number">4</span> <span class="token operator">-</span> y<span class="token operator">/</span><span class="token number">100</span> <span class="token operator">+</span> y<span class="token operator">/</span><span class="token number">400</span> <span class="token operator">-</span> <span class="token number">32045</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// julianDayNumber转换为YearMonthDay结构</span>
+<span class="token keyword">struct</span> <span class="token class-name">Date</span><span class="token operator">:</span><span class="token base-clause"><span class="token operator">:</span><span class="token class-name">YearMonthDay</span> <span class="token function">getYearMonthDay</span><span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token class-name">julianDayNumber</span><span class="token punctuation">)</span></span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">int</span> a <span class="token operator">=</span> julianDayNumber <span class="token operator">+</span> <span class="token number">32044</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> b <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">4</span> <span class="token operator">*</span> a <span class="token operator">+</span> <span class="token number">3</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">146097</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> c <span class="token operator">=</span> a <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>b <span class="token operator">*</span> <span class="token number">146097</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> d <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">4</span> <span class="token operator">*</span> c <span class="token operator">+</span> <span class="token number">3</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">1461</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> e <span class="token operator">=</span> c <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">1461</span> <span class="token operator">*</span> d<span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> m <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">5</span> <span class="token operator">*</span> e <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">153</span><span class="token punctuation">;</span>
+  Date<span class="token double-colon punctuation">::</span>YearMonthDay ymd<span class="token punctuation">;</span>
+  ymd<span class="token punctuation">.</span>day <span class="token operator">=</span> e <span class="token operator">-</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token number">153</span> <span class="token operator">*</span> m <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">5</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+  ymd<span class="token punctuation">.</span>month <span class="token operator">=</span> m <span class="token operator">+</span> <span class="token number">3</span> <span class="token operator">-</span> <span class="token number">12</span> <span class="token operator">*</span> <span class="token punctuation">(</span>m <span class="token operator">/</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  ymd<span class="token punctuation">.</span>year <span class="token operator">=</span> b <span class="token operator">*</span> <span class="token number">100</span> <span class="token operator">+</span> d <span class="token operator">-</span> <span class="token number">4800</span> <span class="token operator">+</span> <span class="token punctuation">(</span>m <span class="token operator">/</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> ymd<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">/// 两者构造方法, 最终转换成julianDayNumber_</span>
+<span class="token class-name">Date</span><span class="token double-colon punctuation">::</span><span class="token function">Date</span><span class="token punctuation">(</span><span class="token keyword">int</span> y<span class="token punctuation">,</span> <span class="token keyword">int</span> m<span class="token punctuation">,</span> <span class="token keyword">int</span> d<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">julianDayNumber_</span><span class="token punctuation">(</span><span class="token function">getJulianDayNumber</span><span class="token punctuation">(</span>y<span class="token punctuation">,</span> m<span class="token punctuation">,</span> d<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">Date</span><span class="token double-colon punctuation">::</span><span class="token function">Date</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">struct</span> <span class="token class-name">tm</span><span class="token operator">&amp;</span> t<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">julianDayNumber_</span><span class="token punctuation">(</span><span class="token function">getJulianDayNumber</span><span class="token punctuation">(</span>
+        t<span class="token punctuation">.</span>tm_year<span class="token operator">+</span><span class="token number">1900</span><span class="token punctuation">,</span>
+        t<span class="token punctuation">.</span>tm_mon<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">,</span>
+        t<span class="token punctuation">.</span>tm_mday<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">/// 格式化显示</span>
+string <span class="token class-name">Date</span><span class="token double-colon punctuation">::</span><span class="token function">toIsoString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">char</span> buf<span class="token punctuation">[</span><span class="token number">32</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  YearMonthDay <span class="token function">ymd</span><span class="token punctuation">(</span><span class="token function">yearMonthDay</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">snprintf</span><span class="token punctuation">(</span>buf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span> buf<span class="token punctuation">,</span> <span class="token string">"%4d-%02d-%02d"</span><span class="token punctuation">,</span> ymd<span class="token punctuation">.</span>year<span class="token punctuation">,</span> ymd<span class="token punctuation">.</span>month<span class="token punctuation">,</span> ymd<span class="token punctuation">.</span>day<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> buf<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">/// 调用getYearMonthDay</span>
+Date<span class="token double-colon punctuation">::</span>YearMonthDay <span class="token class-name">Date</span><span class="token double-colon punctuation">::</span><span class="token function">yearMonthDay</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> <span class="token function">getYearMonthDay</span><span class="token punctuation">(</span>julianDayNumber_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="时间戳-Timestamp-h"><a href="#时间戳-Timestamp-h" class="headerlink" title="时间戳 Timestamp.h"></a>时间戳 Timestamp.h</h4><ul>
+<li>内部单位是微秒, <code>int64_t microSecondsSinceEpoch_</code>表示</li>
+<li>输出格式是秒和微秒</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Timestamp</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> muduo<span class="token double-colon punctuation">::</span><span class="token class-name">copyable</span><span class="token punctuation">,</span>
+                  <span class="token keyword">public</span> boost<span class="token double-colon punctuation">::</span><span class="token class-name">equality_comparable</span><span class="token operator">&lt;</span><span class="token class-name">Timestamp</span><span class="token operator">></span><span class="token punctuation">,</span>
+                  <span class="token keyword">public</span> boost<span class="token double-colon punctuation">::</span><span class="token class-name">less_than_comparable</span><span class="token operator">&lt;</span><span class="token class-name">Timestamp</span><span class="token operator">></span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token comment">/// 时间戳的构造器</span>
+  <span class="token function">Timestamp</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token operator">:</span> <span class="token function">microSecondsSinceEpoch_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">explicit</span> <span class="token function">Timestamp</span><span class="token punctuation">(</span><span class="token keyword">int64_t</span> microSecondsSinceEpochArg<span class="token punctuation">)</span>
+    <span class="token operator">:</span> <span class="token function">microSecondsSinceEpoch_</span><span class="token punctuation">(</span>microSecondsSinceEpochArg<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// 交换两个对象，其实是交换内部microSecondsSinceEpoch_成员</span>
+  <span class="token keyword">void</span> <span class="token function">swap</span><span class="token punctuation">(</span>Timestamp<span class="token operator">&amp;</span> that<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    std<span class="token double-colon punctuation">::</span><span class="token function">swap</span><span class="token punctuation">(</span>microSecondsSinceEpoch_<span class="token punctuation">,</span> that<span class="token punctuation">.</span>microSecondsSinceEpoch_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">// default copy/assignment/dtor are Okay</span>
+  string <span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+  string <span class="token function">toFormattedString</span><span class="token punctuation">(</span><span class="token keyword">bool</span> showMicroseconds <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 有效的时间戳</span>
+  <span class="token keyword">bool</span> <span class="token function">valid</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> microSecondsSinceEpoch_ <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">/// 转换成秒</span>
+  time_t <span class="token function">secondsSinceEpoch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>time_t<span class="token operator">></span></span></span><span class="token punctuation">(</span>microSecondsSinceEpoch_ <span class="token operator">/</span> kMicroSecondsPerSecond<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">///</span>
+  <span class="token comment">/// Get time of now.</span>
+  <span class="token comment">///</span>
+  <span class="token keyword">static</span> Timestamp <span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">static</span> Timestamp <span class="token function">invalid</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token function">Timestamp</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">int</span> kMicroSecondsPerSecond <span class="token operator">=</span> <span class="token number">1000</span> <span class="token operator">*</span> <span class="token number">1000</span><span class="token punctuation">;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">int64_t</span> microSecondsSinceEpoch_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">/// operator比较操作符</span>
+<span class="token keyword">inline</span> <span class="token keyword">bool</span> <span class="token keyword">operator</span><span class="token operator">&lt;</span><span class="token punctuation">(</span>Timestamp lhs<span class="token punctuation">,</span> Timestamp rhs<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> lhs<span class="token punctuation">.</span><span class="token function">microSecondsSinceEpoch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> rhs<span class="token punctuation">.</span><span class="token function">microSecondsSinceEpoch</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">inline</span> <span class="token keyword">bool</span> <span class="token keyword">operator</span><span class="token operator">==</span><span class="token punctuation">(</span>Timestamp lhs<span class="token punctuation">,</span> Timestamp rhs<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> lhs<span class="token punctuation">.</span><span class="token function">microSecondsSinceEpoch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> rhs<span class="token punctuation">.</span><span class="token function">microSecondsSinceEpoch</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">/// resolution for next 100 years.</span>
+<span class="token comment">/// 时间差, 单位为秒</span>
+<span class="token keyword">inline</span> <span class="token keyword">double</span> <span class="token function">timeDifference</span><span class="token punctuation">(</span>Timestamp high<span class="token punctuation">,</span> Timestamp low<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">int64_t</span> diff <span class="token operator">=</span> high<span class="token punctuation">.</span><span class="token function">microSecondsSinceEpoch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> low<span class="token punctuation">.</span><span class="token function">microSecondsSinceEpoch</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">double</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>diff<span class="token punctuation">)</span> <span class="token operator">/</span> Timestamp<span class="token double-colon punctuation">::</span>kMicroSecondsPerSecond<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 当前时间戳, 增加多少秒</span>
+<span class="token keyword">inline</span> Timestamp <span class="token function">addTime</span><span class="token punctuation">(</span>Timestamp timestamp<span class="token punctuation">,</span> <span class="token keyword">double</span> seconds<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">int64_t</span> delta <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int64_t</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>seconds <span class="token operator">*</span> Timestamp<span class="token double-colon punctuation">::</span>kMicroSecondsPerSecond<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token function">Timestamp</span><span class="token punctuation">(</span>timestamp<span class="token punctuation">.</span><span class="token function">microSecondsSinceEpoch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> delta<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li>Timestamp.cpp</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// 时间戳输出, 形式**秒,**微秒</span>
+string <span class="token class-name">Timestamp</span><span class="token double-colon punctuation">::</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span>
+  <span class="token keyword">char</span> buf<span class="token punctuation">[</span><span class="token number">32</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token number">0</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 获取秒和微秒</span>
+  <span class="token keyword">int64_t</span> seconds <span class="token operator">=</span> microSecondsSinceEpoch_ <span class="token operator">/</span> kMicroSecondsPerSecond<span class="token punctuation">;</span>
+  <span class="token keyword">int64_t</span> microseconds <span class="token operator">=</span> microSecondsSinceEpoch_ <span class="token operator">%</span> kMicroSecondsPerSecond<span class="token punctuation">;</span>
+  <span class="token function">snprintf</span><span class="token punctuation">(</span>buf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>buf<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"%"</span> PRId64 <span class="token string">".%06"</span> PRId64 <span class="token string">""</span><span class="token punctuation">,</span> seconds<span class="token punctuation">,</span> microseconds<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> buf<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 当前时间时间戳</span>
+Timestamp <span class="token class-name">Timestamp</span><span class="token double-colon punctuation">::</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">timeval</span> tv<span class="token punctuation">;</span>
+  <span class="token comment">/// 当前时间</span>
+  <span class="token function">gettimeofday</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>tv<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">int64_t</span> seconds <span class="token operator">=</span> tv<span class="token punctuation">.</span>tv_sec<span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token function">Timestamp</span><span class="token punctuation">(</span>seconds <span class="token operator">*</span> kMicroSecondsPerSecond <span class="token operator">+</span> tv<span class="token punctuation">.</span>tv_usec<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="文件工具-FileUtil-h"><a href="#文件工具-FileUtil-h" class="headerlink" title="文件工具 FileUtil.h"></a>文件工具 FileUtil.h</h4><ul>
+<li>读取小文件利用文件操作符, 主要方法是<code>readToString</code>读取文件内容到String对象, <code>readToBuffer</code>读取文件内容到缓冲区</li>
+<li>AppendFile 写文件用文件指针, 基本操作是在文件指针处写入len字节的数据, 还提供flush方法一次性将缓冲区数据刷入文件。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// read small file &lt; 64KB</span>
+<span class="token comment">/// 读取小文件</span>
+<span class="token keyword">class</span> <span class="token class-name">ReadSmallFile</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token function">ReadSmallFile</span><span class="token punctuation">(</span>StringArg filename<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">ReadSmallFile</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// return errno</span>
+  <span class="token comment">/// File内容到String</span>
+  <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">String</span><span class="token operator">></span>
+  <span class="token keyword">int</span> <span class="token function">readToString</span><span class="token punctuation">(</span><span class="token keyword">int</span> maxSize<span class="token punctuation">,</span>
+                   String<span class="token operator">*</span> content<span class="token punctuation">,</span>
+                   <span class="token keyword">int64_t</span><span class="token operator">*</span> fileSize<span class="token punctuation">,</span>
+                   <span class="token keyword">int64_t</span><span class="token operator">*</span> modifyTime<span class="token punctuation">,</span>
+                   <span class="token keyword">int64_t</span><span class="token operator">*</span> createTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// Read at maxium kBufferSize into buf_</span>
+  <span class="token comment">/// 读入缓冲</span>
+  <span class="token comment">// return errno</span>
+  <span class="token keyword">int</span> <span class="token function">readToBuffer</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">*</span> size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> <span class="token function">buffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> buf_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">int</span> kBufferSize <span class="token operator">=</span> <span class="token number">64</span><span class="token operator">*</span><span class="token number">1024</span><span class="token punctuation">;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">int</span> fd_<span class="token punctuation">;</span>
+  <span class="token keyword">int</span> err_<span class="token punctuation">;</span>
+
+  <span class="token comment">/// 缓冲区</span>
+  <span class="token keyword">char</span> buf_<span class="token punctuation">[</span>kBufferSize<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">// read the file content, returns errno if error happens.</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">String</span><span class="token operator">></span>
+<span class="token keyword">int</span> <span class="token function">readFile</span><span class="token punctuation">(</span>StringArg filename<span class="token punctuation">,</span>
+             <span class="token keyword">int</span> maxSize<span class="token punctuation">,</span>
+             String<span class="token operator">*</span> content<span class="token punctuation">,</span>
+             <span class="token keyword">int64_t</span><span class="token operator">*</span> fileSize <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">,</span>
+             <span class="token keyword">int64_t</span><span class="token operator">*</span> modifyTime <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">,</span>
+             <span class="token keyword">int64_t</span><span class="token operator">*</span> createTime <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  ReadSmallFile <span class="token function">file</span><span class="token punctuation">(</span>filename<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> file<span class="token punctuation">.</span><span class="token function">readToString</span><span class="token punctuation">(</span>maxSize<span class="token punctuation">,</span> content<span class="token punctuation">,</span> fileSize<span class="token punctuation">,</span> modifyTime<span class="token punctuation">,</span> createTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// not thread safe</span>
+<span class="token comment">/// 增加文件数据</span>
+<span class="token keyword">class</span> <span class="token class-name">AppendFile</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token keyword">explicit</span> <span class="token function">AppendFile</span><span class="token punctuation">(</span>StringArg filename<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token operator">~</span><span class="token function">AppendFile</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 在文件后面写入数据</span>
+  <span class="token keyword">void</span> <span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> logline<span class="token punctuation">,</span> size_t len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// flush持久化, 将缓冲区数据写入的文件中</span>
+  <span class="token keyword">void</span> <span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  off_t <span class="token function">writtenBytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> writtenBytes_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token comment">/// 向文件中写入字节</span>
+  size_t <span class="token function">write</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> logline<span class="token punctuation">,</span> size_t len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 维护的文件指针</span>
+  FILE<span class="token operator">*</span> fp_<span class="token punctuation">;</span>
+
+  <span class="token comment">/// 缓冲区</span>
+  <span class="token keyword">char</span> buffer_<span class="token punctuation">[</span><span class="token number">64</span><span class="token operator">*</span><span class="token number">1024</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 已经写入的字节数</span>
+  off_t writtenBytes_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+
+<span class="token comment">/// open filename文件, 得到fp</span>
+FileUtil<span class="token double-colon punctuation">::</span><span class="token class-name">AppendFile</span><span class="token double-colon punctuation">::</span><span class="token function">AppendFile</span><span class="token punctuation">(</span>StringArg filename<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">fp_</span><span class="token punctuation">(</span><span class="token double-colon punctuation">::</span><span class="token function">fopen</span><span class="token punctuation">(</span>filename<span class="token punctuation">.</span><span class="token function">c_str</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"ae"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>  <span class="token comment">// 'e' for O_CLOEXEC</span>
+    <span class="token function">writtenBytes_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">/// 设置文件缓冲区</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>fp_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token double-colon punctuation">::</span><span class="token function">setbuffer</span><span class="token punctuation">(</span>fp_<span class="token punctuation">,</span> buffer_<span class="token punctuation">,</span> <span class="token keyword">sizeof</span> buffer_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// posix_fadvise POSIX_FADV_DONTNEED ?</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 关闭文件指针fp</span>
+FileUtil<span class="token double-colon punctuation">::</span><span class="token class-name">AppendFile</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">AppendFile</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token double-colon punctuation">::</span><span class="token function">fclose</span><span class="token punctuation">(</span>fp_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 在文件后写入len字节的数据</span>
+<span class="token keyword">void</span> FileUtil<span class="token double-colon punctuation">::</span><span class="token class-name">AppendFile</span><span class="token double-colon punctuation">::</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> logline<span class="token punctuation">,</span> <span class="token keyword">const</span> size_t len<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  size_t written <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>written <span class="token operator">!=</span> len<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    size_t remain <span class="token operator">=</span> len <span class="token operator">-</span> written<span class="token punctuation">;</span>
+    <span class="token comment">/// 写入对象的指针logline + written, 写入对象数为remain</span>
+    size_t n <span class="token operator">=</span> <span class="token function">write</span><span class="token punctuation">(</span>logline <span class="token operator">+</span> written<span class="token punctuation">,</span> remain<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">!=</span> remain<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token keyword">int</span> err <span class="token operator">=</span> <span class="token function">ferror</span><span class="token punctuation">(</span>fp_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+      <span class="token punctuation">&#123;</span>
+        <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"AppendFile::append() failed %s\n"</span><span class="token punctuation">,</span> <span class="token function">strerror_tl</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    written <span class="token operator">+=</span> n<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// 已经写入的字节</span>
+  writtenBytes_ <span class="token operator">+=</span> written<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> FileUtil<span class="token double-colon punctuation">::</span><span class="token class-name">AppendFile</span><span class="token double-colon punctuation">::</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">/// 强迫将缓冲区内的数据写回fp_指定的文件中</span>
+  <span class="token double-colon punctuation">::</span><span class="token function">fflush</span><span class="token punctuation">(</span>fp_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// </span>
+size_t FileUtil<span class="token double-colon punctuation">::</span><span class="token class-name">AppendFile</span><span class="token double-colon punctuation">::</span><span class="token function">write</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> logline<span class="token punctuation">,</span> size_t len<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">// #undef fwrite_unlocked</span>
+  <span class="token comment">/// 无锁写入, 将logline指向内存的len字节写入到fp_指向的文件中</span>
+  <span class="token comment">// buffer	-	指向数组中要被写入的首个对象的指针</span>
+  <span class="token comment">// size	-	每个对象的大小, 一次一个字节</span>
+  <span class="token comment">// count	-	要被写入的对象数</span>
+  <span class="token comment">// stream	-	指向输出流的指针</span>
+  <span class="token comment">// 但会写入的对象数, 也就是len</span>
+  <span class="token keyword">return</span> <span class="token double-colon punctuation">::</span><span class="token function">fwrite_unlocked</span><span class="token punctuation">(</span>logline<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> len<span class="token punctuation">,</span> fp_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">//// 读文件</span>
+<span class="token comment">/// 小文件构造</span>
+<span class="token comment">/// 返回文件描述符</span>
+FileUtil<span class="token double-colon punctuation">::</span><span class="token class-name">ReadSmallFile</span><span class="token double-colon punctuation">::</span><span class="token function">ReadSmallFile</span><span class="token punctuation">(</span>StringArg filename<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">fd_</span><span class="token punctuation">(</span><span class="token double-colon punctuation">::</span><span class="token function">open</span><span class="token punctuation">(</span>filename<span class="token punctuation">.</span><span class="token function">c_str</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> O_RDONLY <span class="token operator">|</span> O_CLOEXEC<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">err_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  buf_<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">'\0'</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>fd_ <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    err_ <span class="token operator">=</span> errno<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+FileUtil<span class="token double-colon punctuation">::</span><span class="token class-name">ReadSmallFile</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">ReadSmallFile</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>fd_ <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token double-colon punctuation">::</span><span class="token function">close</span><span class="token punctuation">(</span>fd_<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// FIXME: check EINTR</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">// return errno</span>
+<span class="token comment">/// 读取文件到content String</span>
+<span class="token comment">/// modifyTime, createTime用来记录文件信息</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">String</span><span class="token operator">></span>
+<span class="token keyword">int</span> FileUtil<span class="token double-colon punctuation">::</span><span class="token class-name">ReadSmallFile</span><span class="token double-colon punctuation">::</span><span class="token function">readToString</span><span class="token punctuation">(</span><span class="token keyword">int</span> maxSize<span class="token punctuation">,</span>
+                                          String<span class="token operator">*</span> content<span class="token punctuation">,</span>
+                                          <span class="token keyword">int64_t</span><span class="token operator">*</span> fileSize<span class="token punctuation">,</span>
+                                          <span class="token keyword">int64_t</span><span class="token operator">*</span> modifyTime<span class="token punctuation">,</span>
+                                          <span class="token keyword">int64_t</span><span class="token operator">*</span> createTime<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">static_assert</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span>off_t<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">8</span><span class="token punctuation">,</span> <span class="token string">"_FILE_OFFSET_BITS = 64"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>content <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> err <span class="token operator">=</span> err_<span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>fd_ <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    content<span class="token operator">-></span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>fileSize<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token keyword">struct</span> <span class="token class-name">stat</span> statbuf<span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token double-colon punctuation">::</span><span class="token function">fstat</span><span class="token punctuation">(</span>fd_<span class="token punctuation">,</span> <span class="token operator">&amp;</span>statbuf<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+      <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">S_ISREG</span><span class="token punctuation">(</span>statbuf<span class="token punctuation">.</span>st_mode<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#123;</span>
+          <span class="token operator">*</span>fileSize <span class="token operator">=</span> statbuf<span class="token punctuation">.</span>st_size<span class="token punctuation">;</span>
+
+          <span class="token comment">/// content开辟fileSize或maxSize的空间</span>
+          content<span class="token operator">-></span><span class="token function">reserve</span><span class="token punctuation">(</span><span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token generic-function"><span class="token function">implicit_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int64_t</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>maxSize<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">*</span>fileSize<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">S_ISDIR</span><span class="token punctuation">(</span>statbuf<span class="token punctuation">.</span>st_mode<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#123;</span>
+          err <span class="token operator">=</span> EISDIR<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token comment">//// 记录文件一些信息</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>modifyTime<span class="token punctuation">)</span>
+        <span class="token punctuation">&#123;</span>
+          <span class="token operator">*</span>modifyTime <span class="token operator">=</span> statbuf<span class="token punctuation">.</span>st_mtime<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>createTime<span class="token punctuation">)</span>
+        <span class="token punctuation">&#123;</span>
+          <span class="token operator">*</span>createTime <span class="token operator">=</span> statbuf<span class="token punctuation">.</span>st_ctime<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+      <span class="token punctuation">&#125;</span>
+      <span class="token keyword">else</span>
+      <span class="token punctuation">&#123;</span>
+        err <span class="token operator">=</span> errno<span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>content<span class="token operator">-></span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token generic-function"><span class="token function">implicit_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>size_t<span class="token operator">></span></span></span><span class="token punctuation">(</span>maxSize<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      size_t toRead <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token generic-function"><span class="token function">implicit_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>size_t<span class="token operator">></span></span></span><span class="token punctuation">(</span>maxSize<span class="token punctuation">)</span> <span class="token operator">-</span> content<span class="token operator">-></span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>buf_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">/// 读取文件数据到buf_</span>
+      ssize_t n <span class="token operator">=</span> <span class="token double-colon punctuation">::</span><span class="token function">read</span><span class="token punctuation">(</span>fd_<span class="token punctuation">,</span> buf_<span class="token punctuation">,</span> toRead<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">/// buf_数据再到content</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>
+      <span class="token punctuation">&#123;</span>
+        content<span class="token operator">-></span><span class="token function">append</span><span class="token punctuation">(</span>buf_<span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+      <span class="token keyword">else</span>
+      <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#123;</span>
+          err <span class="token operator">=</span> errno<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">break</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> err<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 读取文件到buf</span>
+<span class="token keyword">int</span> FileUtil<span class="token double-colon punctuation">::</span><span class="token class-name">ReadSmallFile</span><span class="token double-colon punctuation">::</span><span class="token function">readToBuffer</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">*</span> size<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">int</span> err <span class="token operator">=</span> err_<span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>fd_ <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    ssize_t n <span class="token operator">=</span> <span class="token double-colon punctuation">::</span><span class="token function">pread</span><span class="token punctuation">(</span>fd_<span class="token punctuation">,</span> buf_<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>buf_<span class="token punctuation">)</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 读取成功</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>size<span class="token punctuation">)</span>
+      <span class="token punctuation">&#123;</span>
+        <span class="token operator">*</span>size <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+      buf_<span class="token punctuation">[</span>n<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">'\0'</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">else</span>
+    <span class="token punctuation">&#123;</span>
+      err <span class="token operator">=</span> errno<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> err<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h3 id="日志"><a href="#日志" class="headerlink" title="日志"></a>日志</h3><p>日志主要分为三个模块, LogStream, Logging, LogFile。</p>
+<h4 id="LogStream"><a href="#LogStream" class="headerlink" title="LogStream"></a>LogStream</h4><p>LogStream 重载了<code>&lt;&lt;</code>操作符, 内部有缓冲区。基本使用是当<code>LogStream&lt;&lt;&quot; &quot;</code>或把内容格式化到缓冲区中。</p>
+<p>缓冲区类<code>FixedBuffer</code></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// 缓冲区大小</span>
+<span class="token keyword">const</span> <span class="token keyword">int</span> kSmallBuffer <span class="token operator">=</span> <span class="token number">4000</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> <span class="token keyword">int</span> kLargeBuffer <span class="token operator">=</span> <span class="token number">4000</span><span class="token operator">*</span><span class="token number">1000</span><span class="token punctuation">;</span>
+
+<span class="token comment">/// 缓冲区类</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">int</span> SIZE<span class="token operator">></span>
+<span class="token keyword">class</span> <span class="token class-name">FixedBuffer</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token function">FixedBuffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token operator">:</span> <span class="token function">cur_</span><span class="token punctuation">(</span>data_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">setCookie</span><span class="token punctuation">(</span>cookieStart<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token operator">~</span><span class="token function">FixedBuffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">setCookie</span><span class="token punctuation">(</span>cookieEnd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">/// 缓冲区在char* cur指针处加入数据</span>
+  <span class="token keyword">void</span> <span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> <span class="token comment">/*restrict*/</span> buf<span class="token punctuation">,</span> size_t len<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">// FIXME: append partially</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token generic-function"><span class="token function">implicit_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>size_t<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token function">avail</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">></span> len<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">/// 把buf拷贝到cur指针处</span>
+      <span class="token function">memcpy</span><span class="token punctuation">(</span>cur_<span class="token punctuation">,</span> buf<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      cur_ <span class="token operator">+=</span> len<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> <span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> data_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token comment">// 缓冲的长度</span>
+  <span class="token keyword">int</span> <span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>cur_ <span class="token operator">-</span> data_<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">// write to data_ directly</span>
+  <span class="token comment">/// 当前输出位置指针</span>
+  <span class="token keyword">char</span><span class="token operator">*</span> <span class="token function">current</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> cur_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// 可用的字节大小</span>
+  <span class="token keyword">int</span> <span class="token function">avail</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> cur_<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// 区域已使用(输出)cur右移</span>
+  <span class="token keyword">void</span> <span class="token function">add</span><span class="token punctuation">(</span>size_t len<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> cur_ <span class="token operator">+=</span> len<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token comment">// 重置cur_指针</span>
+  <span class="token keyword">void</span> <span class="token function">reset</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> cur_ <span class="token operator">=</span> data_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">bzero</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token function">memZero</span><span class="token punctuation">(</span>data_<span class="token punctuation">,</span> <span class="token keyword">sizeof</span> data_<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">// for used by GDB</span>
+  <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> <span class="token function">debugString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">setCookie</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token punctuation">(</span><span class="token operator">*</span>cookie<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> cookie_ <span class="token operator">=</span> cookie<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token comment">// for used by unit test</span>
+  string <span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token function">string</span><span class="token punctuation">(</span>data_<span class="token punctuation">,</span> <span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  StringPiece <span class="token function">toStringPiece</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token function">StringPiece</span><span class="token punctuation">(</span>data_<span class="token punctuation">,</span> <span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+ <span class="token comment">/// 尾地址</span>
+  <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> <span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> data_ <span class="token operator">+</span> <span class="token keyword">sizeof</span> data_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token comment">// Must be outline function for cookies.</span>
+  <span class="token comment">/// 缓冲区</span>
+  <span class="token keyword">char</span> data_<span class="token punctuation">[</span>SIZE<span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token keyword">char</span><span class="token operator">*</span> cur_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<p>LogStream.h</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// 日志流</span>
+<span class="token keyword">class</span> <span class="token class-name">LogStream</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">typedef</span> LogStream self<span class="token punctuation">;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token comment">/// Buffer类型</span>
+  <span class="token keyword">typedef</span> detail<span class="token double-colon punctuation">::</span>FixedBuffer<span class="token operator">&lt;</span>detail<span class="token double-colon punctuation">::</span>kSmallBuffer<span class="token operator">></span> Buffer<span class="token punctuation">;</span>
+
+  <span class="token comment">/// 输出流重载</span>
+  self<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">&lt;&lt;</span><span class="token punctuation">(</span><span class="token keyword">bool</span> v<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    buffer_<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span>v <span class="token operator">?</span> <span class="token string">"1"</span> <span class="token operator">:</span> <span class="token string">"0"</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// 不同类型的数据格式化输出</span>
+  self<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">&lt;&lt;</span><span class="token punctuation">(</span><span class="token keyword">short</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  self<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">&lt;&lt;</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">short</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  self<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">&lt;&lt;</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+  self<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">&lt;&lt;</span><span class="token punctuation">(</span><span class="token keyword">float</span> v<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token operator">*</span><span class="token keyword">this</span> <span class="token operator">&lt;&lt;</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">double</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">/// 将StringPiece&amp; v放入stream的缓冲区中</span>
+  self<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">&lt;&lt;</span><span class="token punctuation">(</span><span class="token keyword">const</span> StringPiece<span class="token operator">&amp;</span> v<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    buffer_<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span>v<span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> v<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  self<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">&lt;&lt;</span><span class="token punctuation">(</span><span class="token keyword">const</span> Buffer<span class="token operator">&amp;</span> v<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token operator">*</span><span class="token keyword">this</span> <span class="token operator">&lt;&lt;</span> v<span class="token punctuation">.</span><span class="token function">toStringPiece</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">void</span> <span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> data<span class="token punctuation">,</span> <span class="token keyword">int</span> len<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> buffer_<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span>data<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">const</span> Buffer<span class="token operator">&amp;</span> <span class="token function">buffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> buffer_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">resetBuffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> buffer_<span class="token punctuation">.</span><span class="token function">reset</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">void</span> <span class="token function">staticCheck</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+  <span class="token keyword">void</span> <span class="token function">formatInteger</span><span class="token punctuation">(</span>T<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 输入输出日志流的缓冲区</span>
+  Buffer buffer_<span class="token punctuation">;</span>
+  <span class="token comment">/// 设置的最大数值字节</span>
+  <span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">int</span> kMaxNumericSize <span class="token operator">=</span> <span class="token number">32</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+
+LogStream<span class="token punctuation">.</span>cc
+
+<span class="token comment">/// 输出的类型重载实现</span>
+LogStream<span class="token operator">&amp;</span> LogStream<span class="token double-colon punctuation">::</span><span class="token keyword">operator</span><span class="token operator">&lt;&lt;</span><span class="token punctuation">(</span><span class="token keyword">short</span> v<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token operator">*</span><span class="token keyword">this</span> <span class="token operator">&lt;&lt;</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+LogStream<span class="token operator">&amp;</span> LogStream<span class="token double-colon punctuation">::</span><span class="token keyword">operator</span><span class="token operator">&lt;&lt;</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">short</span> v<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token operator">*</span><span class="token keyword">this</span> <span class="token operator">&lt;&lt;</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">unsigned</span> <span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+LogStream<span class="token operator">&amp;</span> LogStream<span class="token double-colon punctuation">::</span><span class="token keyword">operator</span><span class="token operator">&lt;&lt;</span><span class="token punctuation">(</span><span class="token keyword">int</span> v<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">formatInteger</span><span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="Logging"><a href="#Logging" class="headerlink" title="Logging"></a>Logging</h4><ul>
+<li>Logging也就是log对象，定义了log level等, 内部核心是LogStream类</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Logger</span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+ <span class="token comment">/// 日志层级</span>
+  <span class="token keyword">enum</span> <span class="token class-name">LogLevel</span>
+  <span class="token punctuation">&#123;</span>
+    TRACE<span class="token punctuation">,</span>
+    DEBUG<span class="token punctuation">,</span>
+    INFO<span class="token punctuation">,</span>
+    WARN<span class="token punctuation">,</span>
+    ERROR<span class="token punctuation">,</span>
+    FATAL<span class="token punctuation">,</span>
+    NUM_LOG_LEVELS<span class="token punctuation">,</span>
+  <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+  <span class="token comment">// 两种构造方法，(1)通过传入数组的引用  (2)通过const char*</span>
+  <span class="token comment">// 存储文件名和长度</span>
+  <span class="token keyword">class</span> <span class="token class-name">SourceFile</span>
+  <span class="token punctuation">&#123;</span>
+   <span class="token keyword">public</span><span class="token operator">:</span>
+   <span class="token comment">/// </span>
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">int</span> N<span class="token operator">></span>
+    <span class="token function">SourceFile</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token punctuation">(</span><span class="token operator">&amp;</span>arr<span class="token punctuation">)</span><span class="token punctuation">[</span>N<span class="token punctuation">]</span><span class="token punctuation">)</span>
+      <span class="token operator">:</span> <span class="token function">data_</span><span class="token punctuation">(</span>arr<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token function">size_</span><span class="token punctuation">(</span>N<span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> slash <span class="token operator">=</span> <span class="token function">strrchr</span><span class="token punctuation">(</span>data_<span class="token punctuation">,</span> <span class="token string">'/'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 返回最后一个'/'之后的地址</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>slash<span class="token punctuation">)</span>
+      <span class="token punctuation">&#123;</span>
+        data_ <span class="token operator">=</span> slash <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>  <span class="token comment">// 文件名的指针</span>
+        size_ <span class="token operator">-=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>data_ <span class="token operator">-</span> arr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> data_<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> size_<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 声明一些构造函数</span>
+  <span class="token function">Logger</span><span class="token punctuation">(</span>SourceFile file<span class="token punctuation">,</span> <span class="token keyword">int</span> line<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">Logger</span><span class="token punctuation">(</span>SourceFile file<span class="token punctuation">,</span> <span class="token keyword">int</span> line<span class="token punctuation">,</span> LogLevel level<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">Logger</span><span class="token punctuation">(</span>SourceFile file<span class="token punctuation">,</span> <span class="token keyword">int</span> line<span class="token punctuation">,</span> <span class="token keyword">bool</span> toAbort<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">Logger</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 返回Logger的流对象</span>
+  LogStream<span class="token operator">&amp;</span> <span class="token function">stream</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> impl_<span class="token punctuation">.</span>stream_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">static</span> LogLevel <span class="token function">logLevel</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">setLogLevel</span><span class="token punctuation">(</span>LogLevel level<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 函数指针类型</span>
+  <span class="token keyword">typedef</span> <span class="token keyword">void</span> <span class="token punctuation">(</span><span class="token operator">*</span>OutputFunc<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> msg<span class="token punctuation">,</span> <span class="token keyword">int</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">typedef</span> <span class="token keyword">void</span> <span class="token punctuation">(</span><span class="token operator">*</span>FlushFunc<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">setOutput</span><span class="token punctuation">(</span>OutputFunc<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">setFlush</span><span class="token punctuation">(</span>FlushFunc<span class="token punctuation">)</span><span class="token punctuation">;</span>
+ <span class="token keyword">private</span><span class="token operator">:</span>
+
+<span class="token comment">/// Logging内部的实现类</span>
+<span class="token keyword">class</span> <span class="token class-name">Impl</span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token comment">/// LogLevel</span>
+  <span class="token keyword">typedef</span> Logger<span class="token double-colon punctuation">::</span>LogLevel LogLevel<span class="token punctuation">;</span>
+  <span class="token function">Impl</span><span class="token punctuation">(</span>LogLevel level<span class="token punctuation">,</span> <span class="token keyword">int</span> old_errno<span class="token punctuation">,</span> <span class="token keyword">const</span> SourceFile<span class="token operator">&amp;</span> file<span class="token punctuation">,</span> <span class="token keyword">int</span> line<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">formatTime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">finish</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 时间戳</span>
+  Timestamp time_<span class="token punctuation">;</span>
+  <span class="token comment">/// LogStream类</span>
+  LogStream stream_<span class="token punctuation">;</span>
+  <span class="token comment">/// 日志level</span>
+  LogLevel level_<span class="token punctuation">;</span>
+  <span class="token keyword">int</span> line_<span class="token punctuation">;</span>
+  <span class="token comment">/// 日志名</span>
+  SourceFile basename_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 内部对象impl_</span>
+  Impl impl_<span class="token punctuation">;</span>
+
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+
+<span class="token comment">/// 定义 LOG_WARN等定义LOG_WARN &lt;&lt; "World";, 外界可直接使用LOG_INFO 返回stream对象</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">LOG_TRACE</span> <span class="token expression"><span class="token keyword">if</span> <span class="token punctuation">(</span>muduo<span class="token double-colon punctuation">::</span><span class="token class-name">Logger</span><span class="token double-colon punctuation">::</span><span class="token function">logLevel</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;=</span> muduo<span class="token double-colon punctuation">::</span>Logger<span class="token double-colon punctuation">::</span>TRACE<span class="token punctuation">)</span> </span><span class="token punctuation">\</span>
+  <span class="token expression">muduo<span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span><span class="token constant">__FILE__</span><span class="token punctuation">,</span> <span class="token constant">__LINE__</span><span class="token punctuation">,</span> muduo<span class="token double-colon punctuation">::</span>Logger<span class="token double-colon punctuation">::</span>TRACE<span class="token punctuation">,</span> <span class="token constant">__func__</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">stream</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">LOG_DEBUG</span> <span class="token expression"><span class="token keyword">if</span> <span class="token punctuation">(</span>muduo<span class="token double-colon punctuation">::</span><span class="token class-name">Logger</span><span class="token double-colon punctuation">::</span><span class="token function">logLevel</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;=</span> muduo<span class="token double-colon punctuation">::</span>Logger<span class="token double-colon punctuation">::</span>DEBUG<span class="token punctuation">)</span> </span><span class="token punctuation">\</span>
+  <span class="token expression">muduo<span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span><span class="token constant">__FILE__</span><span class="token punctuation">,</span> <span class="token constant">__LINE__</span><span class="token punctuation">,</span> muduo<span class="token double-colon punctuation">::</span>Logger<span class="token double-colon punctuation">::</span>DEBUG<span class="token punctuation">,</span> <span class="token constant">__func__</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">stream</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">LOG_INFO</span> <span class="token expression"><span class="token keyword">if</span> <span class="token punctuation">(</span>muduo<span class="token double-colon punctuation">::</span><span class="token class-name">Logger</span><span class="token double-colon punctuation">::</span><span class="token function">logLevel</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;=</span> muduo<span class="token double-colon punctuation">::</span>Logger<span class="token double-colon punctuation">::</span>INFO<span class="token punctuation">)</span> </span><span class="token punctuation">\</span>
+  <span class="token expression">muduo<span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span><span class="token constant">__FILE__</span><span class="token punctuation">,</span> <span class="token constant">__LINE__</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">stream</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">LOG_WARN</span> <span class="token expression">muduo<span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span><span class="token constant">__FILE__</span><span class="token punctuation">,</span> <span class="token constant">__LINE__</span><span class="token punctuation">,</span> muduo<span class="token double-colon punctuation">::</span>Logger<span class="token double-colon punctuation">::</span>WARN<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">stream</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">LOG_ERROR</span> <span class="token expression">muduo<span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span><span class="token constant">__FILE__</span><span class="token punctuation">,</span> <span class="token constant">__LINE__</span><span class="token punctuation">,</span> muduo<span class="token double-colon punctuation">::</span>Logger<span class="token double-colon punctuation">::</span>ERROR<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">stream</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">LOG_FATAL</span> <span class="token expression">muduo<span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span><span class="token constant">__FILE__</span><span class="token punctuation">,</span> <span class="token constant">__LINE__</span><span class="token punctuation">,</span> muduo<span class="token double-colon punctuation">::</span>Logger<span class="token double-colon punctuation">::</span>FATAL<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">stream</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">LOG_SYSERR</span> <span class="token expression">muduo<span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span><span class="token constant">__FILE__</span><span class="token punctuation">,</span> <span class="token constant">__LINE__</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">stream</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">LOG_SYSFATAL</span> <span class="token expression">muduo<span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span><span class="token constant">__FILE__</span><span class="token punctuation">,</span> <span class="token constant">__LINE__</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">stream</span><span class="token punctuation">(</span><span class="token punctuation">)</span></span></span>
+
+
+<span class="token comment">/// 构造函数</span>
+<span class="token class-name">Logger</span><span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span>SourceFile file<span class="token punctuation">,</span> <span class="token keyword">int</span> line<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">impl_</span><span class="token punctuation">(</span>INFO<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> file<span class="token punctuation">,</span> line<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">Logger</span><span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span>SourceFile file<span class="token punctuation">,</span> <span class="token keyword">int</span> line<span class="token punctuation">,</span> LogLevel level<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> func<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">impl_</span><span class="token punctuation">(</span>level<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> file<span class="token punctuation">,</span> line<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  impl_<span class="token punctuation">.</span>stream_ <span class="token operator">&lt;&lt;</span> func <span class="token operator">&lt;&lt;</span> <span class="token string">' '</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">Logger</span><span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span>SourceFile file<span class="token punctuation">,</span> <span class="token keyword">int</span> line<span class="token punctuation">,</span> LogLevel level<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">impl_</span><span class="token punctuation">(</span>level<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> file<span class="token punctuation">,</span> line<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">Logger</span><span class="token double-colon punctuation">::</span><span class="token function">Logger</span><span class="token punctuation">(</span>SourceFile file<span class="token punctuation">,</span> <span class="token keyword">int</span> line<span class="token punctuation">,</span> <span class="token keyword">bool</span> toAbort<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">impl_</span><span class="token punctuation">(</span>toAbort<span class="token operator">?</span>FATAL<span class="token operator">:</span>ERROR<span class="token punctuation">,</span> errno<span class="token punctuation">,</span> file<span class="token punctuation">,</span> line<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+<span class="token punctuation">&#125;</span>
+
+
+<span class="token comment">/// 在log析构的时候, flush日志数据</span>
+<span class="token class-name">Logger</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">Logger</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">/// 加入结束符</span>
+  impl_<span class="token punctuation">.</span><span class="token function">finish</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 将stream().buffer()拷贝到新的buf中</span>
+  <span class="token keyword">const</span> LogStream<span class="token double-colon punctuation">::</span>Buffer<span class="token operator">&amp;</span> <span class="token function">buf</span><span class="token punctuation">(</span><span class="token function">stream</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">buffer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 对buf执行输出函数g_out, 即将msg刷新到stdout</span>
+  <span class="token function">g_output</span><span class="token punctuation">(</span>buf<span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> buf<span class="token punctuation">.</span><span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 如果日志FATAL</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>impl_<span class="token punctuation">.</span>level_ <span class="token operator">==</span> FATAL<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// 全部刷新到g_flush中</span>
+    <span class="token function">g_flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// 结束线程程序执行</span>
+    <span class="token function">abort</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 默认output方法</span>
+<span class="token keyword">void</span> <span class="token function">defaultOutput</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> msg<span class="token punctuation">,</span> <span class="token keyword">int</span> len<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">/// 将msg刷新到stdout</span>
+  size_t n <span class="token operator">=</span> <span class="token function">fwrite</span><span class="token punctuation">(</span>msg<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> len<span class="token punctuation">,</span> <span class="token constant">stdout</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">//FIXME check n</span>
+  <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>n<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 刷新到标准输出</span>
+<span class="token keyword">void</span> <span class="token function">defaultFlush</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">/// 刷新到stdout, 缓存输出到终端</span>
+  <span class="token function">fflush</span><span class="token punctuation">(</span><span class="token constant">stdout</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 设置函数</span>
+Logger<span class="token double-colon punctuation">::</span>OutputFunc g_output <span class="token operator">=</span> defaultOutput<span class="token punctuation">;</span>
+Logger<span class="token double-colon punctuation">::</span>FlushFunc g_flush <span class="token operator">=</span> defaultFlush<span class="token punctuation">;</span>
+
+<span class="token comment">/// 日志level</span>
+<span class="token keyword">void</span> <span class="token class-name">Logger</span><span class="token double-colon punctuation">::</span><span class="token function">setLogLevel</span><span class="token punctuation">(</span>Logger<span class="token double-colon punctuation">::</span>LogLevel level<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  g_logLevel <span class="token operator">=</span> level<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">/// </span>
+<span class="token keyword">void</span> <span class="token class-name">Logger</span><span class="token double-colon punctuation">::</span><span class="token function">setOutput</span><span class="token punctuation">(</span>OutputFunc out<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  g_output <span class="token operator">=</span> out<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="LogFile-日志文件"><a href="#LogFile-日志文件" class="headerlink" title="LogFile 日志文件"></a>LogFile 日志文件</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">LogFile</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token function">LogFile</span><span class="token punctuation">(</span><span class="token keyword">const</span> string<span class="token operator">&amp;</span> basename<span class="token punctuation">,</span>
+          off_t rollSize<span class="token punctuation">,</span>
+          <span class="token keyword">bool</span> threadSafe <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+          <span class="token keyword">int</span> flushInterval <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">,</span>
+          <span class="token keyword">int</span> checkEveryN <span class="token operator">=</span> <span class="token number">1024</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">LogFile</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+  <span class="token comment">// 在缓冲区后添加数据</span>
+  <span class="token keyword">void</span> <span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> logline<span class="token punctuation">,</span> <span class="token keyword">int</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// flush到文件</span>
+  <span class="token keyword">void</span> <span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">bool</span> <span class="token function">rollFile</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+ <span class="token comment">/// 在日志加入record</span>
+  <span class="token keyword">void</span> <span class="token function">append_unlocked</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> logline<span class="token punctuation">,</span> <span class="token keyword">int</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">static</span> string <span class="token function">getLogFileName</span><span class="token punctuation">(</span><span class="token keyword">const</span> string<span class="token operator">&amp;</span> basename<span class="token punctuation">,</span> time_t<span class="token operator">*</span> now<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> string basename_<span class="token punctuation">;</span>
+  <span class="token keyword">const</span> off_t rollSize_<span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token keyword">int</span> flushInterval_<span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token keyword">int</span> checkEveryN_<span class="token punctuation">;</span>
+
+  <span class="token keyword">int</span> count_<span class="token punctuation">;</span>
+
+  std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>MutexLock<span class="token operator">></span> mutex_<span class="token punctuation">;</span>
+
+  <span class="token comment">/// time_t 长整型, 时间1970年1月1日00时00分00秒(也称为Linux系统的Epoch时间)到当前时刻的秒数。</span>
+  time_t startOfPeriod_<span class="token punctuation">;</span>
+  time_t lastRoll_<span class="token punctuation">;</span>
+  time_t lastFlush_<span class="token punctuation">;</span>
+
+  <span class="token comment">/// file_, 是FileUtil::AppendFile类型的智能指针</span>
+  std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>FileUtil<span class="token double-colon punctuation">::</span>AppendFile<span class="token operator">></span> file_<span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> <span class="token keyword">static</span> <span class="token keyword">int</span> kRollPerSeconds_ <span class="token operator">=</span> <span class="token number">60</span><span class="token operator">*</span><span class="token number">60</span><span class="token operator">*</span><span class="token number">24</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<h4 id="AsyncLogging-异步日志"><a href="#AsyncLogging-异步日志" class="headerlink" title="AsyncLogging 异步日志"></a>AsyncLogging 异步日志</h4><ul>
+<li><p>日志主要包括两个步骤, 1. 数据输入到缓冲区 2. 缓冲区写入到文件中。<br>异步日志表示可能有多个线程发生数据输入到缓冲区的情况，但将缓冲区写入到文件是单线程的</p>
+</li>
+<li><p> 异步日志使用两个buffer, 一个现用, 一个备用，如果不够可以加。使用一个buffers储存要写的数据。同时使用copy and swap操作保证一致性。</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token class-name">AsyncLogging</span><span class="token double-colon punctuation">::</span><span class="token function">AsyncLogging</span><span class="token punctuation">(</span><span class="token keyword">const</span> string<span class="token operator">&amp;</span> basename<span class="token punctuation">,</span>
+                           off_t rollSize<span class="token punctuation">,</span>
+                           <span class="token keyword">int</span> flushInterval<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">flushInterval_</span><span class="token punctuation">(</span>flushInterval<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">running_</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">basename_</span><span class="token punctuation">(</span>basename<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">rollSize_</span><span class="token punctuation">(</span>rollSize<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">thread_</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">bind</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>AsyncLogging<span class="token double-colon punctuation">::</span>threadFunc<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"Logging"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">latch_</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">mutex_</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">cond_</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">currentBuffer_</span><span class="token punctuation">(</span><span class="token keyword">new</span> Buffer<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">nextBuffer_</span><span class="token punctuation">(</span><span class="token keyword">new</span> Buffer<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">buffers_</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">/// 重置两个buffer和一个buffer vector</span>
+  currentBuffer_<span class="token operator">-></span><span class="token function">bzero</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  nextBuffer_<span class="token operator">-></span><span class="token function">bzero</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  buffers_<span class="token punctuation">.</span><span class="token function">reserve</span><span class="token punctuation">(</span><span class="token number">16</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 多线程在日志中增加记录， logline指针, 大小为len</span>
+<span class="token keyword">void</span> <span class="token class-name">AsyncLogging</span><span class="token double-colon punctuation">::</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> logline<span class="token punctuation">,</span> <span class="token keyword">int</span> len<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  muduo<span class="token double-colon punctuation">::</span>MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 剩余空间大于len, 加入之</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>currentBuffer_<span class="token operator">-></span><span class="token function">avail</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">></span> len<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    currentBuffer_<span class="token operator">-></span><span class="token function">append</span><span class="token punctuation">(</span>logline<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">else</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// 内容不够, 1. 将currentBuffer_加入到buffers中</span>
+    buffers_<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>currentBuffer_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 2. 更改currentBuffer指针。如果nextBuffer有空间, currentBuffer指向nextBuffer, 没有, 则currentBuffer指向新的buffer对象</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>nextBuffer_<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      currentBuffer_ <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>nextBuffer_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">else</span>
+    <span class="token punctuation">&#123;</span>
+      currentBuffer_<span class="token punctuation">.</span><span class="token function">reset</span><span class="token punctuation">(</span><span class="token keyword">new</span> Buffer<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// Rarely happens</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">/// 3. 在currentBuffer加入数据</span>
+    currentBuffer_<span class="token operator">-></span><span class="token function">append</span><span class="token punctuation">(</span>logline<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">/// 告诉写线程缓冲区有数据了, 可以写了</span>
+    cond_<span class="token punctuation">.</span><span class="token function">notify</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">//// 单线程将buffersToWrite内容写入到文件中</span>
+<span class="token keyword">void</span> <span class="token class-name">AsyncLogging</span><span class="token double-colon punctuation">::</span><span class="token function">threadFunc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>running_ <span class="token operator">==</span> <span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  latch_<span class="token punctuation">.</span><span class="token function">countDown</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  LogFile <span class="token function">output</span><span class="token punctuation">(</span>basename_<span class="token punctuation">,</span> rollSize_<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  BufferPtr <span class="token function">newBuffer1</span><span class="token punctuation">(</span><span class="token keyword">new</span> Buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  BufferPtr <span class="token function">newBuffer2</span><span class="token punctuation">(</span><span class="token keyword">new</span> Buffer<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  newBuffer1<span class="token operator">-></span><span class="token function">bzero</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  newBuffer2<span class="token operator">-></span><span class="token function">bzero</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 要写的buffers vector</span>
+  BufferVector buffersToWrite<span class="token punctuation">;</span>
+  buffersToWrite<span class="token punctuation">.</span><span class="token function">reserve</span><span class="token punctuation">(</span><span class="token number">16</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>running_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>newBuffer1 <span class="token operator">&amp;&amp;</span> newBuffer1<span class="token operator">-></span><span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>newBuffer2 <span class="token operator">&amp;&amp;</span> newBuffer2<span class="token operator">-></span><span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>buffersToWrite<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">/// 得到要写的日志vector, buffersToWrite</span>
+    <span class="token punctuation">&#123;</span>
+      muduo<span class="token double-colon punctuation">::</span>MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token comment">/// buffers_为空, 等待buffers_有数据</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>buffers_<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token comment">// unusual usage!</span>
+      <span class="token punctuation">&#123;</span>
+        cond_<span class="token punctuation">.</span><span class="token function">waitForSeconds</span><span class="token punctuation">(</span>flushInterval_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+      <span class="token comment">/// 处理currentBuffer_</span>
+      buffers_<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>currentBuffer_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      currentBuffer_ <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>newBuffer1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">/// 将buffers cas到buffersToWrite</span>
+      buffersToWrite<span class="token punctuation">.</span><span class="token function">swap</span><span class="token punctuation">(</span>buffers_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>nextBuffer_<span class="token punctuation">)</span>
+      <span class="token punctuation">&#123;</span>
+        nextBuffer_ <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>newBuffer2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>buffersToWrite<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// 给日志加时间戳等信息</span>
+    <span class="token comment">// 将时间戳信息写入到file</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>buffersToWrite<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">25</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token keyword">char</span> buf<span class="token punctuation">[</span><span class="token number">256</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+      <span class="token function">snprintf</span><span class="token punctuation">(</span>buf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span> buf<span class="token punctuation">,</span> <span class="token string">"Dropped log messages at %s, %zd larger buffers\n"</span><span class="token punctuation">,</span>
+               <span class="token class-name">Timestamp</span><span class="token double-colon punctuation">::</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toFormattedString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">c_str</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+               buffersToWrite<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">fputs</span><span class="token punctuation">(</span>buf<span class="token punctuation">,</span> <span class="token constant">stderr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token comment">/// 将buf内容写入到日志中</span>
+      output<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span>buf<span class="token punctuation">,</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token function">strlen</span><span class="token punctuation">(</span>buf<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      buffersToWrite<span class="token punctuation">.</span><span class="token function">erase</span><span class="token punctuation">(</span>buffersToWrite<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">+</span><span class="token number">2</span><span class="token punctuation">,</span> buffersToWrite<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">/// 将buffersToWrite内容写入到file缓冲区</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> buffer <span class="token operator">:</span> buffersToWrite<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">// FIXME: use unbuffered stdio FILE ? or use ::writev ?</span>
+      output<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span>buffer<span class="token operator">-></span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> buffer<span class="token operator">-></span><span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">/// 如果buffersToWrite的buffer数量大于2 , 重新设置为2</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>buffersToWrite<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">2</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">// drop non-bzero-ed buffers, avoid trashing</span>
+      buffersToWrite<span class="token punctuation">.</span><span class="token function">resize</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">/// 从buffersToWrite拿出内容给newBuffer1和newBuffer2</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>newBuffer1<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">/// 必须要有assert, 如果buffersToWrite不为空说明发生问题</span>
+      <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>buffersToWrite<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      newBuffer1 <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>buffersToWrite<span class="token punctuation">.</span><span class="token function">back</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      buffersToWrite<span class="token punctuation">.</span><span class="token function">pop_back</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      newBuffer1<span class="token operator">-></span><span class="token function">reset</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>newBuffer2<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>buffersToWrite<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      newBuffer2 <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>buffersToWrite<span class="token punctuation">.</span><span class="token function">back</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      buffersToWrite<span class="token punctuation">.</span><span class="token function">pop_back</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      newBuffer2<span class="token operator">-></span><span class="token function">reset</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    buffersToWrite<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    output<span class="token punctuation">.</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">/// output文件缓冲区刷新到文件中</span>
+  output<span class="token punctuation">.</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre></div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E7%AE%97%E6%B3%95/2021-08-25-%E5%9B%BE%E6%9C%80%E7%9F%AD%E8%B7%AF/" rel="prev" title="图最短路"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">图最短路</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E7%AE%97%E6%B3%95/2021-08-21-%E4%BA%8C%E5%8F%89%E6%A0%91/" rel="next" title="二叉树"><span class="post-nav-text">二叉树</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-08-25-muduo%E6%BA%90%E7%A0%812/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

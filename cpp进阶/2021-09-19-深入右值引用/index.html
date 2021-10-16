@@ -1,0 +1,455 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>STL到右值引用再到static_cast | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="现代stl是模板编程的优秀例子  容器的左值和右值左值还是右值 vector 内部元素返回的是左值还是右值呢? 答案是左值  vector&lt;int&gt; vect &#x3D; &amp;#123;1,2,3,4&amp;#125;;  int b &#x3D; vect[0]; int&amp; b2 &#x3D; vect[0]; &#x2F;&#x2F; 输出 1 1  int&amp; b2 &#x3D; vect[0]; &#x2F;&#x2F; 无法通过编译 param.cp">
+<meta property="og:type" content="article">
+<meta property="og:title" content="STL到右值引用再到static_cast">
+<meta property="og:url" content="https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-19-%E6%B7%B1%E5%85%A5%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="现代stl是模板编程的优秀例子  容器的左值和右值左值还是右值 vector 内部元素返回的是左值还是右值呢? 答案是左值  vector&lt;int&gt; vect &#x3D; &amp;#123;1,2,3,4&amp;#125;;  int b &#x3D; vect[0]; int&amp; b2 &#x3D; vect[0]; &#x2F;&#x2F; 输出 1 1  int&amp; b2 &#x3D; vect[0]; &#x2F;&#x2F; 无法通过编译 param.cp">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/cpp/5.png">
+<meta property="article:published_time" content="2021-09-18T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-18T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="右值引用">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/assets/images/cpp/5.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8%E7%9A%84%E5%B7%A6%E5%80%BC%E5%92%8C%E5%8F%B3%E5%80%BC"><span class="toc-number">1.</span> <span class="toc-text">容器的左值和右值</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B7%A6%E5%80%BC%E8%BF%98%E6%98%AF%E5%8F%B3%E5%80%BC"><span class="toc-number">1.1.</span> <span class="toc-text">左值还是右值</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#swap"><span class="toc-number">1.2.</span> <span class="toc-text">swap</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BC%95%E7%94%A8"><span class="toc-number">1.3.</span> <span class="toc-text">引用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#std-move%E5%B0%86%E5%8F%82%E6%95%B0%E8%BD%AC%E4%B8%BA%E5%8F%B3%E5%80%BC"><span class="toc-number">1.4.</span> <span class="toc-text">std::move将参数转为右值</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><span class="toc-number">1.5.</span> <span class="toc-text">移动构造函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#std-move%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-number">1.6.</span> <span class="toc-text">std::move的实现</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#static-cast"><span class="toc-number">1.7.</span> <span class="toc-text">static_cast</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-19-%E6%B7%B1%E5%85%A5%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">STL到右值引用再到static_cast<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/cpp进阶/2021-09-19-深入右值引用.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-09-19 00:00:00" itemprop="dateCreated datePublished" datetime="2021-09-19T00:00:00+08:00">2021-09-19</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">3.1k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">13m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/cpp-advanced/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">cpp advanced</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">右值引用</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><blockquote>
+<p>现代stl是模板编程的优秀例子</p>
+</blockquote>
+<h3 id="容器的左值和右值"><a href="#容器的左值和右值" class="headerlink" title="容器的左值和右值"></a>容器的左值和右值</h3><h4 id="左值还是右值"><a href="#左值还是右值" class="headerlink" title="左值还是右值"></a>左值还是右值</h4><ul>
+<li><code>vector</code> 内部元素返回的是左值还是右值呢? 答案是左值</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> vect <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> b <span class="token operator">=</span> vect<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span><span class="token operator">&amp;</span> b2 <span class="token operator">=</span> vect<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token comment">// 输出</span>
+<span class="token number">1</span>
+<span class="token number">1</span>
+
+<span class="token keyword">int</span><span class="token operator">&amp;</span> b2 <span class="token operator">=</span> vect<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token comment">// 无法通过编译</span>
+param<span class="token punctuation">.</span>cpp<span class="token operator">:</span><span class="token number">19</span><span class="token operator">:</span><span class="token number">11</span><span class="token operator">:</span> error<span class="token operator">:</span> conflicting declaration ‘<span class="token keyword">int</span><span class="token operator">&amp;&amp;</span> b’</code></pre>
+
+<span id="more"></span>
+
+<ul>
+<li>但<code>vector</code>的成员变量以右值形式返回</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">size_t<span class="token operator">&amp;</span> size <span class="token operator">=</span> vect<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 不能通过编译</span>
+error<span class="token operator">:</span> cannot bind non<span class="token operator">-</span><span class="token keyword">const</span> lvalue reference of type ‘size_t<span class="token operator">&amp;</span> <span class="token punctuation">&#123;</span>aka <span class="token keyword">long</span> <span class="token keyword">unsigned</span> <span class="token keyword">int</span><span class="token operator">&amp;</span><span class="token punctuation">&#125;</span>’ to an rvalue of type ‘std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span><span class="token double-colon punctuation">::</span>size_type <span class="token punctuation">&#123;</span>aka <span class="token keyword">long</span> <span class="token keyword">unsigned</span> <span class="token keyword">int</span><span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 迭代器返回的也是右值</span>
+<span class="token keyword">auto</span><span class="token operator">&amp;</span> iter <span class="token operator">=</span> vect<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 报错</span>
+cannot bind non<span class="token operator">-</span><span class="token keyword">const</span> lvalue reference of type ‘__gnu_cxx<span class="token double-colon punctuation">::</span>__normal_iterator<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">*</span><span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token operator">></span><span class="token operator">&amp;</span>’ to an rvalue of type ‘std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span><span class="token double-colon punctuation">::</span>iterator <span class="token punctuation">&#123;</span>aka __gnu_cxx<span class="token double-colon punctuation">::</span>__normal_iterator<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">*</span><span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token operator">></span><span class="token punctuation">&#125;</span>’
+<span class="token comment">/// 可见auto 解析成了std::vector&lt;int>::iterator</span>
+
+<span class="token comment">/// 元素返回的是左值</span>
+vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span><span class="token operator">&amp;&amp;</span> num <span class="token operator">=</span> <span class="token operator">*</span>vect<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 报错</span>
+invalid initialization of reference of type ‘std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span><span class="token operator">&amp;&amp;</span>’ from expression of type ‘<span class="token keyword">int</span>’</code></pre>
+
+<h4 id="swap"><a href="#swap" class="headerlink" title="swap"></a>swap</h4><p>现代的<code>swap</code>实现</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span> <span class="token keyword">void</span> <span class="token function">swap</span><span class="token punctuation">(</span>T<span class="token operator">&amp;</span> t1<span class="token punctuation">,</span> T<span class="token operator">&amp;</span> t2<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    T temp <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>t1<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// or T temp(std::move(t1));</span>
+    t1 <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>t2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    t2 <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>temp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li><p>vector的<code>swap</code>函数,<strong>只是对内部主要迭代器(指针)进行了swap, 不是拷贝内存</strong>。</p>
+<pre class="language-cppp" data-language="cppp"><code class="language-cppp">void _M_swap_data(_Vector_impl&amp; __x)
+&#123;
+  std::swap(_M_start, __x._M_start);
+  std::swap(_M_finish, __x._M_finish);
+  std::swap(_M_end_of_storage, __x._M_end_of_storage);
+&#125;</code></pre></li>
+<li><p><code>std::swap</code>位于<code>move.h</code>文件中, 实现如下</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span>
+<span class="token function">swap</span><span class="token punctuation">(</span>_Tp<span class="token operator">&amp;</span> __a<span class="token punctuation">,</span> _Tp<span class="token operator">&amp;</span> __b<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">// concept requirements</span>
+  <span class="token function">__glibcxx_function_requires</span><span class="token punctuation">(</span>_SGIAssignableConcept<span class="token operator">&lt;</span>_Tp<span class="token operator">></span><span class="token punctuation">)</span>
+
+  _Tp __tmp <span class="token operator">=</span> <span class="token function">_GLIBCXX_MOVE</span><span class="token punctuation">(</span>__a<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  __a <span class="token operator">=</span> <span class="token function">_GLIBCXX_MOVE</span><span class="token punctuation">(</span>__b<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  __b <span class="token operator">=</span> <span class="token function">_GLIBCXX_MOVE</span><span class="token punctuation">(</span>__tmp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">// ..其中</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name function">_GLIBCXX_MOVE</span><span class="token expression"><span class="token punctuation">(</span>__val<span class="token punctuation">)</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>__val<span class="token punctuation">)</span></span></span></code></pre></li>
+<li><p><code>std::move</code>将<strong>传入的参数</strong>转成右值(传入的左值, 右值, 左值引用, 右值引用均转为右值), 因此<code>__a = _GLIBCXX_MOVE(__b);</code>和<code>a = 1</code>差不多一个意思。类似于传指针<code>&amp;a</code>, 令<code>a=1</code>, 这样a的内容就修改了, 参数左值引用这里相当于传指针(神奇)。</p>
+</li>
+<li><p>这里<code>__a</code>理解成左值,而不是左值引用</p>
+</li>
+<li><p>可以理解为, 编译时把<code>_GLIBCXX_MOVE__b</code>当成<code>右值</code>看待, 把<code>右值赋给左值</code>。<code>__a</code>相当于传指针, 的<code>*a</code>, 自动解指针。</p>
+</li>
+</ul>
+<h4 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h4><ul>
+<li>注意一句话, <strong>引用绑定对象后, 不能再绑定其他对象</strong>, 这叫用其他对象修改引用绑定的值</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">    string str1<span class="token operator">=</span><span class="token string">"a"</span><span class="token punctuation">;</span>
+    string str3<span class="token operator">=</span><span class="token string">"b"</span><span class="token punctuation">;</span>
+    string <span class="token operator">&amp;</span>str2<span class="token operator">=</span>str1<span class="token punctuation">;</span>
+    <span class="token comment">/// 这句话不是str2绑定str3, 而是用str3改变str2所绑定的, 也就是str1</span>
+    <span class="token comment">/// 或者说str2地址不变, 里面的值用str3换了</span>
+    str2<span class="token operator">=</span>str3<span class="token punctuation">;</span>
+    cout <span class="token operator">&lt;&lt;</span> str2<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+    cout <span class="token operator">&lt;&lt;</span> str1<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+
+<span class="token comment">/// 输出</span>
+b
+b
+<span class="token comment">/// 同样适用于右值引用</span>
+    string<span class="token operator">&amp;&amp;</span> str4<span class="token operator">=</span><span class="token string">"a"</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 用"b"改变str4里面的值</span>
+    str4<span class="token operator">=</span><span class="token string">"b"</span><span class="token punctuation">;</span></code></pre>
+
+<ul>
+<li>引用和传参</li>
+</ul>
+<p>不论 左值引用 还是 右值引用 的在传参时, 被视为左值，但修改引用会连带修改引用值。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">Point <span class="token function">bar</span><span class="token punctuation">(</span>Point<span class="token operator">&amp;</span> val<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">//...</span>
+  val <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// val这里视为普通左值</span>
+  val<span class="token operator">++</span><span class="token punctuation">;</span>    <span class="token comment">// val一旦修改会影响引用值</span>
+  <span class="token keyword">return</span> val<span class="token punctuation">;</span>    <span class="token comment">// 这里返回左值</span>
+<span class="token punctuation">&#125;</span>
+
+Point b <span class="token operator">=</span> <span class="token function">bar</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// bar()返回的是左值, 如果是对象会有耗时的拷贝构造临时变量等</span>
+
+Point <span class="token function">bar</span><span class="token punctuation">(</span>Point<span class="token operator">&amp;</span> val<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">//...</span>
+  val <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// val这里视为普通左值</span>
+  val<span class="token operator">++</span><span class="token punctuation">;</span>    <span class="token comment">// val一旦修改会影响引用值</span>
+  <span class="token keyword">return</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 返回右值</span>
+<span class="token punctuation">&#125;</span>
+Point b <span class="token operator">=</span> <span class="token function">bar</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// 这样减少拷贝构造了, 只调用一个operator=()</span></code></pre>
+
+<ul>
+<li><strong>左值, 左值引用都可以绑定右值引用</strong>, 当然左值引用可以绑定左值, 左值也可以等于左值(对象是拷贝构造), 左值也可以等于左值引用, 左值引用也能绑定 左值, 传导</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">string<span class="token operator">&amp;&amp;</span> str4<span class="token operator">=</span><span class="token string">"a"</span><span class="token punctuation">;</span>
+str4<span class="token operator">=</span><span class="token string">"b"</span><span class="token punctuation">;</span>
+
+cout <span class="token operator">&lt;&lt;</span> str4<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+cout <span class="token operator">&lt;&lt;</span> str4<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+
+string str5 <span class="token operator">=</span> str4<span class="token punctuation">;</span> <span class="token comment">/// 左值绑定右值引用</span>
+string<span class="token operator">&amp;</span> str6 <span class="token operator">=</span> str4<span class="token punctuation">;</span>    <span class="token comment">/// 左值引用绑定右值引用</span>
+
+string str5 <span class="token operator">=</span> str2<span class="token punctuation">;</span>
+string<span class="token operator">&amp;</span> str6 <span class="token operator">=</span> str2<span class="token punctuation">;</span>
+str6 <span class="token operator">=</span> <span class="token string">"c"</span><span class="token punctuation">;</span>
+<span class="token comment">/// 以下全部输出c</span>
+cout <span class="token operator">&lt;&lt;</span> str6<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+cout <span class="token operator">&lt;&lt;</span>str2<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+cout <span class="token operator">&lt;&lt;</span>str1<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span></code></pre>
+<ul>
+<li><p><strong>左值能绑定右值, 左值引用不能绑定右值</strong></p>
+</li>
+<li><p>右值引用能绑定右值, <strong>但右值引用不能绑定左值或者左值引用</strong>, 右值引用也不能=右值引用。换句话说, <strong>右值引用只能绑定右值</strong></p>
+</li>
+</ul>
+<h4 id="std-move将参数转为右值"><a href="#std-move将参数转为右值" class="headerlink" title="std::move将参数转为右值"></a>std::move将参数转为右值</h4><ul>
+<li>对于左值引用而言, 左值引用可以绑定多个左值, 一旦一个左值引用修改, 其他都被影响</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">    <span class="token keyword">int</span> aa <span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span><span class="token operator">&amp;</span> bb <span class="token operator">=</span> a<span class="token punctuation">;</span>
+    <span class="token keyword">int</span><span class="token operator">&amp;</span> cc <span class="token operator">=</span> a<span class="token punctuation">;</span>
+    bb<span class="token operator">++</span><span class="token punctuation">;</span>
+    cout <span class="token operator">&lt;&lt;</span> cc<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+<span class="token comment">// 输出 2</span></code></pre>
+
+
+<ul>
+<li>利用<code>std::move</code>将参数转为右值这时候</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">t1 <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>t2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 等价于</span>
+T t1 <span class="token operator">=</span> t2   <span class="token comment">/// 注意如果t1是左值, 可能发生operator=操作符</span></code></pre>
+<p>注意<code>std::move</code>返回参数不能被左值引用接受</p>
+<ul>
+<li>更常用的是用右值引用接受<code>std::move</code>返回的结果</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> b <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span><span class="token operator">&amp;&amp;</span> c <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">;</span>
+c <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span>
+cout <span class="token operator">&lt;&lt;</span> b<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+
+<span class="token comment">/// 输出为4</span></code></pre>
+<p>但注意<strong>一旦c修改了值, b的值也跟着改变</strong>, 这类似于左值引用。</p>
+<ul>
+<li>那么右值引用根据什么找到右值, 应该是寻址, 右值也是存储在内存中(可以理解成全局变量), 肯定有地址。但注意右值一旦被释放, 右值引用也没有了。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">    cout <span class="token operator">&lt;&lt;</span> aa<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+    cout <span class="token operator">&lt;&lt;</span> <span class="token operator">&amp;</span>aa<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+
+    <span class="token keyword">int</span><span class="token operator">&amp;&amp;</span> bb <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    cout <span class="token operator">&lt;&lt;</span> bb<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+    cout <span class="token operator">&lt;&lt;</span> <span class="token operator">&amp;</span>bb<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+
+输出
+<span class="token number">1</span>
+<span class="token number">0x7fff4e2ffe18</span>
+<span class="token number">1</span>
+<span class="token number">0x7fff4e2ffe20</span></code></pre>
+
+<p><img src="../../assets/images/cpp/5.png" alt="avatar" loading="lazy"></p>
+<p>右值引用和左值的处理差不多感觉, 虽然<strong>右值引用可以理解成左值, 但是它不能绑定左值</strong>(右值引用是只能绑定右值的左值2333), 但右值引用可以被左值引用绑定。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> c<span class="token punctuation">;</span>
+<span class="token keyword">int</span> <span class="token operator">&amp;&amp;</span> d <span class="token operator">=</span> c<span class="token punctuation">;</span>
+<span class="token comment">// 编译失败</span>
+error<span class="token operator">:</span> cannot bind rvalue reference of type ‘<span class="token keyword">int</span><span class="token operator">&amp;&amp;</span>’ to lvalue of type ‘<span class="token keyword">int</span>’</code></pre>
+
+<ul>
+<li>以下<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span> <span class="token keyword">void</span> <span class="token function">swap</span><span class="token punctuation">(</span>T<span class="token operator">&amp;</span> t1<span class="token punctuation">,</span> T<span class="token operator">&amp;</span> t2<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    T temp <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>t1<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// or T temp(std::move(t1));</span>
+    t1 <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>t2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    t2 <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>temp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+更多是防止中间临时变量生成等不必要的拷贝, 但注意将<code>std::move(t1)</code>右值赋给左值<code>t2</code>依然要运行<code>operator=</code>, 这和<code>int a = 1</code>差不多。对内置类型，如果左值引用, 右值引用相比于传值效率也没啥提升。所以<code>vector</code>使用</li>
+</ul>
+<pre class="language-none"><code class="language-none">void _M_swap_data(_Vector_impl&amp; __x)
+&#123;
+  std::swap(_M_start, __x._M_start);
+  std::swap(_M_finish, __x._M_finish);
+  std::swap(_M_end_of_storage, __x._M_end_of_storage);
+&#125;</code></pre>
+<p>而不是</p>
+<pre class="language-none"><code class="language-none">vector&lt;int&gt; b;
+vector&lt;int&gt; a &#x3D; std::move(b);</code></pre>
+<p>因为这照样要拷贝。。。</p>
+<ul>
+<li><p><strong>可以看出所谓右值引用, 左值引用都是编译器的行为</strong>, 例如编译器某种情况下将右值引用看做左值并进行编译, 运行期它就是左值。</p>
+</li>
+<li><p>临时对象的概念也是编译器做的事, 不排除编译器将临时对象用右值引用处理避免拷贝构造来提升效率。</p>
+</li>
+<li><p><code>std::move</code>只是将参数转为了右值, 使用其效率的提升可能是降低了中间临时变量生成, 但不能杜绝拷贝。右值引用<code>&amp;&amp;</code>是真滴可以大大提升效率所以用右值引用接收<code>std::move</code>。</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// std::make_unique&lt;int>(1)返回右值, p是左值</span>
+<span class="token keyword">auto</span> p <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">make_unique</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">/// std::move可以将左值转为右值</span>
+<span class="token comment">/// q是个左值,</span>
+<span class="token keyword">auto</span> q <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>p<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">assert</span><span class="token punctuation">(</span>p <span class="token operator">==</span> <span class="token keyword">nullptr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// OK: reset to default</span>
+p<span class="token punctuation">.</span><span class="token function">reset</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token keyword">int</span><span class="token punctuation">&#123;</span><span class="token number">2</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// or p = std::make_unique&lt;int>(2);</span>
+<span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">*</span>p <span class="token operator">==</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>       <span class="token comment">// OK: reset to int*(2</span></code></pre>
+
+<h4 id="移动构造函数"><a href="#移动构造函数" class="headerlink" title="移动构造函数"></a>移动构造函数</h4><ul>
+<li>移动构造函数提升的效率来自传参不同拷贝构造或者临时对象, 函数内复杂度没有什么提升。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token function">MemoryBlock</span><span class="token punctuation">(</span>MemoryBlock<span class="token operator">&amp;&amp;</span> other<span class="token punctuation">)</span> <span class="token keyword">noexcept</span>
+   <span class="token operator">:</span> <span class="token function">_data</span><span class="token punctuation">(</span><span class="token keyword">nullptr</span><span class="token punctuation">)</span>
+   <span class="token punctuation">,</span> <span class="token function">_length</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+   std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"In MemoryBlock(MemoryBlock&amp;&amp;). length = "</span>
+             <span class="token operator">&lt;&lt;</span> other<span class="token punctuation">.</span>_length <span class="token operator">&lt;&lt;</span> <span class="token string">". Moving resource."</span> <span class="token operator">&lt;&lt;</span> std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span>
+
+   <span class="token comment">// Copy the data pointer and its length from the</span>
+   <span class="token comment">// source object.</span>
+   <span class="token comment">/// other当前是个右值, 但可以直接调用other._data</span>
+   _data <span class="token operator">=</span> other<span class="token punctuation">.</span>_data<span class="token punctuation">;</span>
+   _length <span class="token operator">=</span> other<span class="token punctuation">.</span>_length<span class="token punctuation">;</span>
+
+   <span class="token comment">// Release the data pointer from the source object so that</span>
+   <span class="token comment">// the destructor does not free the memory multiple times.</span>
+   other<span class="token punctuation">.</span>_data <span class="token operator">=</span> <span class="token keyword">nullptr</span><span class="token punctuation">;</span>
+   other<span class="token punctuation">.</span>_length <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// Move assignment operator.</span>
+MemoryBlock<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">=</span><span class="token punctuation">(</span>MemoryBlock<span class="token operator">&amp;&amp;</span> other<span class="token punctuation">)</span> <span class="token keyword">noexcept</span>
+<span class="token punctuation">&#123;</span>
+   std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"In operator=(MemoryBlock&amp;&amp;). length = "</span>
+             <span class="token operator">&lt;&lt;</span> other<span class="token punctuation">.</span>_length <span class="token operator">&lt;&lt;</span> <span class="token string">"."</span> <span class="token operator">&lt;&lt;</span> std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span>
+
+    <span class="token comment">/// other当前是个右值object, 因此取地址和this指针比较</span>
+   <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span> <span class="token operator">!=</span> <span class="token operator">&amp;</span>other<span class="token punctuation">)</span>
+   <span class="token punctuation">&#123;</span>
+      <span class="token comment">// Free the existing resource.</span>
+      <span class="token keyword">delete</span><span class="token punctuation">[</span><span class="token punctuation">]</span> _data<span class="token punctuation">;</span>
+
+      <span class="token comment">// Copy the data pointer and its length from the</span>
+      <span class="token comment">// source object.</span>
+      _data <span class="token operator">=</span> other<span class="token punctuation">.</span>_data<span class="token punctuation">;</span>
+      _length <span class="token operator">=</span> other<span class="token punctuation">.</span>_length<span class="token punctuation">;</span>
+
+      <span class="token comment">// Release the data pointer from the source object so that</span>
+      <span class="token comment">// the destructor does not free the memory multiple times.</span>
+      other<span class="token punctuation">.</span>_data <span class="token operator">=</span> <span class="token keyword">nullptr</span><span class="token punctuation">;</span>
+      other<span class="token punctuation">.</span>_length <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+   <span class="token punctuation">&#125;</span>
+   <span class="token keyword">return</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li><code>std::move</code>可以配合移动构造函数使用, 如下</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token keyword">operator</span><span class="token operator">=</span><span class="token punctuation">(</span><span class="token keyword">const</span> RValue<span class="token operator">&amp;&amp;</span> a<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">/// 对a.source处理转为右值</span>
+		sources <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>a<span class="token punctuation">.</span>sources<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		cout<span class="token operator">&lt;&lt;</span><span class="token string">"&amp;&amp; =="</span><span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span></code></pre>
+<p>使用<code>std::move</code>是编译期行为, 不会影响运行效率(太强了)</p>
+<h4 id="std-move的实现"><a href="#std-move的实现" class="headerlink" title="std::move的实现"></a>std::move的实现</h4><ul>
+<li><code>std::move</code>就是将传入的参数(包括左值, 右值, 左值引用, 右值引用), 转为右值, 是编译期行为, 不影响运行效率</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">typename</span> <span class="token class-name">remove_reference</span><span class="token operator">&lt;</span>T<span class="token operator">></span><span class="token double-colon punctuation">::</span>type<span class="token operator">&amp;&amp;</span> <span class="token function">move</span><span class="token punctuation">(</span>T<span class="token operator">&amp;&amp;</span> t<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token keyword">static_cast</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">remove_reference</span><span class="token operator">&lt;</span>T<span class="token operator">></span><span class="token double-colon punctuation">::</span>type <span class="token operator">&amp;&amp;</span><span class="token operator">></span><span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li><strong>函数返回值类型等价于调用者接收返回值的类型</strong>, 这里返回值类型为<code>&amp;&amp;</code>右值引用, 因此必然有</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">remove_reference<span class="token operator">&lt;</span>T<span class="token operator">></span><span class="token double-colon punctuation">::</span>type<span class="token operator">&amp;&amp;</span> x <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>y<span class="token punctuation">)</span>
+
+<span class="token comment">// 函数内部先用返回值进行接收</span>
+remove_reference<span class="token operator">&lt;</span>T<span class="token operator">></span><span class="token double-colon punctuation">::</span>type<span class="token operator">&amp;&amp;</span> x_ <span class="token operator">=</span> <span class="token keyword">static_cast</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">remove_reference</span><span class="token operator">&lt;</span>T<span class="token operator">></span><span class="token double-colon punctuation">::</span>type <span class="token operator">&amp;&amp;</span><span class="token operator">></span><span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">/// 返回值再递给调用者</span>
+remove_reference<span class="token operator">&lt;</span>T<span class="token operator">></span><span class="token double-colon punctuation">::</span>type<span class="token operator">&amp;&amp;</span> x <span class="token operator">=</span> x_<span class="token punctuation">;</span>
+<span class="token comment">/// 因此最好函数返回值和接收者类型一致</span></code></pre>
+
+<ul>
+<li>不难理解为什么返回右值了, 2333<code>右值引用只能接受右值</code>。effective modern c++的原话是, <strong>保证了std::move返回的真的是右值引用, 这很重要, 因为函数返回的右值引用是右值, 因此std::move将它的参数转换为右值, 这就是它的全部作用。</strong>, </li>
+</ul>
+<p>如下</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> b <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span><span class="token operator">&amp;&amp;</span> a <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">&amp;&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span>
+a<span class="token operator">++</span><span class="token punctuation">;</span>
+cout <span class="token operator">&lt;&lt;</span> b<span class="token operator">&lt;&lt;</span>endl<span class="token punctuation">;</span>
+
+<span class="token comment">/// 输出4</span>
+<span class="token comment">/// 这时候能被int&amp;&amp; a接受, static_cast&lt;int&amp;&amp;>( b)就是个右值</span>
+<span class="token comment">/// 右值引用只能接受右值, int&amp;&amp; d = a;会报错</span>
+
+<span class="token keyword">int</span><span class="token operator">&amp;</span> a <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">&amp;&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/// 报错如下</span>
+
+cannot bind non<span class="token operator">-</span><span class="token keyword">const</span> lvalue reference of type ‘<span class="token keyword">int</span><span class="token operator">&amp;</span>’ to an rvalue of type ‘<span class="token keyword">int</span>’ <span class="token keyword">int</span><span class="token operator">&amp;</span> a <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">&amp;&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">/// 左值引用是能绑定右值引用, int&amp; d = a;正常。说明</span>
+<span class="token comment">/// static_cast&lt;int&amp;&amp;>( b)将b转成了一个右值</span>
+
+
+<span class="token keyword">int</span> a <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">&amp;&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 正常运行,输出b为3</span>
+</code></pre>
+<h4 id="static-cast"><a href="#static-cast" class="headerlink" title="static_cast"></a>static_cast</h4><ul>
+<li>static_cast转移了左值右值!</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> b <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+<span class="token comment">/// b变成了一个右值</span>
+<span class="token keyword">int</span> a <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">//正常</span>
+<span class="token keyword">int</span><span class="token operator">&amp;</span> a <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">//报错</span>
+如上<span class="token punctuation">,</span> <span class="token keyword">static_cast</span><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span>将左值b转移成了右值<span class="token punctuation">,</span> 可赋给<span class="token keyword">int</span> a<span class="token punctuation">;</span>
+
+<span class="token comment">/// 如下, b还是一个左值</span>
+<span class="token keyword">int</span> a <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">//正常</span>
+<span class="token keyword">int</span><span class="token operator">&amp;</span> a <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">//正常</span>
+
+<span class="token comment">/// b又变成了一个右值</span>
+<span class="token keyword">int</span> a <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">&amp;&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 正常运行,输出b为3</span>
+<span class="token keyword">int</span><span class="token operator">&amp;</span> a <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">&amp;&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 报错</span>
+<span class="token keyword">int</span><span class="token operator">&amp;&amp;</span> a <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">&amp;&amp;</span><span class="token operator">></span></span></span><span class="token punctuation">(</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 正常运行,输出b为4</span></code></pre>
+<ul>
+<li>原来关键在<code>static_cast</code>啊, 这老哥不但转了类型, 还转了左值右值。</li>
+</ul>
+<pre class="language-none"><code class="language-none">int fun() &#123;
+    int* a &#x3D; b;
+    return a;   &#x2F;&#x2F; 就算a是指针, 但以返回类型int为准
+&#125;
+
+double b&#x3D; fun();    &#x2F;&#x2F; b与int返回类型应该一致
+</code></pre>
+<ul>
+<li><p><strong><code>static&lt;T&gt;(a)</code>并不是将<code>a</code>转为T, 而是转为能以<code>T</code>为左值接受的<code>右值</code></strong>, 对<code>static&lt;T&amp;&gt;(a)</code>来说, 返回能被左值引用<code>T&amp;</code>接受的左值(左值引用是左值, 左值自然就是等号右边的右值了)。</p>
+</li>
+<li><p>显然<code>static_cast&lt;typename remove_reference&lt;T&gt;::type &amp;&amp;&gt;(t)</code>将t转为能被<code>typename remove_reference&lt;T&gt;::type &amp;&amp;</code>接受的右值。</p>
+</li>
+<li><p><strong>static_cast&lt;T&amp;&amp;&gt;(b) 可以将 T, T&amp;, T&amp;&amp; 类型的b全部转为右值</strong>, 真滴牛批, 这才是核心, 不是人云既云的<code>std::move</code></p>
+</li>
+<li><p>所谓左值右值, 只是编译器的定义, 只是左值对象赋给左值, C++会调用拷贝构造, 临时对象等操作(这是编译器的选择), 但右值对象赋给左值只需要一次<code>opeartor=</code>, 可以提高效率。这不意味着一个<code>std::move</code>就完事了, 还需要对对象内部的指针进行操作, 避免拷贝(例如vector交换指针<code>begin()</code>. 和<code>end()</code>而不是拷贝), 这些不是<code>std::move</code>解决的, 可以说<code>std::swap</code>使用了<code>std::move</code>而不等于<code>std::move1</code>。</p>
+</li>
+</ul>
+<p>———以上均在g++7.5测试</p>
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/cpp%E8%BF%9B%E9%98%B6/2021-09-20-%E7%BA%A2%E9%BB%91%E6%A0%91%E5%92%8Cmap/" rel="prev" title="红黑树和STL"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">红黑树和STL</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E6%95%B0%E5%AD%A6/2021-09-18-%E5%AF%86%E7%A0%81%E5%AD%A6%E7%AE%80%E8%A6%81/" rel="next" title="密码学简要"><span class="post-nav-text">密码学简要</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/cpp%E8%BF%9B%E9%98%B6/2021-09-19-%E6%B7%B1%E5%85%A5%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

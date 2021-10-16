@@ -1,0 +1,765 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>pytorch | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="pytorch基本知识创建和操作Tensor import torch print(&quot;版本号为: &amp;#123;&amp;#125;&quot;.format(torch.__version__))  tensor_a &#x3D; torch.arange(0,12) print (tensor_a)  print (&quot;张量存储位置: &amp;#123;&amp;#125;&quot;.format">
+<meta property="og:type" content="article">
+<meta property="og:title" content="pytorch">
+<meta property="og:url" content="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-15-pytorch%E5%92%8Ctensorflow/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="pytorch基本知识创建和操作Tensor import torch print(&quot;版本号为: &amp;#123;&amp;#125;&quot;.format(torch.__version__))  tensor_a &#x3D; torch.arange(0,12) print (tensor_a)  print (&quot;张量存储位置: &amp;#123;&amp;#125;&quot;.format">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-07-15T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-15T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="机器学习">
+<meta name="twitter:card" content="summary"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#pytorch"><span class="toc-number">1.</span> <span class="toc-text">pytorch</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86"><span class="toc-number">1.1.</span> <span class="toc-text">基本知识</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A8%A1%E5%9E%8B%E6%9E%84%E9%80%A0"><span class="toc-number">2.</span> <span class="toc-text">模型构造</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92"><span class="toc-number">2.1.</span> <span class="toc-text">线性回归</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#softmax%E6%A8%A1%E5%9E%8B"><span class="toc-number">2.2.</span> <span class="toc-text">softmax模型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BB%A7%E6%89%BFMudule%E7%B1%BB%E6%9D%A5%E6%9E%84%E9%80%A0%E6%A8%A1%E5%9E%8B"><span class="toc-number">2.3.</span> <span class="toc-text">继承Mudule类来构造模型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#GPU%E8%AE%A1%E7%AE%97"><span class="toc-number">2.4.</span> <span class="toc-text">GPU计算</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#RNN"><span class="toc-number">2.5.</span> <span class="toc-text">RNN</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6"><span class="toc-number">2.6.</span> <span class="toc-text">注意力机制</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%96%E7%A0%81%E5%99%A8%E5%92%8C%E8%A7%A3%E7%A0%81%E5%99%A8"><span class="toc-number">2.7.</span> <span class="toc-text">编码器和解码器</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-15-pytorch%E5%92%8Ctensorflow/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">pytorch<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/编程语言/2021-07-15-pytorch和tensorflow.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-07-16 00:00:00" itemprop="dateCreated datePublished" datetime="2021-07-16T00:00:00+08:00">2021-07-16</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">4.2k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">21m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/language/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">language</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/python/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">python</span></a><a class="tag-item" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">机器学习</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h3 id="pytorch"><a href="#pytorch" class="headerlink" title="pytorch"></a>pytorch</h3><h4 id="基本知识"><a href="#基本知识" class="headerlink" title="基本知识"></a>基本知识</h4><p>创建和操作Tensor</p>
+<pre class="language-py" data-language="py"><code class="language-py">import torch
+print(&quot;版本号为: &#123;&#125;&quot;.format(torch.__version__))
+
+tensor_a &#x3D; torch.arange(0,12)
+print (tensor_a)
+
+print (&quot;张量存储位置: &#123;&#125;&quot;.format(tensor_a.device))
+
+tensor([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
+张量存储位置: cpu
+
+tensor_a &#x3D; torch.arange(0,12)
+print (tensor_a)
+
+print (&quot;张量存储位置: &#123;&#125;&quot;.format(tensor_a.device))
+
+print (tensor_a.shape)
+
+print (torch.zeros((2,3,4)))
+
+print (torch.tensor([[1,2],[3,4]]))
+
+print (torch.randn((3,4)))
+
+torch.Size([12])
+tensor([[[0., 0., 0., 0.],
+         [0., 0., 0., 0.],
+         [0., 0., 0., 0.]],
+
+        [[0., 0., 0., 0.],
+         [0., 0., 0., 0.],
+         [0., 0., 0., 0.]]])
+tensor([[1, 2],
+        [3, 4]])
+tensor([[-0.7588, -0.7888, -0.3240, -0.1797],
+        [ 0.2589,  0.0594,  1.4420, -0.0355],
+        [-0.7512,  0.7934,  2.4866, -0.5525]])
+
+X &#x3D; torch.Tensor([[1,2],[3,4],[5,6]])
+Y &#x3D; torch.Tensor([[11,12],[13,14],[15,16]])
+Z &#x3D; torch.Tensor([[2,3,4],[5,6,7]])
+
+X+Y
+X*Y 
+X.float()&#x2F;Y.float()
+torch.exp(Y.float())
+X @ Z  # 矩阵乘法
+
+torch.cat((X, Y), 0)
+
+tensor([[ 1.,  2.],
+        [ 3.,  4.],
+        [ 5.,  6.],
+        [11., 12.],
+        [13., 14.],
+        [15., 16.]])
+
+条件判别式，得到对应位置元素为0或1的Tensor
+X &#x3D;&#x3D; Y
+tensor([[False, False],
+        [False, False],
+        [False, False]])
+
+torch.sum(X)
+tensor(21.)
+
+item() 函数将单元素的tensor转换为标量, norm范数
+torch.norm(X).item()
+
+.viem() 相当于numpy的reshape
+
+当然tensor也是可用切片的</code></pre>
+
+<span id="more"></span>
+
+<p>reshape和view</p>
+<p>torch的view()与reshape()方法都可以用来重塑tensor的shape，区别就是使用的条件不一样。view()方法只适用于满足连续性条件的tensor，并且该操作不会开辟新的内存空间，只是产生了对原存储空间的一个新别称和引用，返回值是视图。而reshape()方法的返回值既可以是视图，也可以是副本，当满足连续性条件时返回view，否则返回副本</p>
+<p>tensor与numpy转换 </p>
+<pre class="language-py" data-language="py"><code class="language-py">import numpy as np
+p &#x3D; np.ones((2,3))
+d &#x3D; torch.from_numpy(p)
+
+d.numpy()</code></pre>
+
+<p>自动求梯度</p>
+<pre class="language-py" data-language="py"><code class="language-py">
+import torch
+from torch import autograd
+
+x &#x3D; torch.arange(4).float()
+
+
+x.requires_grad_(True)
+
+y &#x3D; 2*x@x.t()
+
+# y - 2 * torch.dot(x, x.t())
+y
+
+y.backward()
+
+print (x.grad)
+
+# 结果
+tensor([ 0.,  4.,  8., 12.])
+
+2*x*x 对x的梯度为4x, 结果为正确的</code></pre>
+
+<h3 id="模型构造"><a href="#模型构造" class="headerlink" title="模型构造"></a>模型构造</h3><h4 id="线性回归"><a href="#线性回归" class="headerlink" title="线性回归"></a>线性回归</h4><pre class="language-py" data-language="py"><code class="language-py"># 线性回归，数据集准备
+import matplotlib.pyplot as plt 
+import random
+import numpy as np
+import torch 
+
+num_inputs &#x3D; 2
+num_examples &#x3D; 1000
+true_w &#x3D; [2, -3.4] 
+true_b &#x3D; 4.2 
+features &#x3D; torch.randn(num_examples, num_inputs, dtype&#x3D;torch.float32) 
+labels &#x3D; true_w[0] * features[:, 0] + true_w[1] * features[:,1]+true_b
+labels +&#x3D; torch.tensor(np.random.normal(0, 0.01, size&#x3D;labels.size()), dtype&#x3D;torch.float32)
+
+features[0], labels[0]、
+
+from IPython import display
+
+
+def use_svg_display():
+    display.set_matplotlib_formats(&#39;svg&#39;)
+
+def set_figsize(figsize&#x3D;(3.5,2.5)):
+    use_svg_display()
+    plt.rcParams[&#39;figure.figsize&#39;] &#x3D; figsize
+
+set_figsize()
+
+plt.scatter(features[:, 1].numpy(), labels.numpy(), 1)
+
+# 形成一个batch
+def data_iter(batch_size, features, labels):
+    num_examples &#x3D; len(features)
+    indices&#x3D;list(range(num_examples))
+    # 样本读取顺序随机, 索引
+    random.shuffle(indices)
+    for i in range(0, num_examples, batch_size):
+        # 最后一次可能不够一个batch
+        j &#x3D; torch.LongTensor(indices[i : min(i+batch_size, num_examples)])
+
+        yield features.index_select(0, j), labels.index_select(0, j)
+
+# 一个batch
+batch_size &#x3D; 10
+for X, y in data_iter(batch_size, features, labels):
+    print (X ,y)
+    break
+# X 是一个batch的数据, batchsize*2的矩阵
+# w 是2*1的tensor
+def linreg(X, w, b):
+    return torch.mm(X, w) + b
+
+def square_loss(y_hat, y):
+    return (y_hat - y.view(y_hat.size()))**2
+# 优化算法
+def sgd(params, lr, batch_size):
+    for param in params:
+        # 自动求梯度模块是批量样本的梯度和，除以batch大小作为batch梯度平均值
+        param.data -&#x3D; lr*param.grad &#x2F; batch_size
+
+# 初始化参数
+w &#x3D; torch.tensor(np.random.normal(0, 0.01, (num_inputs, 1)), dtype&#x3D;torch.float32)
+b &#x3D; torch.zeros(1, dtype&#x3D;torch.float32)
+
+w.requires_grad_(requires_grad &#x3D; True)
+b.requires_grad_(requires_grad&#x3D;True)
+
+
+lr &#x3D; 0.03
+num_epochs &#x3D; 3
+net &#x3D; linreg
+loss &#x3D; square_loss
+
+for epoch in range(num_epochs):
+    for X, y in data_iter(batch_size, features, labels):
+        # 关于X, y的损失。一次求一个batch_size
+        # loss返回batchsize的行向量，加个sum是损失和
+        l &#x3D; loss(net(X, w, b), y).sum()
+        l.backward() # 参数求梯度
+        sgd([w, b], lr, batch_size)
+
+        # 梯度清零
+        w.grad.data.zero_()
+        b.grad.data.zero_()
+    train_l &#x3D; loss(net(features, w, b), labels)
+    print (&#39;epoch %d, loss %f&#39; % (epoch+1, train_l.mean().item()))
+</code></pre>
+
+<p>模块型写法</p>
+<pre class="language-py" data-language="py"><code class="language-py">num_inputs &#x3D; 2
+num_examples &#x3D; 1000
+true_w &#x3D; [2, -3.4]
+true_b &#x3D; 4.2
+
+features &#x3D; torch.tensor(
+    np.random.normal(0, 1, (num_examples, num_inputs)),
+    dtype &#x3D; torch.float32
+)
+labels &#x3D; true_w[0] * features[:, 0] + true_w[1] * features[:, 1] + true_b
+labels +&#x3D; torch.tensor(np.random.normal(0, 0.01, size&#x3D;labels.size()), dtype&#x3D;torch.float32)
+
+
+import torch.utils.data as Data
+
+batch_size &#x3D; 10
+# 特征标签组合
+dataset &#x3D; Data.TensorDataset(features, labels)
+# 随机选取小批量
+data_iter &#x3D; Data.DataLoader(dataset, batch_size, shuffle&#x3D;True)
+
+from torch import nn 
+class LinearNet(nn.Module):
+    def __init__(self, n_feature):
+        super(LinearNet, self).__init__()
+        self.linear &#x3D; nn.Linear(n_feature, 1)
+
+    def forward(self, x):
+        y &#x3D; self.linear(x)
+        return y
+net &#x3D; LinearNet(num_inputs)
+
+print (net)
+
+
+net2 &#x3D; nn.Sequential()
+net2.add_module(&#39;linear&#39;, nn.Linear(num_inputs, 1))
+
+# net.parameters()可查看模型所有可学习参数，函数返回一个生成器
+for param in net.parameters():
+    print (param)
+
+# 初始化模型参数
+from torch.nn import init
+
+init.normal_(net.linear.weight, mean&#x3D;0, std&#x3D;0.01)
+init.constant_(net.linear.bias, val&#x3D;0)
+
+loss &#x3D; nn.MSELoss()
+
+import torch.optim as optim
+
+optimizer &#x3D; optim.SGD(net.parameters(), lr&#x3D;0.03)
+print (optimizer)
+
+num_epoch &#x3D; 3
+for epoch in range(1, num_epochs+1):
+    for X, y in data_iter:
+        output &#x3D; net(X)
+        l &#x3D; loss(output, y.view(-1, 1))
+        # 梯度清零
+        optimizer.zero_grad()
+        # 反向传播得到梯度
+        l.backward()
+        # 更新参数
+        optimizer.step()
+    print (&#39;epoch %d, loss %f&#39; % (epoch+1, train_l.mean().item()))</code></pre>
+<p>其中<code>nn.Sequential</code>可用看作有序容器，网络层将根据传入<code>Sequential</code>的顺序依次添加入网络层中，给定输入数据时，容器某一层将依次计算并输出作为下一层输入。</p>
+<h4 id="softmax模型"><a href="#softmax模型" class="headerlink" title="softmax模型"></a>softmax模型</h4><p>softmax回归和线性回归一样将输入特征与权重做线性累加，但不同之处是输出值个数等于标签里的类别数。也叫做全连接层。</p>
+<p>softmax运算将输出值变成正且和为1的概率分布。</p>
+<h4 id="继承Mudule类来构造模型"><a href="#继承Mudule类来构造模型" class="headerlink" title="继承Mudule类来构造模型"></a>继承Mudule类来构造模型</h4><p>Module类是nn模块提供的模型构造类，是所有神经网络模块的基类</p>
+<pre class="language-py" data-language="py"><code class="language-py">import torch
+from torch import nn
+class MLP(nn.Module):
+    def __init__(self, **kwargs):
+        super(MLP, self).__init__(**kwargs)
+
+        self.hidden &#x3D; nn.Linear(784, 256)
+        self.act &#x3D; nn.Relu()
+        self.output &#x3D; nn.Linear(256,10)
+    def forward(self, x):
+        a &#x3D; self.act(self.hidden(x))
+        return self.output(a)
+
+x &#x3D; torch.randn(2, 784)
+net &#x3D; MLP()
+print (net)
+net(x)</code></pre>
+<p><code>net(x)</code>会调用MLP继承自Mudule类的<code>__call__</code>函数，该函数调用MLP定义的forward函数来完成前向计算。</p>
+<h4 id="GPU计算"><a href="#GPU计算" class="headerlink" title="GPU计算"></a>GPU计算</h4><pre class="language-py" data-language="py"><code class="language-py">a &#x3D; torch.tensor([1,2,3], device &#x3D; torch.device(&#39;cuda:1&#39;))
+
+import os
+os.environ[&quot;CUDA_VISIBLE_DEVICES&quot;] &#x3D; &quot;2&quot;
+
+device &#x3D; torch.device(
+    &#39;cuda&#39; if torch.cuda.is_available() else &#39;cpu&#39;
+)
+
+cuda_gpu &#x3D; torch.cuda.is_available()
+if(cuda_gpu):
+    net &#x3D; torch.nn.DataParallel(net).cuda()</code></pre>
+<p>注意存储在不同位置的数据不能直接计算，不同GPU的数据也不能直接计算。pytorch要求所有输入数据都在内存或者同一块显卡的显存上。 device=’cpu’说明Tensor存储在内存上。</p>
+<h4 id="RNN"><a href="#RNN" class="headerlink" title="RNN"></a>RNN</h4><pre class="language-py" data-language="py"><code class="language-py">import time
+import math
+import numpy as np
+import torch
+from torch import nn, optim
+import torch.nn.functional as F
+
+import sys
+sys.path.append(&quot;..&quot;) 
+import d2lzh_pytorch as d2l
+device &#x3D; torch.device(&#39;cuda&#39; if torch.cuda.is_available() else &#39;cpu&#39;)
+
+print(torch.__version__)
+print(device)
+
+(corpus_indices, char_to_idx, idx_to_char, vocab_size) &#x3D; d2l.load_data_jay_lyrics()
+
+# one-hot编码
+def one_hot(x, n_class, dtype&#x3D;torch.float32): 
+    # X shape: (batch), output shape: (batch, n_class)
+    x &#x3D; x.long()
+    res &#x3D; torch.zeros(x.shape[0], n_class, dtype&#x3D;dtype, device&#x3D;x.device)
+    # scatter_(dim, index, src)
+    # dim 改数据的维度， 索引， 替换值
+    res.scatter_(1, x.view(-1, 1), 1)
+    return res
+    
+x &#x3D; torch.tensor([0, 2])
+one_hot(x, vocab_size)
+
+def to_onehot(X, n_class):  
+    # X shape: (batch, seq_len), output: seq_len elements of (batch, n_class)
+    return [one_hot(X[:, i], n_class) for i in range(X.shape[1])]
+
+X &#x3D; torch.arange(10).view(2, 5)
+inputs &#x3D; to_onehot(X, vocab_size)
+print(len(inputs), inputs[0].shape)
+# 输出
+5 torch.Size([2, 1027]) torch.Size([2, 256])
+
+# 2*5 -&gt; 5*2*256
+# 尺寸变化 batch_size * seq_len -&gt;  seq_len * batch * vocab_size
+# num_inputs &#x3D; vocab_size
+
+num_inputs, num_hiddens, num_outputs &#x3D; vocab_size, 256, vocab_size
+print(&#39;will use&#39;, device)
+
+def get_params():
+    def _one(shape):
+        ts &#x3D; torch.tensor(np.random.normal(0, 0.01, size&#x3D;shape), device&#x3D;device, dtype&#x3D;torch.float32)
+        return torch.nn.Parameter(ts, requires_grad&#x3D;True)
+
+    # 隐藏层参数
+    W_xh &#x3D; _one((num_inputs, num_hiddens))
+    W_hh &#x3D; _one((num_hiddens, num_hiddens))
+    b_h &#x3D; torch.nn.Parameter(torch.zeros(num_hiddens, device&#x3D;device, requires_grad&#x3D;True))
+    # 输出层参数
+    W_hq &#x3D; _one((num_hiddens, num_outputs))
+    b_q &#x3D; torch.nn.Parameter(torch.zeros(num_outputs, device&#x3D;device, requires_grad&#x3D;True))
+    return nn.ParameterList([W_xh, W_hh, b_h, W_hq, b_q])
+
+# 初始化
+def init_rnn_state(batch_size, num_hiddens, device):
+    return (torch.zeros((batch_size, num_hiddens), device&#x3D;device))
+
+def rnn(inputs, state, params):
+    # inputs和outputs皆为num_steps个形状为(batch_size, vocab_size)的矩阵， 参数
+    W_xh, W_hh, b_h, W_hq, b_q &#x3D; params
+    H, &#x3D; state
+    outputs &#x3D; []
+    for X in inputs:
+        # 处理每一个seq字符
+        # batch_size * hidden_size
+        H &#x3D; torch.tanh(torch.matmul(X, W_xh) + torch.matmul(H, W_hh) + b_h)
+        Y &#x3D; torch.matmul(H, W_hq) + b_q
+        outputs.append(Y)
+    # seq_len * batch_size * num_outputs(vocab_size)
+    return outputs, (H,)
+
+# batch_size * hidden_size
+# input seq_len * batch * vocab_size
+state &#x3D; init_rnn_state(X.shape[0], num_hiddens, device)
+inputs &#x3D; to_onehot(X.to(device), vocab_size)
+params &#x3D; get_params()
+outputs, state_new &#x3D; rnn(inputs, state, params)
+print(len(outputs), outputs[0].shape, state_new[0].shape)
+
+# 输出
+5 torch.Size([2, 1027]) torch.Size([2, 256])
+
+# 裁剪梯度
+def grad_clipping(params, theta, device):
+    norm &#x3D; torch.tensor([0.0], device&#x3D;device)
+    for param in params:
+        norm +&#x3D; (param.grad.data ** 2).sum()
+    norm &#x3D; norm.sqrt().item()
+    if norm &gt; theta:
+        for param in params:
+            param.grad.data *&#x3D; (theta &#x2F; norm)
+# 预测
+def predict_rnn(prefix, num_chars, rnn, params, init_rnn_state,
+                num_hiddens, vocab_size, device, idx_to_char, char_to_idx):
+    state &#x3D; init_rnn_state(1, num_hiddens, device)
+    output &#x3D; [char_to_idx[prefix[0]]]
+    for t in range(num_chars + len(prefix) - 1):
+        # 将上一时间步的输出作为当前时间步的输入
+        X &#x3D; to_onehot(torch.tensor([[output[-1]]], device&#x3D;device), vocab_size)
+        # 计算输出和更新隐藏状态
+        (Y, state) &#x3D; rnn(X, state, params)
+        # 下一个时间步的输入是prefix里的字符或者当前的最佳预测字符
+        if t &lt; len(prefix) - 1:
+            output.append(char_to_idx[prefix[t + 1]])
+        else:
+            output.append(int(Y[0].argmax(dim&#x3D;1).item()))
+    return &#39;&#39;.join([idx_to_char[i] for i in output])
+
+predict_rnn(&#39;分开&#39;, 10, rnn, params, init_rnn_state, num_hiddens, vocab_size,device, idx_to_char, char_to_idx)
+
+&#39;分开养近朋身倒爽抱疑棒邻&#39;
+
+def train_and_predict_rnn(rnn, get_params, init_rnn_state, num_hiddens,
+                          vocab_size, device, corpus_indices, idx_to_char,
+                          char_to_idx, is_random_iter, num_epochs, num_steps,
+                          lr, clipping_theta, batch_size, pred_period,
+                          pred_len, prefixes):
+    if is_random_iter:
+        data_iter_fn &#x3D; d2l.data_iter_random
+    else:
+        data_iter_fn &#x3D; d2l.data_iter_consecutive
+    params &#x3D; get_params()
+    loss &#x3D; nn.CrossEntropyLoss()
+
+    for epoch in range(num_epochs):
+        if not is_random_iter:  # 如使用相邻采样，在epoch开始时初始化隐藏状态
+            state &#x3D; init_rnn_state(batch_size, num_hiddens, device)
+        l_sum, n, start &#x3D; 0.0, 0, time.time()
+        data_iter &#x3D; data_iter_fn(corpus_indices, batch_size, num_steps, device)
+        for X, Y in data_iter:
+            if is_random_iter:  # 如使用随机采样，在每个小批量更新前初始化隐藏状态
+                state &#x3D; init_rnn_state(batch_size, num_hiddens, device)
+            else:  # 否则需要使用detach函数从计算图分离隐藏状态
+                for s in state:
+                    s.detach_()
+            inputs &#x3D; to_onehot(X, vocab_size)
+            # outputs有num_steps个形状为(batch_size, vocab_size)的矩阵
+            (outputs, state) &#x3D; rnn(inputs, state, params)
+            # 拼接之后形状为(num_steps * batch_size, vocab_size)
+            outputs &#x3D; torch.cat(outputs, dim&#x3D;0)
+            # Y的形状是(batch_size, num_steps)，转置后再变成长度为
+            # batch * num_steps 的向量，这样跟输出的行一一对应
+            y &#x3D; torch.transpose(Y, 0, 1).contiguous().view(-1)
+            # 使用交叉熵损失计算平均分类误差
+            l &#x3D; loss(outputs, y.long())
+            
+            # 梯度清0
+            if params[0].grad is not None:
+                for param in params:
+                    param.grad.data.zero_()
+            l.backward()
+            grad_clipping(params, clipping_theta, device)  # 裁剪梯度
+            d2l.sgd(params, lr, 1)  # 因为误差已经取过均值，梯度不用再做平均
+            l_sum +&#x3D; l.item() * y.shape[0]
+            n +&#x3D; y.shape[0]
+
+        if (epoch + 1) % pred_period &#x3D;&#x3D; 0:
+            print(&#39;epoch %d, perplexity %f, time %.2f sec&#39; % (
+                epoch + 1, math.exp(l_sum &#x2F; n), time.time() - start))
+            for prefix in prefixes:
+                print(&#39; -&#39;, predict_rnn(prefix, pred_len, rnn, params, init_rnn_state,
+                    num_hiddens, vocab_size, device, idx_to_char, char_to_idx))</code></pre>
+
+<h4 id="注意力机制"><a href="#注意力机制" class="headerlink" title="注意力机制"></a>注意力机制</h4><pre class="language-py" data-language="py"><code class="language-py">def attention_model(input_size, attention_size):
+    model &#x3D; nn.Sequential(nn.Linear(input_size, attention_size, bias&#x3D;False),
+                          nn.Tanh(),
+                          nn.Linear(attention_size, 1, bias&#x3D;False))
+    return model
+
+def attention_forward(model, enc_states, dec_state):
+    &quot;&quot;&quot;
+    enc_states: (时间步数, 批量大小, 隐藏单元个数)
+    dec_state: (批量大小, 隐藏单元个数)
+    &quot;&quot;&quot;
+    # 将解码器隐藏状态广播到和编码器隐藏状态形状相同后进行连结
+    dec_states &#x3D; dec_state.unsqueeze(dim&#x3D;0).expand_as(enc_states)
+    enc_and_dec_states &#x3D; torch.cat((enc_states, dec_states), dim&#x3D;2)
+    # 输入连接后通入多层感知机
+    e &#x3D; model(enc_and_dec_states)  # 形状为(时间步数, 批量大小, 1)
+    alpha &#x3D; F.softmax(e, dim&#x3D;0)  # 在时间步维度做softmax运算，结果仍为(时间步数, 批量大小, 1) 
+
+    # 对enc_states的加权求和
+    return (alpha * enc_states).sum(dim&#x3D;0)  # 返回背景变量
+
+seq_len, batch_size, num_hiddens &#x3D; 10, 4, 8
+model &#x3D; attention_model(2*num_hiddens, 10) 
+# (时间步数, 批量大小, 隐藏单元个数)
+enc_states &#x3D; torch.zeros((seq_len, batch_size, num_hiddens))
+dec_state &#x3D; torch.zeros((batch_size, num_hiddens))
+attention_forward(model, enc_states, dec_state).shape
+
+torch.Size([4, 8])
+
+</code></pre>
+
+<h4 id="编码器和解码器"><a href="#编码器和解码器" class="headerlink" title="编码器和解码器"></a>编码器和解码器</h4><pre class="language-py" data-language="py"><code class="language-py">#三种特殊字符
+PAD, BOS, EOS &#x3D; &#39;&lt;pad&gt;&#39;, &#39;&lt;bos&gt;&#39;, &#39;&lt;eos&gt;&#39;
+# 将一个序列中所有的词记录在all_tokens中以便之后构造词典，然后在该序列后面添加PAD直到序列
+# 长度变为max_seq_len，然后将序列保存在all_seqs中
+def process_one_seq(seq_tokens, all_tokens, all_seqs, max_seq_len):
+    all_tokens.extend(seq_tokens)
+    seq_tokens +&#x3D; [EOS] + [PAD] * (max_seq_len - len(seq_tokens) - 1)
+    all_seqs.append(seq_tokens)
+
+# 使用所有的词来构造词典。并将所有序列中的词变换为词索引后构造Tensor
+def build_data(all_tokens, all_seqs):
+    vocab &#x3D; Vocab.Vocab(collections.Counter(all_tokens),
+                        specials&#x3D;[PAD, BOS, EOS])
+    indices &#x3D; [[vocab.stoi[w] for w in seq] for seq in all_seqs]
+    return vocab, torch.tensor(indices)
+
+def read_data(max_seq_len):
+    # in和out分别是input和output的缩写
+    in_tokens, out_tokens, in_seqs, out_seqs &#x3D; [], [], [], []
+    with io.open(&#39;..&#x2F;..&#x2F;data&#x2F;fr-en-small.txt&#39;) as f:
+        lines &#x3D; f.readlines()
+    for line in lines:
+        in_seq, out_seq &#x3D; line.rstrip().split(&#39;\t&#39;)
+        in_seq_tokens, out_seq_tokens &#x3D; in_seq.split(&#39; &#39;), out_seq.split(&#39; &#39;)
+        if max(len(in_seq_tokens), len(out_seq_tokens)) &gt; max_seq_len - 1:
+            continue  # 如果加上EOS后长于max_seq_len，则忽略掉此样本
+        process_one_seq(in_seq_tokens, in_tokens, in_seqs, max_seq_len)
+        process_one_seq(out_seq_tokens, out_tokens, out_seqs, max_seq_len)
+    in_vocab, in_data &#x3D; build_data(in_tokens, in_seqs)
+    out_vocab, out_data &#x3D; build_data(out_tokens, out_seqs)
+    return in_vocab, out_vocab, Data.TensorDataset(in_data, out_data)
+
+class Encoder(nn.Module):
+    def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
+                 drop_prob&#x3D;0, **kwargs):
+        super(Encoder, self).__init__(**kwargs)
+        self.embedding &#x3D; nn.Embedding(vocab_size, embed_size)
+        self.rnn &#x3D; nn.GRU(embed_size, num_hiddens, num_layers, dropout&#x3D;drop_prob)
+
+    def forward(self, inputs, state):
+        # 输入形状是(批量大小, 时间步数)。将输出互换样本维和时间步维
+        embedding &#x3D; self.embedding(inputs.long()).permute(1, 0, 2) # (seq_len, batch, input_size)
+        return self.rnn(embedding, state)
+
+    def begin_state(self):
+        return None
+encoder &#x3D; Encoder(vocab_size&#x3D;10, embed_size&#x3D;8, num_hiddens&#x3D;16, num_layers&#x3D;2)
+output, state &#x3D; encoder(torch.zeros((4, 7)), encoder.begin_state())
+output.shape, state.shape # GRU的state是h, 而LSTM的是一个元组(h, c)
+
+(torch.Size([7, 4, 16]), torch.Size([2, 4, 16]))
+
+
+# 解码器
+class Decoder(nn.Module):
+    def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
+                 attention_size, drop_prob&#x3D;0):
+        super(Decoder, self).__init__()
+        self.embedding &#x3D; nn.Embedding(vocab_size, embed_size)
+        self.attention &#x3D; attention_model(2*num_hiddens, attention_size)
+        # GRU的输入包含attention输出的c和实际输入, 所以尺寸是 num_hiddens+embed_size
+        self.rnn &#x3D; nn.GRU(num_hiddens + embed_size, num_hiddens, 
+                          num_layers, dropout&#x3D;drop_prob)
+        self.out &#x3D; nn.Linear(num_hiddens, vocab_size)
+
+    def forward(self, cur_input, state, enc_states):
+        &quot;&quot;&quot;
+        cur_input shape: (batch, )
+        state shape: (num_layers, batch, num_hiddens)
+        &quot;&quot;&quot;
+        # 使用注意力机制计算背景向量
+        c &#x3D; attention_forward(self.attention, enc_states, state[-1])
+        # 将嵌入后的输入和背景向量在特征维连结, (批量大小, num_hiddens+embed_size)
+        input_and_c &#x3D; torch.cat((self.embedding(cur_input), c), dim&#x3D;1) 
+        # 为输入和背景向量的连结增加时间步维，时间步个数为1
+        output, state &#x3D; self.rnn(input_and_c.unsqueeze(0), state)
+        # 移除时间步维，输出形状为(批量大小, 输出词典大小)
+        output &#x3D; self.out(output).squeeze(dim&#x3D;0)
+        return output, state
+
+    def begin_state(self, enc_state):
+        # 直接将编码器最终时间步的隐藏状态作为解码器的初始隐藏状态
+        return enc_state
+
+def batch_loss(encoder, decoder, X, Y, loss):
+    # (1) 编码得到向量c
+    # (2) 基于向量c等解码一遍
+    # (3) 求损失函数，更新参数
+    batch_size &#x3D; X.shape[0]
+    enc_state &#x3D; encoder.begin_state()
+    # 编码器，同时更新当前编码状态
+    enc_outputs, enc_state &#x3D; encoder(X, enc_state)
+    # 初始化解码器的隐藏状态
+    dec_state &#x3D; decoder.begin_state(enc_state)
+    # 解码器在最初时间步的输入是BOS
+    dec_input &#x3D; torch.tensor([out_vocab.stoi[BOS]] * batch_size)
+    # 我们将使用掩码变量mask来忽略掉标签为填充项PAD的损失, 初始全1
+    # 注意一次性处理的是一个batchsize
+    mask, num_not_pad_tokens &#x3D; torch.ones(batch_size,), 0
+    l &#x3D; torch.tensor([0.0])
+    for y in Y.permute(1,0): #维度换位。 Y shape: (batch, seq_len)
+    # 基于当前y字符，状态，enc_outputs对y进行解码
+    # 同时更新当前解码输入和解码状态
+        dec_output, dec_state &#x3D; decoder(dec_input, dec_state, enc_outputs)
+        l &#x3D; l + (mask * loss(dec_output, y)).sum()
+        dec_input &#x3D; y  # 使用强制教学
+
+        num_not_pad_tokens +&#x3D; mask.sum().item()
+        # EOS后面全是PAD. 下面一行保证一旦遇到EOS接下来的循环中mask就一直是0
+        # 一旦遇到EOS停止解码
+        mask &#x3D; mask * (y !&#x3D; out_vocab.stoi[EOS]).float()
+    # 损失函数，分母是非padding的字符数量
+    return l &#x2F; num_not_pad_tokens
+
+def train(encoder, decoder, dataset, lr, batch_size, num_epochs):
+    enc_optimizer &#x3D; torch.optim.Adam(encoder.parameters(), lr&#x3D;lr)
+    dec_optimizer &#x3D; torch.optim.Adam(decoder.parameters(), lr&#x3D;lr)
+
+    loss &#x3D; nn.CrossEntropyLoss(reduction&#x3D;&#39;none&#39;)
+    data_iter &#x3D; Data.DataLoader(dataset, batch_size, shuffle&#x3D;True)
+    for epoch in range(num_epochs):
+        l_sum &#x3D; 0.0
+        for X, Y in data_iter:
+            enc_optimizer.zero_grad()
+            dec_optimizer.zero_grad()
+            l &#x3D; batch_loss(encoder, decoder, X, Y, loss)
+            l.backward()
+            enc_optimizer.step()
+            dec_optimizer.step()
+            l_sum +&#x3D; l.item()
+        if (epoch + 1) % 10 &#x3D;&#x3D; 0:
+            print(&quot;epoch %d, loss %.3f&quot; % (epoch + 1, l_sum &#x2F; len(data_iter)))
+
+embed_size, num_hiddens, num_layers &#x3D; 64, 64, 2
+attention_size, drop_prob, lr, batch_size, num_epochs &#x3D; 10, 0.5, 0.01, 2, 50
+encoder &#x3D; Encoder(len(in_vocab), embed_size, num_hiddens, num_layers,
+                  drop_prob)
+decoder &#x3D; Decoder(len(out_vocab), embed_size, num_hiddens, num_layers,
+                  attention_size, drop_prob)
+train(encoder, decoder, dataset, lr, batch_size, num_epochs)
+
+
+# 预测
+def translate(encoder, decoder, input_seq, max_seq_len):
+    in_tokens &#x3D; input_seq.split(&#39; &#39;)
+    in_tokens +&#x3D; [EOS] + [PAD] * (max_seq_len - len(in_tokens) - 1)
+    enc_input &#x3D; torch.tensor([[in_vocab.stoi[tk] for tk in in_tokens]]) # batch&#x3D;1
+    enc_state &#x3D; encoder.begin_state()
+    # 编码，基于训练好的参数
+    enc_output, enc_state &#x3D; encoder(enc_input, enc_state)
+    # 起始单词BOS
+    dec_input &#x3D; torch.tensor([out_vocab.stoi[BOS]])
+    dec_state &#x3D; decoder.begin_state(enc_state)
+    output_tokens &#x3D; []
+
+    # 解码，获取预测的序列
+    for _ in range(max_seq_len):
+        dec_output, dec_state &#x3D; decoder(dec_input, dec_state, enc_output)
+        pred &#x3D; dec_output.argmax(dim&#x3D;1)
+
+        pred_token &#x3D; out_vocab.itos[int(pred.item())]
+        if pred_token &#x3D;&#x3D; EOS:  # 当任一时间步搜索出EOS时，输出序列即完成
+            break
+        else:
+            output_tokens.append(pred_token)
+            dec_input &#x3D; pred
+    return output_tokens
+
+input_seq &#x3D; &#39;ils regardent .&#39;
+translate(encoder, decoder, input_seq, max_seq_len)
+
+[&#39;they&#39;, &#39;are&#39;, &#39;watching&#39;, &#39;.&#39;]</code></pre></div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-17-NLP%E4%B8%80%E4%BA%9B%E5%B7%A5%E5%85%B7/" rel="prev" title="NLP tools"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">NLP tools</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-14-python%E6%95%B0%E6%8D%AE%E7%A7%91%E5%AD%A6%E6%89%8B%E5%86%8C/" rel="next" title="python数据分析"><span class="post-nav-text">python数据分析</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-15-pytorch%E5%92%8Ctensorflow/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

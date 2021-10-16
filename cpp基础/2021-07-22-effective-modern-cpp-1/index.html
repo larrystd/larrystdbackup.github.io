@@ -1,0 +1,487 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>modern_cpp_1:template | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="c++98有一套模板类型推导的规则, c++11修改了一些规则并为auto和decltype添加了新规则。 条款1 理解模板类型推导考虑以下 template &lt;typename T&gt; void f(ParamType param);  f(expr);    &#x2F;&#x2F; 需要从expr中推导T和ParamType   ParamType是一个指针或引用但不是通用引用  若expr类型是一个引用,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="modern_cpp_1:template">
+<meta property="og:url" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-07-22-effective-modern-cpp-1/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="c++98有一套模板类型推导的规则, c++11修改了一些规则并为auto和decltype添加了新规则。 条款1 理解模板类型推导考虑以下 template &lt;typename T&gt; void f(ParamType param);  f(expr);    &#x2F;&#x2F; 需要从expr中推导T和ParamType   ParamType是一个指针或引用但不是通用引用  若expr类型是一个引用,">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-07-21T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-21T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="cpp">
+<meta property="article:tag" content="modern cpp">
+<meta name="twitter:card" content="summary"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE1-%E7%90%86%E8%A7%A3%E6%A8%A1%E6%9D%BF%E7%B1%BB%E5%9E%8B%E6%8E%A8%E5%AF%BC"><span class="toc-number">1.</span> <span class="toc-text">条款1 理解模板类型推导</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%B0%E7%BB%84%E5%AE%9E%E5%8F%82"><span class="toc-number">1.1.</span> <span class="toc-text">数组实参</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%BD%E6%95%B0%E5%AE%9E%E5%8F%82"><span class="toc-number">1.2.</span> <span class="toc-text">函数实参</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE2-%E7%90%86%E8%A7%A3auto%E7%B1%BB%E5%9E%8B%E6%8E%A8%E5%AF%BC"><span class="toc-number">2.</span> <span class="toc-text">条款2 理解auto类型推导</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE2-%E7%90%86%E8%A7%A3decltype"><span class="toc-number">3.</span> <span class="toc-text">条款2 理解decltype</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE5-%E4%BC%98%E5%85%88%E8%80%83%E8%99%91auto%E8%80%8C%E9%9D%9E%E6%98%BE%E7%A4%BA%E7%B1%BB%E5%9E%8B%E5%A3%B0%E6%98%8E"><span class="toc-number">4.</span> <span class="toc-text">条款5 优先考虑auto而非显示类型声明</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE7-%E5%8C%BA%E5%88%AB%E4%BD%BF%E7%94%A8-%E5%92%8C-%E5%88%9B%E5%BB%BA%E5%AF%B9%E8%B1%A1"><span class="toc-number">5.</span> <span class="toc-text">条款7 区别使用()和{}创建对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE8-%E4%BC%98%E5%85%88%E8%80%83%E8%99%91nullptr%E8%80%8C%E9%9D%9E0%E5%92%8CNULL"><span class="toc-number">6.</span> <span class="toc-text">条款8 优先考虑nullptr而非0和NULL</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE9-%E4%BC%98%E5%85%88%E8%80%83%E8%99%91%E5%88%AB%E5%90%8Dalias%E8%80%8C%E4%B8%8D%E6%98%AFtypedef"><span class="toc-number">7.</span> <span class="toc-text">条款9 优先考虑别名alias而不是typedef</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE10-%E4%BC%98%E5%85%88%E8%80%83%E8%99%91%E9%99%90%E5%9F%9F%E6%9E%9A%E4%B8%BE%E8%80%8C%E9%9D%9E%E6%9C%AA%E9%99%90%E5%9F%9F%E6%9E%9A%E4%B8%BE"><span class="toc-number">8.</span> <span class="toc-text">条款10 优先考虑限域枚举而非未限域枚举</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE11-%E4%BC%98%E5%85%88%E8%80%83%E8%99%91delete%E5%87%BD%E6%95%B0%E8%80%8C%E9%9D%9E%E7%A7%81%E6%9C%89%E5%A3%B0%E6%98%8E"><span class="toc-number">9.</span> <span class="toc-text">条款11 优先考虑delete函数而非私有声明</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE12-%E4%BD%BF%E7%94%A8override%E5%A3%B0%E6%98%8E%E9%87%8D%E8%BD%BD%E5%87%BD%E6%95%B0"><span class="toc-number">10.</span> <span class="toc-text">条款12 使用override声明重载函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE13-%E4%BC%98%E5%85%88%E8%80%83%E8%99%91const-iterator%E8%80%8C%E9%9D%9Eiterator"><span class="toc-number">11.</span> <span class="toc-text">条款13 优先考虑const_iterator而非iterator</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE14-%E5%87%BD%E6%95%B0%E4%B8%8D%E6%8A%9B%E5%BC%82%E5%B8%B8%E7%94%A8noexcpet"><span class="toc-number">12.</span> <span class="toc-text">条款14 函数不抛异常用noexcpet</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE15-%E5%B0%BD%E5%8F%AF%E8%83%BD%E4%BD%BF%E7%94%A8constexpr"><span class="toc-number">13.</span> <span class="toc-text">条款15 尽可能使用constexpr</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE16-%E4%BF%9D%E8%AF%81const%E5%87%BD%E6%95%B0%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8"><span class="toc-number">14.</span> <span class="toc-text">条款16 保证const函数的线程安全</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE17-%E7%89%B9%E6%AE%8A%E5%87%BD%E6%95%B0%E7%9A%84%E7%94%9F%E6%88%90"><span class="toc-number">15.</span> <span class="toc-text">条款17 特殊函数的生成</span></a></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-07-22-effective-modern-cpp-1/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">modern_cpp_1:template<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/cpp基础/2021-07-22-effective-modern-cpp-1.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-07-22 00:00:00" itemprop="dateCreated datePublished" datetime="2021-07-22T00:00:00+08:00">2021-07-22</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">3.9k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">16m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/cpp-base/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">cpp base</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">cpp</span></a><a class="tag-item" href="/tags/modern-cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">modern cpp</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><p>c++98有一套模板类型推导的规则, c++11修改了一些规则并为auto和decltype添加了新规则。</p>
+<h3 id="条款1-理解模板类型推导"><a href="#条款1-理解模板类型推导" class="headerlink" title="条款1 理解模板类型推导"></a>条款1 理解模板类型推导</h3><p>考虑以下</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>ParamType param<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">f</span><span class="token punctuation">(</span>expr<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 需要从expr中推导T和ParamType</span></code></pre>
+
+<ul>
+<li><p>ParamType是一个指针或引用但不是通用引用</p>
+</li>
+<li><p>若expr类型是一个引用, 忽略引用部分, 来决定T。也就是说<strong>T会被推导成非引用</strong>。</p>
+</li>
+</ul>
+<p>T和形参匹配得出最终的ParamType, ParamType一般是一个左值引用。</p>
+<p>这也是STL模板萃取指针类型的办法, 即参数ParamType为<code>T*</code>可以推导出T的类型(因为T被推到成非引用)。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>T<span class="token operator">&amp;</span> param<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// ParamType是一个引用</span>
+
+<span class="token keyword">int</span> x <span class="token operator">=</span> <span class="token number">27</span><span class="token punctuation">;</span> <span class="token comment">//int</span>
+<span class="token keyword">const</span> <span class="token keyword">int</span> cx <span class="token operator">=</span> x<span class="token punctuation">;</span><span class="token number">1</span><span class="token comment">// const int</span>
+<span class="token keyword">const</span> <span class="token keyword">int</span><span class="token operator">&amp;</span> rx <span class="token operator">=</span> cx<span class="token punctuation">;</span> <span class="token comment">// rx是指向const int的引用</span>
+
+<span class="token function">f</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span>    <span class="token comment">// T为int, param类型为int&amp;</span>
+<span class="token function">f</span><span class="token punctuation">(</span>cx<span class="token punctuation">)</span>   <span class="token comment">// T是const int, param类型const int&amp;</span>
+<span class="token function">f</span><span class="token punctuation">(</span>rx<span class="token punctuation">)</span>   <span class="token comment">// T是const int, param类型const int&amp;</span>
+<span class="token comment">// 注意rx类型为引用，但T会推导为一个非引用</span></code></pre>
+
+<ul>
+<li><p>ParamType是一个通用引用<br>(ParamType最终被推导成左值引用或右值引用)</p>
+</li>
+<li><p>如果expr是左值, T和ParamType均被推到成左值引用, T&amp;&amp;也是一个左值引用。</p>
+</li>
+<li><p>如果expr是右值，忽略引用部分决定T。也就是说T会被推导成非引用(类型), 而T&amp;&amp;是一个右值引用。</p>
+</li>
+</ul>
+<span id="more"></span>
+<p>保留<code>const</code>修饰</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>T<span class="token operator">&amp;&amp;</span> param<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// ParamType是一个通用引用</span>
+
+<span class="token keyword">int</span> x <span class="token operator">=</span> <span class="token number">27</span><span class="token punctuation">;</span> <span class="token comment">//int</span>
+<span class="token keyword">const</span> <span class="token keyword">int</span> cx <span class="token operator">=</span> x<span class="token punctuation">;</span><span class="token number">1</span><span class="token comment">// const int</span>
+<span class="token keyword">const</span> <span class="token keyword">int</span><span class="token operator">&amp;</span> rx <span class="token operator">=</span> cx<span class="token punctuation">;</span> <span class="token comment">// rx是指向const int的引用</span>
+
+<span class="token function">f</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span>    <span class="token comment">// x为左值,推到成左值引用 T为int&amp; , param类型为int&amp;</span>
+<span class="token function">f</span><span class="token punctuation">(</span>cx<span class="token punctuation">)</span>   <span class="token comment">// cx为左值, T是const int&amp;, param类型const int&amp;</span>
+<span class="token function">f</span><span class="token punctuation">(</span>rx<span class="token punctuation">)</span>   <span class="token comment">// rx为左值 T是const int&amp;, param类型const int&amp;</span>
+<span class="token function">f</span><span class="token punctuation">(</span><span class="token number">27</span><span class="token punctuation">)</span>   <span class="token comment">// 27为右值, T为int, param为int &amp;&amp;</span></code></pre>
+
+<ul>
+<li>ParamType既不是指针也不是引用</li>
+</ul>
+<p>此时通过传值方式处理, 无论<strong>引用与否, 推到成传值形式</strong> , 且抛弃<code>const</code>修饰</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>T param<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// ParamType是一个非指针引用</span>
+
+<span class="token keyword">int</span> x <span class="token operator">=</span> <span class="token number">27</span><span class="token punctuation">;</span> <span class="token comment">//int</span>
+<span class="token keyword">const</span> <span class="token keyword">int</span> cx <span class="token operator">=</span> x<span class="token punctuation">;</span> <span class="token comment">// const int</span>
+<span class="token keyword">const</span> <span class="token keyword">int</span><span class="token operator">&amp;</span> rx <span class="token operator">=</span> cx<span class="token punctuation">;</span> <span class="token comment">// rx是指向const int的引用</span>
+
+<span class="token function">f</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span>    <span class="token comment">// T与Param均为int</span>
+<span class="token function">f</span><span class="token punctuation">(</span>cx<span class="token punctuation">)</span>   <span class="token comment">// T与Param均为int</span>
+<span class="token function">f</span><span class="token punctuation">(</span>rx<span class="token punctuation">)</span>   <span class="token comment">// T与Param均为int</span></code></pre>
+
+<ul>
+<li>注意在传参时, 形参是左值引用不能接收右值, 形参是右值引用时不能接受左值</li>
+<li>但是<code>&amp;&amp;</code>被认为是通用引用时可以接受左值右值</li>
+<li>对于内置变量, <code>int</code>, <code>char</code>, <code>double</code>等, 传指针或引用效率不见得比传值高, 因此形参用<code>(int a)</code>即可, 但对于一般的class, 如<code>string</code>, 传指针或者引用效率比传值很有优势, 这时候一般对左值用<code>string&amp;</code>, 右值用<code>string&amp;&amp;</code>, 一般不用<code>string</code>。</li>
+</ul>
+<h4 id="数组实参"><a href="#数组实参" class="headerlink" title="数组实参"></a>数组实参</h4><p>一般的,C语言中有数组退化成指针的规则。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">const</span> <span class="token keyword">char</span> name<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"J. P. Briggs"</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> ptrToName <span class="token operator">=</span> name<span class="token punctuation">;</span>   <span class="token comment">//数组退化成指针</span>
+
+<span class="token keyword">void</span> <span class="token function">myFunc</span><span class="token punctuation">(</span><span class="token keyword">int</span> param<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 等价于</span>
+<span class="token keyword">void</span> <span class="token function">myFunc</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token operator">*</span> param<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>模板类型推导中指针不同于数组, </p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">const</span> <span class="token keyword">char</span> name<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"J. P. Briggs"</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>T param<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">f</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 传指针, T被推导成const char*</span>
+
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>T<span class="token operator">&amp;</span> param<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">f</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span> <span class="token comment">// 传数组, T被推导为const char[13], paramType为 const char(&amp;)[13]</span></code></pre>
+
+<h4 id="函数实参"><a href="#函数实参" class="headerlink" title="函数实参"></a>函数实参</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token function">someFunc</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// someFunc是一个函数, 类型是void(int, double)</span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>T param<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">f</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 传函数指针, T被推导成void(*)(int double)</span>
+
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>T<span class="token operator">&amp;</span> param<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">f</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span> <span class="token comment">// 传函数引用, T被推导为void(&amp;) (int double)</span></code></pre>
+
+<h3 id="条款2-理解auto类型推导"><a href="#条款2-理解auto类型推导" class="headerlink" title="条款2 理解auto类型推导"></a>条款2 理解auto类型推导</h3><p>auto类型推导和模板类型推导有一个直接的映射关系, 它们直接有非常系统化的转换流程来转换彼此。</p>
+<p>注意直接用auto相当于模板推导参数无引用, 对引用会剥去。而<code>auto&amp;</code>, <code>auto&amp;&amp;</code>分别对应模板推导的剩余两种情形。</p>
+<p>在item1 中模板类型推导用下面的函数模板解释</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>ParmaType param<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p><code>ParamType</code>的三种情况表示<code>T</code>, <code>T&amp;</code>, <code>T&amp;&amp;</code>。</p>
+<p>当一个变量使用<code>auto</code>声明时, <code>auto</code>扮演了模板<code>T</code>的角色, 变量的类型则扮演了<code>ParamType</code>的角色</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">auto</span> x <span class="token operator">=</span> <span class="token number">27</span><span class="token punctuation">;</span>
+<span class="token comment">// 转换成</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">func_for_x</span><span class="token punctuation">(</span>T param<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">func_for_x</span><span class="token punctuation">(</span><span class="token number">27</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token keyword">auto</span> cx <span class="token operator">=</span> x<span class="token punctuation">;</span>
+<span class="token comment">// 转换成</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">func_for_x</span><span class="token punctuation">(</span><span class="token keyword">const</span> T param<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">func_for_x</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> rx <span class="token operator">=</span> x<span class="token punctuation">;</span>
+<span class="token comment">// 转换成</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">func_for_x</span><span class="token punctuation">(</span><span class="token keyword">const</span> T<span class="token operator">&amp;</span> param<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">func_for_x</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token keyword">int</span> theAnswer <span class="token operator">=</span> <span class="token number">42</span><span class="token punctuation">;</span>
+<span class="token keyword">auto</span> x <span class="token operator">=</span> theAnswer<span class="token punctuation">;</span> <span class="token comment">// 推导成int</span>
+<span class="token keyword">auto</span> y <span class="token operator">=</span> <span class="token operator">&amp;</span>theAnswer<span class="token punctuation">;</span>    <span class="token comment">// 推导出const int*</span></code></pre>
+
+<p>即</p>
+<ul>
+<li><p>类型说明符是一个指针或引用但不是通用引用 auto&amp;, 这样auto是一个非引用, 但auto&amp; 是一个引用类型。</p>
+</li>
+<li><p>类型说明符是一个通用引用 auto&amp;&amp;</p>
+</li>
+<li><p>类型说明符不是指针或者引用 auto, const auto</p>
+</li>
+<li><p>auto之后跟左值, 用auto&amp;, 跟右值用auto&amp;&amp;, auto可以跟左右值但可能涉及到拷贝函数。</p>
+</li>
+</ul>
+<p>同理</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">const</span> <span class="token keyword">char</span> name<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"R. N. Briggs"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">auto</span> arr1 <span class="token operator">=</span> name<span class="token punctuation">;</span>   <span class="token comment">// arr1类型 const char*</span>
+<span class="token keyword">auto</span><span class="token operator">&amp;</span> arr2 <span class="token operator">=</span> name<span class="token punctuation">;</span>  <span class="token comment">// arr2类型const char(&amp;)[13]</span>
+
+<span class="token keyword">void</span> <span class="token function">someFunc</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">,</span> <span class="token keyword">double</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">auto</span> func1 <span class="token operator">=</span> someFunc<span class="token punctuation">;</span>  <span class="token comment">// func1类型void(*) (int, double)</span>
+<span class="token keyword">auto</span> func2 <span class="token operator">=</span> someFunc<span class="token punctuation">;</span>  <span class="token comment">// func2类型void(&amp;) (int, double)</span></code></pre>
+
+<p>auto类型不同于模板类型推导的情况是, 当用auto声明的变量用花括号初始化, auto类型推导会推导出auto类型为<code>std::initializer_list</code>, 但模板不会这样处理。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">auto</span> x1 <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3.0</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>    <span class="token comment">// 不能工作, 类型必须一致</span>
+<span class="token keyword">auto</span> x2 <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token number">11</span><span class="token punctuation">,</span><span class="token number">23</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>    <span class="token comment">// x2类型为std::initializer_list&lt;int></span>
+
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>T param<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">f</span><span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token number">11</span><span class="token punctuation">,</span><span class="token number">23</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// 错误, 不能推导出T</span>
+
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>initalizer_list<span class="token operator">&lt;</span>T<span class="token operator">></span> initList<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">f</span><span class="token punctuation">(</span><span class="token punctuation">&#123;</span><span class="token number">11</span><span class="token punctuation">,</span><span class="token number">23</span><span class="token punctuation">,</span><span class="token number">9</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// T被推导成int, 可以运行</span></code></pre>
+
+
+<h3 id="条款2-理解decltype"><a href="#条款2-理解decltype" class="headerlink" title="条款2 理解decltype"></a>条款2 理解decltype</h3><p>decltype作用, 给它一个名字或者表达式decltype就会告诉名字或表达式的类型。cpp11中, <strong>decltype最主要用途是用于函数模板返回类型 而这个返回类型依赖于形参</strong>。</p>
+<p>显然deltype的实现也是基于模板, 条款2说明直接使用auto可能会剥去引用, 而decltype只是简单的返回表达式的类型, 不会进行模板推导的修改。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">Container</span><span class="token punctuation">,</span> <span class="token keyword">typename</span> <span class="token class-name">Index</span><span class="token operator">></span>
+<span class="token keyword">auto</span> <span class="token function">authAndAccess</span><span class="token punctuation">(</span>Container<span class="token operator">&amp;</span> c<span class="token punctuation">,</span> Index i<span class="token punctuation">)</span>
+    <span class="token operator">-></span> <span class="token keyword">decltype</span><span class="token punctuation">(</span>c<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>       <span class="token comment">// 推导成int, 而不是int&amp;</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token function">authenticateUser</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> c<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+std<span class="token double-colon punctuation">::</span>queue<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> d<span class="token punctuation">;</span>
+<span class="token function">authAndAccess</span><span class="token punctuation">(</span>d<span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>    <span class="token comment">// authAndAccess返回右值, 10赋给右值无法通过编译</span></code></pre>
+
+<p>函数名称前的auto不会做任何类型推导工作, 只是暗示用cpp11的尾置返回类型语法。</p>
+<p>cpp14的decltype(auto), 通过一直特殊的规则推导, 不会像模板推导那么死板</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">Widget w<span class="token punctuation">;</span>
+<span class="token keyword">const</span> Widget<span class="token operator">&amp;</span> cw <span class="token operator">=</span> w<span class="token punctuation">;</span>
+
+<span class="token keyword">auto</span> myWidget1 <span class="token operator">=</span> cw<span class="token punctuation">;</span>    <span class="token comment">// auto类型推导, myWidget1类型为Widget</span>
+
+<span class="token keyword">decltype</span><span class="token punctuation">(</span><span class="token keyword">auto</span><span class="token punctuation">)</span> myWidget2 <span class="token operator">=</span> cw<span class="token punctuation">;</span>  <span class="token comment">// decltype类型推导, myWidget2类型const Widget&amp;</span></code></pre>
+
+<h3 id="条款5-优先考虑auto而非显示类型声明"><a href="#条款5-优先考虑auto而非显示类型声明" class="headerlink" title="条款5 优先考虑auto而非显示类型声明"></a>条款5 优先考虑auto而非显示类型声明</h3><ul>
+<li>auto变量必须初始化, 这使得在编译器检查出未初始化的问题。</li>
+</ul>
+<h3 id="条款7-区别使用-和-创建对象"><a href="#条款7-区别使用-和-创建对象" class="headerlink" title="条款7 区别使用()和{}创建对象"></a>条款7 区别使用()和{}创建对象</h3><ul>
+<li>{} 基于构造函数或者拷贝构造函数的初始化。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> v<span class="token punctuation">&#123;</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+    <span class="token keyword">int</span> x<span class="token punctuation">&#123;</span><span class="token number">0</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> y <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> <span class="token function">z</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// 错误</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 不可拷贝的对象不能用=初始化</span>
+std<span class="token double-colon punctuation">::</span>atomic<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token function">a1</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 对, 使用构造函数初始化</span>
+std<span class="token double-colon punctuation">::</span>atomic<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> a2 <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>    <span class="token comment">// 错误</span></code></pre>
+
+<ul>
+<li>{}可用于一般的初始化, {}的应用更加灵活, 不用区分赋值和拷贝。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> nums <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<ul>
+<li><code>&#123;&#125;</code>倾向于与<code>std::initializer_list&lt;&gt;()</code>进行匹配, <code>initializer_list</code>是一种标准库类型，用于表示某种特定类型的值的数组。例如<code>std::vector</code>有一个非<code>initializer_list</code>构造函数允许你去指定容器的初始大小。也有一个<code>initializer_list</code>构造函数允许你使用花括号里面的值初始化容器。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token function">v1</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">//使用非std::initializer_list构造函数</span>
+                                <span class="token comment">//创建一个包含10个元素的std::vector，</span>
+                                <span class="token comment">//所有的元素的值都是20</span>
+std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> v2<span class="token punctuation">&#123;</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>    <span class="token comment">//使用std::initializer_list构造函数</span>
+                                <span class="token comment">//创建包含两个元素的std::vector，</span>
+                                <span class="token comment">//元素的值为10和20</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span> 
+<span class="token keyword">public</span><span class="token operator">:</span>  
+    <span class="token function">Widget</span><span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token punctuation">,</span> <span class="token keyword">bool</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span>                              
+    <span class="token function">Widget</span><span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token punctuation">,</span> <span class="token keyword">double</span> d<span class="token punctuation">)</span><span class="token punctuation">;</span>                            
+    <span class="token function">Widget</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>initializer_list<span class="token operator">&lt;</span><span class="token keyword">long</span> <span class="token keyword">double</span><span class="token operator">></span> il<span class="token punctuation">)</span><span class="token punctuation">;</span>     
+    <span class="token keyword">operator</span> <span class="token keyword">float</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>                             
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+Widget <span class="token function">w5</span><span class="token punctuation">(</span>w4<span class="token punctuation">)</span><span class="token punctuation">;</span>                  <span class="token comment">//使用小括号，调用拷贝构造函数</span>
+
+Widget w6<span class="token punctuation">&#123;</span>w4<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>                  <span class="token comment">//使用花括号，调用std::initializer_list构造, (w4转换为float，float转换为double)</span>
+
+Widget <span class="token function">w7</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>w4<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>       <span class="token comment">//使用小括号，调用移动构造函数</span>
+
+Widget w8<span class="token punctuation">&#123;</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>w4<span class="token punctuation">)</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>       <span class="token comment">//使用花括号，调用std::initializer_list构造</span></code></pre>
+
+<p><code>&#123;&#125;</code>匹配时不允许变窄转换</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span> 
+<span class="token keyword">public</span><span class="token operator">:</span> 
+    <span class="token function">Widget</span><span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token punctuation">,</span> <span class="token keyword">bool</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span>                      <span class="token comment">//同之前一样</span>
+    <span class="token function">Widget</span><span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token punctuation">,</span> <span class="token keyword">double</span> d<span class="token punctuation">)</span><span class="token punctuation">;</span>                    <span class="token comment">//同之前一样</span>
+    <span class="token function">Widget</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>initializer_list<span class="token operator">&lt;</span><span class="token keyword">bool</span><span class="token operator">></span> il<span class="token punctuation">)</span><span class="token punctuation">;</span>     <span class="token comment">//现在元素类型为bool</span>
+    …                                           <span class="token comment">//没有隐式转换函数</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+Widget w<span class="token punctuation">&#123;</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">5.0</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>              <span class="token comment">//错误！要求变窄转换</span></code></pre>
+
+<h3 id="条款8-优先考虑nullptr而非0和NULL"><a href="#条款8-优先考虑nullptr而非0和NULL" class="headerlink" title="条款8 优先考虑nullptr而非0和NULL"></a>条款8 优先考虑nullptr而非0和NULL</h3><p>在C语言中,0既可表示为整型, 也可表示为NULL。这可能出现问题。比较典型的是参数匹配, 0是匹配整型还是指针型。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">bool</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">f</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// 会调用f(int)而不是f(void*)</span>
+<span class="token function">f</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 可能不会被编译，一般来说优先调f(int)</span>
+
+<span class="token function">f</span><span class="token punctuation">(</span><span class="token keyword">nullptr</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 调用f(void*)版本</span></code></pre>
+
+<h3 id="条款9-优先考虑别名alias而不是typedef"><a href="#条款9-优先考虑别名alias而不是typedef" class="headerlink" title="条款9 优先考虑别名alias而不是typedef"></a>条款9 优先考虑别名alias而不是typedef</h3><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>unordered_map<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>string<span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">>></span> UPtrMaps<span class="token punctuation">;</span>
+
+<span class="token keyword">using</span> UPtrMaps <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>unordered_map<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>string<span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">>></span><span class="token punctuation">;</span>
+
+别名可以简化模板写法<span class="token punctuation">,</span> 当使用一个类型<span class="token punctuation">,</span> 这个类型依赖于模板参数T
+```cpp
+<span class="token comment">// typedef </span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">MyAllocList</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>list<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> MyAlloc<span class="token operator">&lt;</span>T<span class="token operator">>></span> type<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+<span class="token comment">// 使用类型typedef std::list&lt;T, MyAlloc&lt;T>> type</span>
+    <span class="token keyword">typename</span> <span class="token class-name">MyAllocList</span><span class="token operator">&lt;</span>T<span class="token operator">></span><span class="token double-colon punctuation">::</span>type list<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 别名写法</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">using</span> MyAllocList <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span>list<span class="token operator">&lt;</span>T<span class="token punctuation">,</span> MyAlloc<span class="token operator">&lt;</span>T<span class="token operator">>></span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+<span class="token comment">// 使用类型typedef std::list&lt;T, MyAlloc&lt;T>> type</span>
+    MyAllocList<span class="token operator">&lt;</span>T<span class="token operator">></span> list<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<h3 id="条款10-优先考虑限域枚举而非未限域枚举"><a href="#条款10-优先考虑限域枚举而非未限域枚举" class="headerlink" title="条款10 优先考虑限域枚举而非未限域枚举"></a>条款10 优先考虑限域枚举而非未限域枚举</h3><ul>
+<li>限域枚举中的变量域位于枚举类中(相当于类成员变量), 非限域枚举定义的变量域位于枚举外。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// 不限域枚举</span>
+<span class="token keyword">enum</span> <span class="token class-name">Color</span> <span class="token punctuation">&#123;</span>black<span class="token punctuation">,</span> white<span class="token punctuation">,</span> red<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">auto</span> white <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span> <span class="token comment">// 错误, white 位于枚举外, 已在该域中存在, 重复定义</span>
+
+<span class="token comment">// 限域枚举</span>
+<span class="token keyword">enum</span> <span class="token keyword">class</span> <span class="token class-name">Color</span> <span class="token punctuation">&#123;</span> black<span class="token punctuation">,</span> white<span class="token punctuation">,</span> red<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">auto</span> white <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span> <span class="token comment">// 没问题，这个域没有white</span>
+
+Color c <span class="token operator">=</span> Color<span class="token double-colon punctuation">::</span>red<span class="token punctuation">;</span>
+
+<span class="token keyword">if</span> <span class="token punctuation">(</span>c <span class="token operator">&lt;</span> <span class="token number">14</span><span class="token punctuation">)</span> <span class="token comment">// 错误, 不能比较, 不接受隐式类型转换</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>c<span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token number">14</span><span class="token operator">></span><span class="token punctuation">)</span>  <span class="token comment">// 有效</span></code></pre>
+
+<h3 id="条款11-优先考虑delete函数而非私有声明"><a href="#条款11-优先考虑delete函数而非私有声明" class="headerlink" title="条款11 优先考虑delete函数而非私有声明"></a>条款11 优先考虑delete函数而非私有声明</h3><p>使类不可拷贝, 在c++98中声明拷贝构造和赋值操作符为private</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">basic_ios</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">ios_base</span></span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+    <span class="token function">basic_ios</span><span class="token punctuation">(</span><span class="token keyword">const</span> basic_ios<span class="token operator">&amp;</span> <span class="token punctuation">)</span><span class="token punctuation">;</span>
+    basic_ios<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">=</span><span class="token punctuation">(</span><span class="token keyword">const</span> basic_ios<span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>cpp11中直接标记为delete函数, 声明为delete相比于定义为private, 在成员函数或者友元函数中也不能访问。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">basic_ios</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">ios_base</span></span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+    <span class="token function">basic_ios</span><span class="token punctuation">(</span><span class="token keyword">const</span> basic_ios<span class="token operator">&amp;</span> <span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">delete</span><span class="token punctuation">;</span>
+    basic_ios<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">=</span><span class="token punctuation">(</span><span class="token keyword">const</span> basic_ios<span class="token operator">&amp;</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">delete</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<h3 id="条款12-使用override声明重载函数"><a href="#条款12-使用override声明重载函数" class="headerlink" title="条款12 使用override声明重载函数"></a>条款12 使用override声明重载函数</h3><p>cpp11提供了overide将派生类函数指定为基类重写版本。编译器甚至会强制转型使基类和子类声明override的函数表现得一致。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Base</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf1</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf2</span><span class="token punctuation">(</span><span class="token keyword">int</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf3</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token function">mf4</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">class</span> <span class="token class-name">Derived</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">Base</span></span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf1</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf2</span><span class="token punctuation">(</span><span class="token keyword">unsigned</span> <span class="token keyword">int</span> x<span class="token punctuation">)</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf3</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf4</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>通过声明override, 方便重写,编译器会将以上代码转换为</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Base</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf1</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf2</span><span class="token punctuation">(</span><span class="token keyword">int</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf3</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;</span><span class="token punctuation">;</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf4</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token keyword">class</span> <span class="token class-name">Derived</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">Base</span></span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf1</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf2</span><span class="token punctuation">(</span><span class="token keyword">int</span> <span class="token keyword">int</span> x<span class="token punctuation">)</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+    <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">mf3</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token function">mf4</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<h3 id="条款13-优先考虑const-iterator而非iterator"><a href="#条款13-优先考虑const-iterator而非iterator" class="headerlink" title="条款13 优先考虑const_iterator而非iterator"></a>条款13 优先考虑const_iterator而非iterator</h3><p>const_iterator等价于指向常量的指针, 它们都指向不能被修改的值。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">C</span><span class="token punctuation">,</span> <span class="token keyword">typename</span> <span class="token class-name">V</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">findAndInsert</span><span class="token punctuation">(</span>C<span class="token operator">&amp;</span> container<span class="token punctuation">,</span> <span class="token keyword">const</span> V<span class="token operator">&amp;</span> targetVal<span class="token punctuation">,</span> <span class="token keyword">const</span> V<span class="token operator">&amp;</span> insertVal<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">using</span> std<span class="token double-colon punctuation">::</span>cbegin<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> std<span class="token double-colon punctuation">::</span>cend<span class="token punctuation">;</span>
+    <span class="token keyword">auto</span> it <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token function">cbegin</span><span class="token punctuation">(</span>container<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">cend</span><span class="token punctuation">(</span>container<span class="token punctuation">)</span><span class="token punctuation">,</span> targetVal<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    container<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span>it<span class="token punctuation">,</span> insertVal<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h3 id="条款14-函数不抛异常用noexcpet"><a href="#条款14-函数不抛异常用noexcpet" class="headerlink" title="条款14 函数不抛异常用noexcpet"></a>条款14 函数不抛异常用noexcpet</h3><p>在一个noexcept函数中, 当异常传播到函数外, 优化器不需要保证运行时栈的可展开状态。编译器可以对noexcept函数极致优化。</p>
+<p><code>swap</code>函数使noexcept函数的绝佳用地, swap函数往往被认为不抛出异常。</p>
+<ul>
+<li>在移动构造函数中抛出异常是很危险的，因为会导致空悬的指针，因此最好给移动构造函数添加一个noexcept关键字，如果移动构造函数抛出异常则直接调用teminate函数终止程序，而不是造成指针空悬的状态。</li>
+</ul>
+<h3 id="条款15-尽可能使用constexpr"><a href="#条款15-尽可能使用constexpr" class="headerlink" title="条款15 尽可能使用constexpr"></a>条款15 尽可能使用constexpr</h3><p>constexpr表明一个值不仅仅使常量, 还是编译期可知的。因此, const包含constexpr。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> sz<span class="token punctuation">;</span> <span class="token comment">// sz不是const</span>
+<span class="token keyword">constexpr</span> <span class="token keyword">auto</span> arraysize <span class="token operator">=</span> sz<span class="token punctuation">;</span>  <span class="token comment">// 错误, sz编译期不可知</span>
+
+<span class="token keyword">constexpr</span> <span class="token keyword">auto</span> arraysize2 <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span> <span class="token comment">// 正确, 10编译期可知</span></code></pre>
+
+<h3 id="条款16-保证const函数的线程安全"><a href="#条款16-保证const函数的线程安全" class="headerlink" title="条款16 保证const函数的线程安全"></a>条款16 保证const函数的线程安全</h3><p>const意味着只读,</p>
+<ul>
+<li>只有非静态成员函数后面加const（加到非成员函数或静态成员后面会产生编译错误）</li>
+<li>表示成员函数隐含传入的this指针为const指针，决定了在该成员函数中，<br>  任意修改它所在的类的成员的操作都是不允许的（因为隐含了对this指针的const引用）；</li>
+<li>加了const的成员函数可以被非const对象和const对象调用;<br>  但不加const的成员函数只能被非const对象调用</li>
+</ul>
+<p>const成员函数不能修改类成员变量(mutable成员变量除外), 只能被const对象引用, 这隐含了线程安全性。</p>
+<p>当存在mutable成员变量, const函数可能不安全时, 应该通过加锁或原子类确保const函数的线程安全。总之const函数应该是线程安全的, 支持并发执行的。</p>
+<h3 id="条款17-特殊函数的生成"><a href="#条款17-特殊函数的生成" class="headerlink" title="条款17 特殊函数的生成"></a>条款17 特殊函数的生成</h3><p>cpp11对特殊成员函数处理的规则如下</p>
+<ul>
+<li>默认构造函数, 和cpp98一样, 仅当类不存在用户声明的构造函数时自动生成。</li>
+<li>析构函数: 析构函数默认nonexcept, 类不存在用户声明的析构函数时自动生成, 基类析构为虚函数该类析构也为虚函数。</li>
+</ul>
+<p>虚析构函数定义为虚析构函数是为了当用一个基类的指针删除一个派生类的对象时，派生类的析构函数和基类析构函数会被同时调用。 若去掉析构的virtual声明, 则智慧调用基类析构函数。</p>
+<ul>
+<li><p>拷贝构造函数 逐成员拷贝非static数据。当用户定义拷贝构造或析构不会自动生成, 类声明移动操作它就是delete</p>
+</li>
+<li><p>拷贝赋值运算符 当用户定义拷贝构造或析构不会自动生成, 类声明移动操作它就是delete</p>
+</li>
+<li><p>移动构造函数和移动赋值运算符 对非static数据逐成员移动, 仅当类没有用户定义的拷贝操作, 移动操作和析构时才自动生成。</p>
+</li>
+</ul>
+<p>综上, 用户声明构造函数会抑制拷贝, 移动的生成。 声明移动, 自定义拷贝会抑制拷贝的自动生成, 声明拷贝, 自定义移动会抑制移动的自动生成。</p>
+<p>Rule of three规则, 若声明了拷贝构造函数, 拷贝赋值运算符, 析构函数三者之一, 也应该声明其余两个。</p>
+<p>声明移动会抑制拷贝的自动生成, 若需要支持拷贝, 在拷贝操作加上<code>=default</code></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Base</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">virtual</span> <span class="token operator">~</span><span class="token function">Base</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span>
+    <span class="token function">Base</span><span class="token punctuation">(</span>Base<span class="token operator">&amp;&amp;</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span>
+    Base<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">=</span><span class="token punctuation">(</span>Base<span class="token operator">&amp;&amp;</span> <span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span>
+
+    <span class="token function">Base</span><span class="token punctuation">(</span><span class="token keyword">const</span> Base<span class="token operator">&amp;</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span>
+    Base<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">=</span><span class="token punctuation">(</span><span class="token keyword">const</span> Base<span class="token operator">&amp;</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-23-mysql%E8%BF%9B%E9%98%B6/" rel="prev" title="mysql进阶"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">mysql进阶</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-21-linux%E7%B3%BB%E7%BB%9F/" rel="next" title="linux内核"><span class="post-nav-text">linux内核</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/cpp%E5%9F%BA%E7%A1%80/2021-07-22-effective-modern-cpp-1/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

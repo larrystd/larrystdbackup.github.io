@@ -1,0 +1,442 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>mysql进阶 | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="mysql的日常使用包括  启动MYSQL服务器程序 启动MYSQL客户端程序,连接到服务器程序 客户端中输入命令语句, 并将其作为请求发送到服务器程序、服务器执行将结果返回到客户端。  命令mysql基础mysqld 可执行文件表示MYSQL服务器启动程序 mysql.server是一个启动脚本，间接调用mysqld_saft. mysql.server start  # 启动服务器程序 mys">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mysql进阶">
+<meta property="og:url" content="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-23-mysql%E8%BF%9B%E9%98%B6/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="mysql的日常使用包括  启动MYSQL服务器程序 启动MYSQL客户端程序,连接到服务器程序 客户端中输入命令语句, 并将其作为请求发送到服务器程序、服务器执行将结果返回到客户端。  命令mysql基础mysqld 可执行文件表示MYSQL服务器启动程序 mysql.server是一个启动脚本，间接调用mysqld_saft. mysql.server start  # 启动服务器程序 mys">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/4.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/5.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/6.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/7.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/8.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/9.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/10.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/11.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/12.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/13.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/14.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/15.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/16.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/17.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/19.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/18.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/20.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/21.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/22.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/23.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/24.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/25.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/26.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/27.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/28.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/29.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/DB/30.png">
+<meta property="article:published_time" content="2021-07-22T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-22T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="mysql">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/assets/images/DB/4.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4"><span class="toc-number">1.</span> <span class="toc-text">命令</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#mysql%E5%9F%BA%E7%A1%80"><span class="toc-number">1.1.</span> <span class="toc-text">mysql基础</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="toc-number">2.</span> <span class="toc-text">InnoDB存储引擎</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#COMPACT-%E6%AF%8F%E8%A1%8C%E6%A0%BC%E5%BC%8F-%E8%A1%8C%E5%8F%88%E7%A7%B0%E8%AE%B0%E5%BD%95"><span class="toc-number">2.1.</span> <span class="toc-text">COMPACT 每行格式, 行又称记录</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#InnoDB%E6%95%B0%E6%8D%AE%E9%A1%B5%E6%A0%BC%E5%BC%8F"><span class="toc-number">2.2.</span> <span class="toc-text">InnoDB数据页格式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#B-%E6%A0%91%E7%B4%A2%E5%BC%95"><span class="toc-number">2.3.</span> <span class="toc-text">B+树索引</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%81%9A%E7%B0%87%E7%B4%A2%E5%BC%95"><span class="toc-number">2.4.</span> <span class="toc-text">聚簇索引</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BA%8C%E7%BA%A7%E7%B4%A2%E5%BC%95"><span class="toc-number">2.5.</span> <span class="toc-text">二级索引</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95"><span class="toc-number">2.6.</span> <span class="toc-text">创建索引</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%98%E5%82%A8"><span class="toc-number">2.7.</span> <span class="toc-text">存储</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96"><span class="toc-number">3.</span> <span class="toc-text">查询优化</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8D%95%E8%A1%A8%E8%AE%BF%E9%97%AE%E6%96%B9%E6%B3%95"><span class="toc-number">3.1.</span> <span class="toc-text">单表访问方法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A1%A8%E8%BF%9E%E6%8E%A5"><span class="toc-number">3.2.</span> <span class="toc-text">表连接</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E5%8C%96%E5%99%A8%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92"><span class="toc-number">3.3.</span> <span class="toc-text">优化器执行计划</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E%E8%A7%84%E5%88%99%E7%9A%84%E4%BC%98%E5%8C%96"><span class="toc-number">3.4.</span> <span class="toc-text">基于规则的优化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%93%E5%AD%98"><span class="toc-number">3.5.</span> <span class="toc-text">缓存</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1-transaction"><span class="toc-number">4.</span> <span class="toc-text">事务 transaction</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E7%AE%80%E4%BB%8B"><span class="toc-number">4.1.</span> <span class="toc-text">事务简介</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#redo%E6%97%A5%E5%BF%97"><span class="toc-number">4.2.</span> <span class="toc-text">redo日志</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#undo%E6%97%A5%E5%BF%97"><span class="toc-number">4.3.</span> <span class="toc-text">undo日志</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="toc-number">4.4.</span> <span class="toc-text">事务隔离级别</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%94%81"><span class="toc-number">4.5.</span> <span class="toc-text">锁</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-23-mysql%E8%BF%9B%E9%98%B6/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">mysql进阶<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/计算机四大件/2021-07-23-mysql进阶.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-07-23 00:00:00" itemprop="dateCreated datePublished" datetime="2021-07-23T00:00:00+08:00">2021-07-23</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">4.5k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">16m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/database/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">database</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/mysql/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">mysql</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><p>mysql的日常使用包括</p>
+<ul>
+<li>启动MYSQL服务器程序</li>
+<li>启动MYSQL客户端程序,连接到服务器程序</li>
+<li>客户端中输入命令语句, 并将其作为请求发送到服务器程序、服务器执行将结果返回到客户端。</li>
+</ul>
+<h3 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h3><h4 id="mysql基础"><a href="#mysql基础" class="headerlink" title="mysql基础"></a>mysql基础</h4><p>mysqld 可执行文件表示MYSQL服务器启动程序</p>
+<p>mysql.server是一个启动脚本，间接调用mysqld_saft.</p>
+<pre class="language-sh" data-language="sh"><code class="language-sh">mysql.server start  # 启动服务器程序
+mysql.server stop   # 关闭正在运行的服务器程序</code></pre>
+<p>mysql服务器默认监听3306端口</p>
+<p>启动mysqL服务器程序后, 可以启动客户端来连接。通过mysql可执行文件可以与服务器交互。</p>
+<pre class="language-sh" data-language="sh"><code class="language-sh">mysql -h host -u user -p password
+
+mysql -hlocalhost -uroot -p123456</code></pre>
+
+<ul>
+<li>命令的长形式</li>
+</ul>
+<p><img src="../../assets/images/DB/4.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li><p>启动<br><img src="../../assets/images/DB/5.png" alt="avatar" loading="lazy"></p>
+</li>
+<li><p>变量</p>
+</li>
+</ul>
+<span id="more"></span>
+
+<p><img src="../../assets/images/DB/6.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li>字符集和比较规则, 字符集表示编码规则, 比较规则定义比较(例如大小写是否区分)</li>
+</ul>
+<p><img src="../../assets/images/DB/7.png" alt="avatar" loading="lazy"></p>
+<p><img src="../../assets/images/DB/8.png" alt="avatar" loading="lazy"></p>
+<h3 id="InnoDB存储引擎"><a href="#InnoDB存储引擎" class="headerlink" title="InnoDB存储引擎"></a>InnoDB存储引擎</h3><h4 id="COMPACT-每行格式-行又称记录"><a href="#COMPACT-每行格式-行又称记录" class="headerlink" title="COMPACT 每行格式, 行又称记录"></a>COMPACT 每行格式, 行又称记录</h4><p><img src="../../assets/images/DB/9.png" alt="avatar" loading="lazy"></p>
+<p>额外信息是方便管理存储的内容</p>
+<ol>
+<li>变长字段长度列表, 变长字段存储空间分为两部分: 真正的数据内容, 该数据占用的字节数。其中长度组成了变长字段长度列表, 真实数据存到后面</li>
+<li>NULL值列表用二进制表示, 二进制位值为1, 表示对应的列号为NULL</li>
+<li>头信息</li>
+</ol>
+<p><img src="../../assets/images/DB/10.png" alt="avatar" loading="lazy"></p>
+<p><img src="../../assets/images/DB/11.png" alt="avatar" loading="lazy"></p>
+<h4 id="InnoDB数据页格式"><a href="#InnoDB数据页格式" class="headerlink" title="InnoDB数据页格式"></a>InnoDB数据页格式</h4><ul>
+<li>页是InnDB管理存储空间的基本单位, 一个页的大小一般是16KB。我们存储的记录会按照指定的行格式存储到User Records部分</li>
+</ul>
+<p><img src="../../assets/images/DB/12.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li>Page Header存储该页的信息, 例如数据页存储了多少记录等, 存储的是当前页的状态信息</li>
+</ul>
+<p><img src="../../assets/images/DB/13.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li><p>File Header 存储通用的信息例如, 页号, 上一页, 下一页, 页的类型等</p>
+</li>
+<li><p>File Trailer文件尾部, 由8字节组成。前4字节代表页的校验和, 校验和和File Header的对应, 二者一致说明无误。后四字节也是用于校验完整性LSN。</p>
+</li>
+</ul>
+<p><img src="../../assets/images/DB/14.png" alt="avatar" loading="lazy"></p>
+<p>每个记录的头信息有<code>next_record</code>属性,使页内所有记录串联成一个单向链表。</p>
+<ul>
+<li>各数据页页组成单向链表, 每个数据页的记录按照主键值从小到大顺序组成单向链表。InnoDB会把页里的记录分为若干组, <strong>每个组最后一个记录地址偏移量作为槽, 放入目录里, 通过主键查找可用在页目录中使用二分查找定位到对应的槽</strong>, 然后遍历槽对应的分组。</li>
+</ul>
+<ol>
+<li>目录里二分查找槽</li>
+<li>遍历槽中的目录</li>
+</ol>
+<p><img src="../../assets/images/DB/15.png" alt="avatar" loading="lazy"></p>
+<h4 id="B-树索引"><a href="#B-树索引" class="headerlink" title="B+树索引"></a>B+树索引</h4><ul>
+<li>一般查找过程是, 定位到页, 二分查找页的目录得到槽, 遍历槽里的记录。</li>
+</ul>
+<h4 id="聚簇索引"><a href="#聚簇索引" class="headerlink" title="聚簇索引"></a>聚簇索引</h4><ul>
+<li><p>页内的记录按照主键大小顺序排成单向链表, 页内的记录划分为若干组, 每个组主键最大的记录在页内的偏移量当作槽存放在页目录中; </p>
+</li>
+<li><p>存放用户记录页也是根据主键大小顺序形成的双向链表</p>
+</li>
+<li><p>存放目录项的页分为不同的层级, 同层级的页也是根据页中目录项记录主键大小排成双向链表</p>
+</li>
+<li><p>目录项的页只存储主键值和对应的页号</p>
+</li>
+<li><p>聚簇索引<strong>B+树的叶子节点存储的是完整的用户记录</strong>,包括了记录所有列的值。</p>
+</li>
+<li><p>聚簇索引完整的用户记录都位于B+树结构中, InnoDB引擎自动创建。也就是<strong>索引即数据,数据即索引</strong>, 但只能在搜索条件是主键时发挥作用。因为只有主键有序, <strong>聚簇索引作用就是在主键有序的页中用B+树结构检索页(叶子节点)</strong>, 之后就是二分查找目录得到槽了</p>
+</li>
+</ul>
+<p><img src="../../assets/images/DB/16.png" alt="avatar" loading="lazy"></p>
+<h4 id="二级索引"><a href="#二级索引" class="headerlink" title="二级索引"></a>二级索引</h4><ul>
+<li><p>当使用别的列作为条件, 而不是主键值时, 简单的办法时以其他列再建一颗B+树。同样, 联合索引时同时以多个列的大小作为排序规则。</p>
+</li>
+<li><p>这时候在叶子节点处存储的是索引列+主键。</p>
+</li>
+<li><p>B+树的每层都根据索引列的值从小到大组成了双向列表。页内的记录(包括用户记录和目录项记录)都按照索引值从小到大形成单向链表， 联合索引优先前一个索引排序。二级索引找到主键值之后, 再从聚簇索引中查找完整的用户记录。</p>
+</li>
+</ul>
+<h4 id="创建索引"><a href="#创建索引" class="headerlink" title="创建索引"></a>创建索引</h4><ul>
+<li>为出现在where子句的列, 连接子句中的连接列, 或者出现在order by, group by 子句的列创建索引。</li>
+<li>索引类型尽可能小</li>
+<li>对字符串, 可以为列前缀创建索引(索引只保留字符串的前n个字符)</li>
+</ul>
+<pre class="language-none"><code class="language-none">ALTER TABLE single_table ADD INDEX index_key1(key1(10))</code></pre>
+
+<ul>
+<li>不是查询操作的谨慎创建索引, 索引建的不多不少为佳</li>
+</ul>
+<p><img src="../../assets/images/DB/17.png" alt="avatar" loading="lazy"></p>
+<h4 id="存储"><a href="#存储" class="headerlink" title="存储"></a>存储</h4><p>向InnoDB这样的存储引擎都是把数据存储在文件系统上, 操作系统使用文件系统管理磁盘。</p>
+<p>表空间对应文件系统上一个或多个真实文件, 同时一个表空间可以被划分为很多页, 表数据就存放在某个表空间的某个页中。同时, 聚簇索引和二级索引都是以B+树的形式保存在表空间中。</p>
+<ul>
+<li>具体的, 连续的64个页就是一个区, 也就是1MB大小。系统表空间和独立表空间, 可以看成若干连续的区组成, 每256个区划分为一组。<br><img src="../../assets/images/DB/19.png" alt="avatar" loading="lazy"><br><img src="../../assets/images/DB/18.png" alt="avatar" loading="lazy"></li>
+</ul>
+<p>当表中的数据量很大时, 为某个索引分配空间时不再按页为单位而按区为单位分配。</p>
+<ul>
+<li>InnoDB提供了一些列系统表描述元数据, 其中<code>SYS_TABLES</code>, <code>SYS_COLUMNS</code>, <code>SYS_INDEXS</code>, <code>SYS_FIELDS</code>这四个表尤其重要, 成为基本系统表。</li>
+</ul>
+<h3 id="查询优化"><a href="#查询优化" class="headerlink" title="查询优化"></a>查询优化</h3><h4 id="单表访问方法"><a href="#单表访问方法" class="headerlink" title="单表访问方法"></a>单表访问方法</h4><p>以下表结构</p>
+<pre class="language-none"><code class="language-none">CREATE TABLE single_table (
+    id INT NOT NULL AUTO_INCREMENT,
+    key1 VARCHAR(100),
+    key2 INT,
+    key3 VARCHAR,
+    key_part1 VARCHAR(100),
+    key_part2 VARCHAR(100),
+    key_part3 VARCHAR(100),
+    common_field VARCHAR(100),
+    PRIMARY KEY(id),
+    KEY idx_key1(key1),
+    UNIQUE KEY uk_key2 (key2),
+    KEY idx_key3(key3),
+    KEY idx_key_part(key_part1, key_part2, key_part3)
+) Engine&#x3D;InnoDB CHARSET&#x3D;utf8;</code></pre>
+<ul>
+<li>主键会自动添加唯一索引，所以主键列不需要添加索引</li>
+<li>唯一键需要该列值唯一，这样会自动添加唯一索引，所以唯一键列不需要添加索引</li>
+<li>绝大部分情况下，mysql中的索引index和键key是同义词。<br>以上, 主键id有聚簇索引, key2有唯一索引, key1, key3是普通二级索引, (key_part1, key_part2, key_part3)是一个联合二级索引。</li>
+</ul>
+<ul>
+<li><p>const查询, 当根据<strong>主键或者唯一二级索引和常数等值比较</strong>定位记录, 是最快的, 称const查询</p>
+</li>
+<li><p>ref查询, <strong>普通二级索引列和常数等值比较</strong>, 称为ref查询。这时候由于索引列值可能不唯一, 因此可能匹配多条记录。这时候每获得一条二级索引记录都立即执行一次回表操作。</p>
+</li>
+<li><p>ref_or_null, 当执行<strong>普通二级索引列和常数等值比较或者值为NULL</strong>的记录,</p>
+</li>
+</ul>
+<pre class="language-none"><code class="language-none">SELECT * FROM single_table WHERE key1 &#x3D; &#39;abc&#39; OR key1 IS NULL</code></pre>
+<p>这时候对应扫描空间是<code>[NULL,NULL]</code>和<code>[&#39;abc&#39;, &#39;abc&#39;]</code>,这种查询方法称为<code>ref_or_null</code>。这与ref查询类似, 只是执行<code>key1 = &#39;abc&#39; OR key1 IS NULL</code>, 每找到一条记录就会执行回表操作</p>
+<ul>
+<li>range查询, 当搜索区间非单点或全部时, 称为range查询。如<pre class="language-none"><code class="language-none">SELECT * FROM single_table WHERE key2 IN (1438, 6238) OR (key2 &gt;&#x3D; 38 AND key2 &lt;&#x3D; 79)</code></pre></li>
+</ul>
+<p>这时候搜索区间为<code>[1438,1438]</code>, <code>[6328,6328]</code>, 以及<code>[38, 79]</code>。</p>
+<ul>
+<li>index 查询</li>
+</ul>
+<pre class="language-none"><code class="language-none">SELECT key_part1,key_part2, key_part3 FROM single_table WHERE key_part2 &#x3D; &#39;abc&#39;</code></pre>
+
+<p>这时候<code>key_part2</code>不是联合索引idx_key_part最左边的列, 无法形成范围区间。但是查询列表key_part1,key_part2, key_part3均来自联合索引且查询条件也是联合索引, <strong>这个过程不需要回表操作</strong> 称为index查询</p>
+<p>此外全表扫描添加<code>ORDER BY</code>主键也被认为index访问, 如</p>
+<pre class="language-none"><code class="language-none">SELECT * FROM single_table ORDER BY id</code></pre>
+
+<ul>
+<li><p>最后全表扫描称为all查询, 全表扫描指没有索引的扫描。</p>
+</li>
+<li><p>如果使用多个索引进行查询, 有可能发生索引合并。</p>
+</li>
+</ul>
+<h4 id="表连接"><a href="#表连接" class="headerlink" title="表连接"></a>表连接</h4><ul>
+<li>连接查询</li>
+</ul>
+<p>将t1表的记录和t2表的记录连起来组成新的更大的记录, 称为连接。全表连接直接在from后面跟多个表名</p>
+<pre class="language-none"><code class="language-none">SELECT * FROM t1, t2</code></pre>
+
+<ul>
+<li>直接表连接产生的笛卡尔积是巨大的, 因此有必要先过滤掉指定记录。连接过程, 对于</li>
+</ul>
+<pre class="language-none"><code class="language-none">SELECT * FROM t1, t2 WHERE t1.m1 &gt; 1 AND t1.m1 &#x3D; t2.m2 AND t2.n2 &lt; &#39;d&#39;</code></pre>
+
+<p>以上查询指明了三个过滤条件, <code>t1.m1 &gt; 1</code>, <code>t1.m1=t2.m2</code>, <code>t2.n2&lt;&#39;d&#39;</code></p>
+<ol>
+<li>首先建立一个需要查询的表称为, 驱动表, 也就是t1。单表查询<code>t1.m1 &gt; 1</code>, 可以使用全表扫描</li>
+<li>从驱动表中得到一个记录, 就从t2表找匹配的记录, 如果找到<code>t1.m1=2</code>则t2查询条件<code>t2.m2=2 AND t2.n2 &lt; &#39;d&#39;</code></li>
+</ol>
+<p><img src="../../assets/images/DB/20.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li>内连接, 若驱动表的记录在被驱动表中找不到匹配的记录, 则该记录不会加入到最后的结果集</li>
+<li>外连接, 若驱动表的记录在被驱动表中找不到匹配的记录也会加入到最后的结果集。左外连接就是选取左边的表作为驱动表, 右外连接是选取右边的表作为驱动表</li>
+</ul>
+<pre class="language-none"><code class="language-none">&#x2F;&#x2F;&#x2F; 内连接
+SELECT * FROM t1 JOIN t2 ON [连接条件,where过滤条件]
+&#x2F;&#x2F; 左外连接
+SELECT * FROM t1 LEFT JOIN t2 ON [连接条件,where过滤条件]
+&#x2F;&#x2F; 右外连接
+SELECT * FROM t1 RIGHT JOIN t2 ON [连接条件,where过滤条件]</code></pre>
+
+<ul>
+<li>使用索引加快连接速度</li>
+</ul>
+<pre class="language-none"><code class="language-none">SELECT * FROM  t1,t2 WHERE t1.m1 &gt; 1 AND t1.m1 &#x3D; t2.m2 AND t2.n2 &lt; &#39;d&#39;</code></pre>
+
+<p>在m2列加索引, 查询<code>t1.m1=t2.m2</code>就是等值查找, 可能使用到ref访问方法。同理, 在n2上加索引可能使用到range访问方法。而且为了可能用到的index访问方法, 最好不要用*作为查询列表, 而把真正用到的列作为查询列表。</p>
+<h4 id="优化器执行计划"><a href="#优化器执行计划" class="headerlink" title="优化器执行计划"></a>优化器执行计划</h4><p>单表查询中, 优化器生成执行计划的步骤一般如下</p>
+<ol>
+<li>根据搜索条件, 找出所有可能使用的索引</li>
+<li>计算全表扫描的代价</li>
+<li>计算使用不同索引执行查询的代价</li>
+<li>对比各种执行方案的代价, 找出成本最低的方案</li>
+</ol>
+<p>对于内连接来说, 为了生成成本最低的执行计划, 需要考虑</p>
+<ol>
+<li>最优的表连接顺序</li>
+<li>为驱动表和被驱动表选择成本最低的访问方法</li>
+</ol>
+<p>可以手动修改mysql数据库下engine_cost表中的某些成本常数, 更精确控制执行计划中的成本计算过程。</p>
+<h4 id="基于规则的优化"><a href="#基于规则的优化" class="headerlink" title="基于规则的优化"></a>基于规则的优化</h4><p>MYSQL会根据一些规则, 将糟糕的语句转换成某种可以高效执行的形式。</p>
+<ul>
+<li>条件化简</li>
+</ul>
+<p>移除不必要的括号</p>
+<p>移除多余的条件</p>
+<p>合并HAVING子句和WHERE子句</p>
+<p>外连接消除, 例如设定搜索条件不为NULL, 外连接和内连接结果没有区别, 就会转化成内连接</p>
+<ul>
+<li>子查询</li>
+</ul>
+<pre class="language-none"><code class="language-none">SELECT m, n FROM (SELECT m2+1 as m, n2 as n FROM te WHERE m2 &gt; 2) AS t;</code></pre>
+
+<h4 id="缓存"><a href="#缓存" class="headerlink" title="缓存"></a>缓存</h4><ul>
+<li><p>Buffer Pool, Buffer Pool对应的一片连续的内存被划分为若干个页面, 页面大小与InnoDB表空间使用的页面大小一致,默认16KB。这些页面称之为缓冲页。每个缓冲页有一些控制信息, 包含该页所属的表空间编号, 页号, 地址,链表节点信息等。 </p>
+</li>
+<li><p>刚刚初始化的Buffer Pool, 所有的缓冲页都是空闲的, 每一个缓冲页对应的控制块都会加入到free链表中。每当需要从磁盘加载一个页到Buffer Pool中时，就从free链表取一个空闲的缓冲页, 把该缓冲页对应的控制块信息填入, 将控制块从free链表中移除表示该缓冲页已经使用了。</p>
+</li>
+</ul>
+<p><img src="../../assets/images/DB/21.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li><p>如果要访问的页已经在Buffer Pool中, 直接使用就可以不用从磁盘拿数据, 查找的办法是根据<strong>表空间号+页号定位一个页</strong>, 用表空间号+页号当作Key用哈希表直接映射到缓冲页控制块地址， 只需要输入表空间号+页号就可以定位缓冲控制块。</p>
+</li>
+<li><p>当修改了Buffer Pool缓冲页的数据, 它就与磁盘上的页不一样了, 这样的缓冲页也称为脏页。频繁向磁盘中写数据会影响数据库的性能。因此创建一个存储脏页的链表,也就是flush链表</p>
+</li>
+<li><p>某个缓冲页不可能既是free链表的节点, 又是flush链表的节点。</p>
+</li>
+</ul>
+<ul>
+<li>LRU链表, 留下最近最频繁使用的数据。可以使用某个比例将LRU分为两部分, 热数据和冷数据</li>
+</ul>
+<p><img src="../../assets/images/DB/22.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li>只要从磁盘中加载一个页面到Buffer Pool的缓冲页中, 该缓冲页对应的控制块就会作为一个节点加入到LRU链表中, 控制块从free list中删除。但flush链表的节点肯定包含在LRU链表中。</li>
+</ul>
+<h3 id="事务-transaction"><a href="#事务-transaction" class="headerlink" title="事务 transaction"></a>事务 transaction</h3><h4 id="事务简介"><a href="#事务简介" class="headerlink" title="事务简介"></a>事务简介</h4><p>事务的特性 AICD</p>
+<ul>
+<li><p>原子性 Atomicity, 操作不可分割, 要么全部做完且成功, 要么不做</p>
+</li>
+<li><p>隔离性 Isolation, 其他的操作不会影响本次操作(例如多线程)</p>
+</li>
+<li><p>一致性 Consistency 应用系统从一个正确的状态到另一个正确的状态。可以说AID都是来保证C</p>
+</li>
+<li><p> 持久性 Durability 状态转移发生后 , 转换的结果永久保留不可更改。</p>
+</li>
+</ul>
+<p>事务的状态转换, 活动的, 部分提交的, 提交的, 失败的, 中止的, </p>
+<p><img src="../../assets/images/DB/23.png" alt="avatar" loading="lazy"></p>
+<p>事务的语法</p>
+<pre class="language-none"><code class="language-none">BEGIN;
+UPDATE account SET balance &#x3D; blance-10 WHERE id&#x3D;1;
+UPDATE account SET balance &#x3D; blance+10 WHERE id&#x3D;2;
+COMMIT; # 提交 或者 ROLLBACK # 回滚</code></pre>
+<p>有时候没有COMMIT;也会自动提交事务, 称为隐式提交。</p>
+<ul>
+<li>保存点</li>
+</ul>
+<p>可以在事务中加入保存点<code>SAVEPOINT</code>, 回滚到指定的保存点。</p>
+<pre class="language-none"><code class="language-none">BEGIN;
+UPDATE account SET balance &#x3D; balance - 10 WHERE id &#x3D; 1;
+SAVEPOINT s1;
+UPDATE account SET blance &#x3D; blance + 1 WHERE id &#x3D; 2;
+ROLLBACK TO s1;</code></pre>
+
+<h4 id="redo日志"><a href="#redo日志" class="headerlink" title="redo日志"></a>redo日志</h4><ul>
+<li>对于一个已经提交的事务. 在事务提交之后即使系统发生了崩溃, 对数据库做的更改也不能丢失。在事务提交前刷新入磁盘, 较于事务提交时将所有修改过的内存的页面刷新到磁盘中, redo日志有以下好处</li>
+</ul>
+<ol>
+<li>redo日志占用空间小, 只存储表空间id, 页号, 偏移量以及要更新的值</li>
+<li>redo日志顺序写入磁盘， 顺序IO</li>
+</ol>
+<p><img src="../../assets/images/DB/24.png" alt="avatar" loading="lazy"></p>
+<p><img src="../../assets/images/DB/25.png" alt="avatar" loading="lazy"><br>type日志类型, space ID表空间ID, page number页号, data具体内容</p>
+<ul>
+<li>redo日志放在了大小为512字节的页中, 称为block。redo日志存储在496字节的log block body中, log block header和log block trailer存储的是一些管理信息。</li>
+</ul>
+<p><img src="../../assets/images/DB/26.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li>服务器启动时会将操作系统申请大片redo log buffer redo日志缓冲区.<br>向log buffer中写入redo 日志时顺序写入到log block body中。</li>
+</ul>
+<p><img src="../../assets/images/DB/27.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li>redo buffer会在, log buffer空间不足, 事务提交, 后台1s一次进程的时机将redo日志进行刷盘。</li>
+</ul>
+<p>以上时redo日志在内存中的存储格式, 接下来是文件中redo日志文件格式.MYSQL的数据目录(可使用<code>SHOW VARIABLES LIKE &#39;datadir&#39;</code>命令)默认有<code>iblogfile</code>文件, logbuffer的日志默认刷新到这两个磁盘文件中。redo日志文件组中每个文件大小都一样, 格式也一样。前2048个字节可分为4个特殊block, 从2048字节往后存储log buffer中的block镜像。</p>
+<p><img src="../../assets/images/DB/28.png" alt="avatar" loading="lazy"></p>
+<ul>
+<li><p>redo日志只是为了系统崩溃后恢复脏页用的, 如果对应的脏页已经刷新到磁盘中, 即使现在系统崩溃重启后也不用恢复页面,redo日志也就没用了。mysql对redo日志设置lsn(log sequence number), 该值一致递增。当redo日志有可以被覆盖的, 首先计算当前可被覆盖的redo日志对应的lsn值最大多少, 小于该值的redo日志都可以被覆盖掉。此外当页被刷新到磁盘上, redo日志可以覆盖, 同时进行一次增加checkpoint_lsn的操作, checkpoint_lsn主要用于恢复</p>
+</li>
+<li><p>恢复时, 首先去欸的那个<strong>恢复起始点, 也就是最近发生的那次checkpoint的信息</strong>, 然后确定恢复的终点, 最后一个redo日志文件中的block。且如果该日志页lsn小于于检查点的lsn, 说明已经刷入磁盘。</p>
+</li>
+</ul>
+<p><img src="../../assets/images/DB/29.png" alt="avatar" loading="lazy"></p>
+<h4 id="undo日志"><a href="#undo日志" class="headerlink" title="undo日志"></a>undo日志</h4><h4 id="事务隔离级别"><a href="#事务隔离级别" class="headerlink" title="事务隔离级别"></a>事务隔离级别</h4><p>事务并发执行时的一致性问题</p>
+<ul>
+<li>脏写 Dirty Write, 一个事务修改了另一个未提交事务修改过的数据</li>
+<li>脏读 Dirty Read, 一个事务读到了另一个未提交事务修改过的数据</li>
+<li>不可重复读 Non-Repeatable Read 一个事务修改了另一个未提交事务<strong>读取</strong>的数据,</li>
+<li>幻读 Phantom 一个事务查询一些记录, 该事务未提交时, 另一个事务写入了那些符合条件的记录(写入可以是INSERT, DELETE, UPDATE), 称为幻读。</li>
+</ul>
+<p>严重性, 脏写 &gt; 脏读 &gt; 不可重复读 &gt; 幻读</p>
+<ul>
+<li>四个隔离级别</li>
+</ul>
+<ol>
+<li>READ UNCOMMITTED 未提交读</li>
+<li>READ COMMITTED 已提交读</li>
+<li>REPEATABLE READ 可重复读</li>
+<li>SERIALIZABLE 可串行化</li>
+</ol>
+<p><img src="../../assets/images/DB/30.png" alt="avatar" loading="lazy"><br>都不允许脏写, 而REPEATABLE READ也可以很大程度避免幻读</p>
+<ul>
+<li>MVCC Muti-Version Concurrency Control 多版本并发控制</li>
+</ul>
+<h4 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h4></div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-23-TCP_IP/" rel="prev" title="TCP/IP详解"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">TCP/IP详解</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/cpp%E5%9F%BA%E7%A1%80/2021-07-22-effective-modern-cpp-1/" rel="next" title="modern_cpp_1:template"><span class="post-nav-text">modern_cpp_1:template</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-23-mysql%E8%BF%9B%E9%98%B6/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

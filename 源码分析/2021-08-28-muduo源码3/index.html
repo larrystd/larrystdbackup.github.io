@@ -1,0 +1,1168 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>muduo网络库 03 eventloop channel poller | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="channel 抽象一个连接，该连接即监听一个fd, 并注册好fd到来时的读写等回调函数, 更新fd的事件函数 poller用来监听多个连接, 也就是监听多个fd。需要注册监听fd, 注册fd的事件, 返回活跃的fd等。 eventloop主loop调用poller返回活跃的channel, 执行其回调函数。此外主线程可以设置任务队列的任务让该线程执行, 令该线程的loop多监听一个eventf">
+<meta property="og:type" content="article">
+<meta property="og:title" content="muduo网络库 03 eventloop channel poller">
+<meta property="og:url" content="https://larrystd.github.io/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-08-28-muduo%E6%BA%90%E7%A0%813/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="channel 抽象一个连接，该连接即监听一个fd, 并注册好fd到来时的读写等回调函数, 更新fd的事件函数 poller用来监听多个连接, 也就是监听多个fd。需要注册监听fd, 注册fd的事件, 返回活跃的fd等。 eventloop主loop调用poller返回活跃的channel, 执行其回调函数。此外主线程可以设置任务队列的任务让该线程执行, 令该线程的loop多监听一个eventf">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-08-27T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-08-27T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="cpp">
+<meta property="article:tag" content="muduo">
+<meta name="twitter:card" content="summary"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#channel-h"><span class="toc-number">1.</span> <span class="toc-text">channel.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#eventloop-h"><span class="toc-number">2.</span> <span class="toc-text">eventloop.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#poller"><span class="toc-number">3.</span> <span class="toc-text">poller</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#eventloopthread"><span class="toc-number">4.</span> <span class="toc-text">eventloopthread</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#eventloopthreadPool"><span class="toc-number">5.</span> <span class="toc-text">eventloopthreadPool</span></a></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-08-28-muduo%E6%BA%90%E7%A0%813/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">muduo网络库 03 eventloop channel poller<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/源码分析/2021-08-28-muduo源码3.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-08-28 00:00:00" itemprop="dateCreated datePublished" datetime="2021-08-28T00:00:00+08:00">2021-08-28</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">4.9k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">24m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/source-code/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">source code</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">cpp</span></a><a class="tag-item" href="/tags/muduo/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">muduo</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><ul>
+<li>channel 抽象一个连接，该连接即监听一个fd, 并注册好fd到来时的读写等回调函数, 更新fd的事件函数</li>
+<li>poller用来监听多个连接, 也就是监听多个fd。需要注册监听fd, 注册fd的事件, 返回活跃的fd等。</li>
+<li>eventloop主loop调用poller返回活跃的channel, 执行其回调函数。此外主线程可以设置任务队列的任务让该线程执行, 令该线程的loop多监听一个eventfd, 主线程想让该线程执行任务只需要写wakefd, 该线程就会停止epoll_wait阻塞，去执行任务队列的任务。wakefd_起到条件变量的作用。</li>
+</ul>
+<h4 id="channel-h"><a href="#channel-h" class="headerlink" title="channel.h"></a>channel.h</h4><p>channel是一个网络连接的抽象, 主要作用如下</p>
+<ul>
+<li>channel也就是对应一个fd, fd会可读可写, poller监听多个fd也就是监听多个channel</li>
+<li>设置回调函数ReadCallback， WriteCallback, CloseCallback, ErrorCallback</li>
+<li>设置channel可读可写, 具体的通过update poll event实现</li>
+<li>基于poller传回的revent选择调用对应回调函数进行处理</li>
+</ul>
+<span id="more"></span>
+
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Channel</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token comment">// event回调函数类型，包括写回调，关闭回调，错误回调</span>
+  <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>function<span class="token operator">&lt;</span><span class="token keyword">void</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">></span> EventCallback<span class="token punctuation">;</span>
+  <span class="token comment">// 读事件回调函数</span>
+  <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>function<span class="token operator">&lt;</span><span class="token keyword">void</span><span class="token punctuation">(</span>Timestamp<span class="token punctuation">)</span><span class="token operator">></span> ReadEventCallback<span class="token punctuation">;</span>
+
+  <span class="token comment">// 构造函数，传入EventLoop和监听的fd</span>
+  <span class="token function">Channel</span><span class="token punctuation">(</span>EventLoop<span class="token operator">*</span> loop<span class="token punctuation">,</span> <span class="token keyword">int</span> fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">Channel</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 事件处理函数，传入接收时间</span>
+  <span class="token keyword">void</span> <span class="token function">handleEvent</span><span class="token punctuation">(</span>Timestamp receiveTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 设置回调函数，分别是写回调，读回调，关闭回调，错误回调</span>
+  <span class="token keyword">void</span> <span class="token function">setReadCallback</span><span class="token punctuation">(</span>ReadEventCallback cb<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span> readCallback_ <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>cb<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">setWriteCallback</span><span class="token punctuation">(</span>EventCallback cb<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span> writeCallback_ <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>cb<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">setCloseCallback</span><span class="token punctuation">(</span>EventCallback cb<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span> closeCallback_ <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>cb<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">setErrorCallback</span><span class="token punctuation">(</span>EventCallback cb<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span> errorCallback_ <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>cb<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">/// 传入shared_ptr对象 绑定const std::shared_ptr&lt;void>&amp; obj</span>
+  <span class="token keyword">void</span> <span class="token function">tie</span><span class="token punctuation">(</span><span class="token keyword">const</span> std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span><span class="token keyword">void</span><span class="token operator">></span><span class="token operator">&amp;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+
+  <span class="token keyword">int</span> <span class="token function">fd</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> fd_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">int</span> <span class="token function">events</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> events_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">void</span> <span class="token function">set_revents</span><span class="token punctuation">(</span><span class="token keyword">int</span> revt<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> revents_ <span class="token operator">=</span> revt<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span> <span class="token comment">// used by pollers</span>
+  <span class="token comment">// int revents() const &#123; return revents_; &#125;</span>
+  <span class="token keyword">bool</span> <span class="token function">isNoneEvent</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> events_ <span class="token operator">==</span> kNoneEvent<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  
+  <span class="token comment">// 设置该通道的event可读，可写等，并向poller中更新之</span>
+  <span class="token keyword">void</span> <span class="token function">enableReading</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> events_ <span class="token operator">|=</span> kReadEvent<span class="token punctuation">;</span> <span class="token function">update</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">disableReading</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> events_ <span class="token operator">&amp;=</span> <span class="token operator">~</span>kReadEvent<span class="token punctuation">;</span> <span class="token function">update</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">enableWriting</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> events_ <span class="token operator">|=</span> kWriteEvent<span class="token punctuation">;</span> <span class="token function">update</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">disableWriting</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> events_ <span class="token operator">&amp;=</span> <span class="token operator">~</span>kWriteEvent<span class="token punctuation">;</span> <span class="token function">update</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">disableAll</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> events_ <span class="token operator">=</span> kNoneEvent<span class="token punctuation">;</span> <span class="token function">update</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  
+  <span class="token keyword">bool</span> <span class="token function">isWriting</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> events_ <span class="token operator">&amp;</span> kWriteEvent<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">bool</span> <span class="token function">isReading</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> events_ <span class="token operator">&amp;</span> kReadEvent<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">// for Poller</span>
+  <span class="token keyword">int</span> <span class="token function">index</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> index_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// 设置</span>
+  <span class="token keyword">void</span> <span class="token function">set_index</span><span class="token punctuation">(</span><span class="token keyword">int</span> idx<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> index_ <span class="token operator">=</span> idx<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">// for debug</span>
+  string <span class="token function">reventsToString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+  string <span class="token function">eventsToString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">void</span> <span class="token function">doNotLogHup</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> logHup_ <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  EventLoop<span class="token operator">*</span> <span class="token function">ownerLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> loop_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">remove</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">static</span> string <span class="token function">eventsToString</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">int</span> ev<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 更新channel</span>
+  <span class="token keyword">void</span> <span class="token function">update</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">void</span> <span class="token function">handleEventWithGuard</span><span class="token punctuation">(</span>Timestamp receiveTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 三种event, 空事件, 读事件, 写事件</span>
+  <span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">int</span> kNoneEvent<span class="token punctuation">;</span>
+  <span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">int</span> kReadEvent<span class="token punctuation">;</span>
+  <span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">int</span> kWriteEvent<span class="token punctuation">;</span>
+
+  <span class="token comment">// eventloop对象</span>
+  EventLoop<span class="token operator">*</span> loop_<span class="token punctuation">;</span>
+  <span class="token comment">// 文件描述符</span>
+  <span class="token keyword">const</span> <span class="token keyword">int</span>  fd_<span class="token punctuation">;</span>
+
+  <span class="token keyword">int</span>        events_<span class="token punctuation">;</span>
+  <span class="token comment">// poll 传回的事件</span>
+  <span class="token keyword">int</span>        revents_<span class="token punctuation">;</span> <span class="token comment">// it's the received event types of epoll or poll</span>
+  <span class="token comment">/// poll要对fd进行的操作，例如kdeleted等</span>
+  <span class="token keyword">int</span>        index_<span class="token punctuation">;</span> <span class="token comment">// used by Poller.</span>
+  <span class="token keyword">bool</span>       logHup_<span class="token punctuation">;</span>
+
+  <span class="token comment">// 绑定对象的软连接</span>
+  std<span class="token double-colon punctuation">::</span>weak_ptr<span class="token operator">&lt;</span><span class="token keyword">void</span><span class="token operator">></span> tie_<span class="token punctuation">;</span>
+  <span class="token keyword">bool</span> tied_<span class="token punctuation">;</span>
+  <span class="token keyword">bool</span> eventHandling_<span class="token punctuation">;</span>
+  <span class="token keyword">bool</span> addedToLoop_<span class="token punctuation">;</span>
+
+  <span class="token comment">// 回调函数</span>
+  ReadEventCallback readCallback_<span class="token punctuation">;</span>
+  EventCallback writeCallback_<span class="token punctuation">;</span>
+  EventCallback closeCallback_<span class="token punctuation">;</span>
+  EventCallback errorCallback_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<p>channel.cc</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// 向poll更新event(即channel)</span>
+<span class="token keyword">void</span> <span class="token class-name">Channel</span><span class="token double-colon punctuation">::</span><span class="token function">update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  addedToLoop_ <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  loop_<span class="token operator">-></span><span class="token function">updateChannel</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 基于poll返回的事件, 处理相关事件的回调函数</span>
+<span class="token keyword">void</span> <span class="token class-name">Channel</span><span class="token double-colon punctuation">::</span><span class="token function">handleEvent</span><span class="token punctuation">(</span>Timestamp receiveTime<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span><span class="token keyword">void</span><span class="token operator">></span> guard<span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>tied_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">// 如果绑定了对象，要看对象是否存活</span>
+    <span class="token comment">// 如果对象存在，lock()函数返回一个指向共享对象的shared_ptr，否则返回一个空shared_ptr。</span>
+    guard <span class="token operator">=</span> tie_<span class="token punctuation">.</span><span class="token function">lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>guard<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token function">handleEventWithGuard</span><span class="token punctuation">(</span>receiveTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">else</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">handleEventWithGuard</span><span class="token punctuation">(</span>receiveTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 根据poll 发来的revents_, 执行各种回调函数</span>
+<span class="token comment">// 回调函数类型, closeCallback_, errorCallback_, readCallback_, writeCallback_</span>
+<span class="token keyword">void</span> <span class="token class-name">Channel</span><span class="token double-colon punctuation">::</span><span class="token function">handleEventWithGuard</span><span class="token punctuation">(</span>Timestamp receiveTime<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  eventHandling_ <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  LOG_TRACE <span class="token operator">&lt;&lt;</span> <span class="token function">reventsToString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>revents_ <span class="token operator">&amp;</span> POLLHUP<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token punctuation">(</span>revents_ <span class="token operator">&amp;</span> POLLIN<span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>logHup_<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      LOG_WARN <span class="token operator">&lt;&lt;</span> <span class="token string">"fd = "</span> <span class="token operator">&lt;&lt;</span> fd_ <span class="token operator">&lt;&lt;</span> <span class="token string">" Channel::handle_event() POLLHUP"</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>closeCallback_<span class="token punctuation">)</span> <span class="token function">closeCallback_</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>revents_ <span class="token operator">&amp;</span> POLLNVAL<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    LOG_WARN <span class="token operator">&lt;&lt;</span> <span class="token string">"fd = "</span> <span class="token operator">&lt;&lt;</span> fd_ <span class="token operator">&lt;&lt;</span> <span class="token string">" Channel::handle_event() POLLNVAL"</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>revents_ <span class="token operator">&amp;</span> <span class="token punctuation">(</span>POLLERR <span class="token operator">|</span> POLLNVAL<span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>errorCallback_<span class="token punctuation">)</span> <span class="token function">errorCallback_</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>revents_ <span class="token operator">&amp;</span> <span class="token punctuation">(</span>POLLIN <span class="token operator">|</span> POLLPRI <span class="token operator">|</span> POLLRDHUP<span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>readCallback_<span class="token punctuation">)</span> <span class="token function">readCallback_</span><span class="token punctuation">(</span>receiveTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>revents_ <span class="token operator">&amp;</span> POLLOUT<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>writeCallback_<span class="token punctuation">)</span> <span class="token function">writeCallback_</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  eventHandling_ <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="eventloop-h"><a href="#eventloop-h" class="headerlink" title="eventloop.h"></a>eventloop.h</h4><ul>
+<li><p>每一个线程会分配一个eventloop对象, 同时记录该线程的id，从而将线程于eventloop对象进行绑定, 也就是one thread one loop</p>
+</li>
+<li><p>eventloop对象有注册的channel, 监听注册的fd, 如果发生事件会返回并处理事件回调函数。处理该事件回调函数是单线程的。主线程的eventloop会注册监听连接的事件，而建立连接后会在工作线程中注册处理该连接的事件。</p>
+</li>
+<li><p>对于一个线程, 它执行的loop对象要么是它自己的, 要么是别人的。<strong>尽管每个线程会分配一个eventloop对象, 但该线程有可能调用其他线程的eventloop对象</strong>， 此时该线程不可执行, 必须将任务放到其他线程的pendingFunctors_中等待其他线程来调用该任务。 此举称之为<code>runInLoop</code>。例如server可能创建子线程来处理连接, server可能会调用子线程的loop来初始化, 但不可调用子线程执行task(防止两个线程竞争), 必须将task放入pendingFunctors中等子线程前来执行。</p>
+</li>
+<li><p>muduo的多线程协调是主线程和工作线程的协调, 大大减少多线程调度的竞争。</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">EventLoop</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>function<span class="token operator">&lt;</span><span class="token keyword">void</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">></span> Functor<span class="token punctuation">;</span>
+
+  <span class="token function">EventLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">EventLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+
+  <span class="token comment">/// Loops forever.</span>
+  <span class="token comment">///</span>
+  <span class="token comment">/// Must be called in the same thread as creation of the object.</span>
+  <span class="token keyword">void</span> <span class="token function">loop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// Quits loop.</span>
+  <span class="token comment">/// This is not 100% thread safe, if you call through a raw pointer,</span>
+  <span class="token comment">/// better to call through shared_ptr&lt;EventLoop> for 100% safety.</span>
+  <span class="token keyword">void</span> <span class="token function">quit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// Time when poll returns, usually means data arrival.</span>
+  Timestamp <span class="token function">pollReturnTime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> pollReturnTime_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">int64_t</span> <span class="token function">iteration</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> iteration_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">/// Runs callback immediately in the loop thread.</span>
+  <span class="token comment">/// It wakes up the loop, and run the cb.</span>
+  <span class="token comment">/// If in the same loop thread, cb is run within the function.</span>
+  <span class="token comment">/// Safe to call from other threads.</span>
+  <span class="token keyword">void</span> <span class="token function">runInLoop</span><span class="token punctuation">(</span>Functor cb<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// Queues callback in the loop thread.</span>
+  <span class="token comment">/// Runs after finish pooling.</span>
+  <span class="token comment">/// Safe to call from other threads.</span>
+  <span class="token keyword">void</span> <span class="token function">queueInLoop</span><span class="token punctuation">(</span>Functor cb<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  size_t <span class="token function">queueSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// timers, 设置定时器任务</span>
+  TimerId <span class="token function">runAt</span><span class="token punctuation">(</span>Timestamp time<span class="token punctuation">,</span> TimerCallback cb<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">///</span>
+  <span class="token comment">/// Runs callback after @c delay seconds.</span>
+  <span class="token comment">/// Safe to call from other threads.</span>
+  <span class="token comment">///</span>
+  TimerId <span class="token function">runAfter</span><span class="token punctuation">(</span><span class="token keyword">double</span> delay<span class="token punctuation">,</span> TimerCallback cb<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">///</span>
+  <span class="token comment">/// Runs callback every @c interval seconds.</span>
+  <span class="token comment">/// Safe to call from other threads.</span>
+  <span class="token comment">///</span>
+  TimerId <span class="token function">runEvery</span><span class="token punctuation">(</span><span class="token keyword">double</span> interval<span class="token punctuation">,</span> TimerCallback cb<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">///</span>
+  <span class="token comment">/// Cancels the timer.</span>
+  <span class="token comment">/// Safe to call from other threads.</span>
+  <span class="token comment">///</span>
+  <span class="token keyword">void</span> <span class="token function">cancel</span><span class="token punctuation">(</span>TimerId timerId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// internal usage</span>
+  <span class="token comment">/// 更新channel，就是更新需要poll的连接，因此调用poller内部函数实现</span>
+  <span class="token keyword">void</span> <span class="token function">wakeup</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">updateChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">removeChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">bool</span> <span class="token function">hasChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// pid_t threadId() const &#123; return threadId_; &#125;</span>
+  <span class="token keyword">void</span> <span class="token function">assertInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">isInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token function">abortNotInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// 当前线程idCurrentThread::tid() 为 构建thread_loop线程的id</span>
+  <span class="token keyword">bool</span> <span class="token function">isInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> threadId_ <span class="token operator">==</span> <span class="token class-name">CurrentThread</span><span class="token double-colon punctuation">::</span><span class="token function">tid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span> 
+  <span class="token comment">// bool callingPendingFunctors() const &#123; return callingPendingFunctors_; &#125;</span>
+  <span class="token keyword">bool</span> <span class="token function">eventHandling</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> eventHandling_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">void</span> <span class="token function">setContext</span><span class="token punctuation">(</span><span class="token keyword">const</span> boost<span class="token double-colon punctuation">::</span>any<span class="token operator">&amp;</span> context<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span> context_ <span class="token operator">=</span> context<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">const</span> boost<span class="token double-colon punctuation">::</span>any<span class="token operator">&amp;</span> <span class="token function">getContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> context_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  boost<span class="token double-colon punctuation">::</span>any<span class="token operator">*</span> <span class="token function">getMutableContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token operator">&amp;</span>context_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">static</span> EventLoop<span class="token operator">*</span> <span class="token function">getEventLoopOfCurrentThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token comment">// EventLoop对象创建者并非本线程</span>
+  <span class="token keyword">void</span> <span class="token function">abortNotInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// read waked up fd_</span>
+  <span class="token keyword">void</span> <span class="token function">handleRead</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// waked up</span>
+  <span class="token comment">// 运行等待的任务</span>
+  <span class="token keyword">void</span> <span class="token function">doPendingFunctors</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// 打印ChannelList activeChannels_;</span>
+  <span class="token keyword">void</span> <span class="token function">printActiveChannels</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span> <span class="token comment">// DEBUG</span>
+
+  <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>Channel<span class="token operator">*</span><span class="token operator">></span> ChannelList<span class="token punctuation">;</span>
+  <span class="token comment">// 调用EventLoop，设置为true</span>
+  <span class="token keyword">bool</span> looping_<span class="token punctuation">;</span> <span class="token comment">/* atomic */</span>
+  std<span class="token double-colon punctuation">::</span>atomic<span class="token operator">&lt;</span><span class="token keyword">bool</span><span class="token operator">></span> quit_<span class="token punctuation">;</span>
+  <span class="token comment">// 处理事件中</span>
+  <span class="token keyword">bool</span> eventHandling_<span class="token punctuation">;</span> <span class="token comment">/* atomic */</span>
+  <span class="token keyword">bool</span> callingPendingFunctors_<span class="token punctuation">;</span> <span class="token comment">/* atomic */</span>
+  <span class="token comment">// 迭代次数</span>
+  <span class="token keyword">int64_t</span> iteration_<span class="token punctuation">;</span>
+  <span class="token comment">/// tid</span>
+  <span class="token keyword">const</span> pid_t threadId_<span class="token punctuation">;</span>
+  <span class="token comment">// pollReturnTime_ 时间戳</span>
+  Timestamp pollReturnTime_<span class="token punctuation">;</span>
+  <span class="token comment">/// poller和时间队列</span>
+  <span class="token comment">/// Poller用来监听channel</span>
+  std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>Poller<span class="token operator">></span> poller_<span class="token punctuation">;</span>
+  std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>TimerQueue<span class="token operator">></span> timerQueue_<span class="token punctuation">;</span>
+
+  <span class="token keyword">int</span> wakeupFd_<span class="token punctuation">;</span>
+  <span class="token comment">// unlike in TimerQueue, which is an internal class,</span>
+  <span class="token comment">// we don't expose Channel to client.</span>
+  std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>Channel<span class="token operator">></span> wakeupChannel_<span class="token punctuation">;</span>
+
+  boost<span class="token double-colon punctuation">::</span>any context_<span class="token punctuation">;</span>
+
+  <span class="token comment">// scratch variables</span>
+  ChannelList activeChannels_<span class="token punctuation">;</span>
+  Channel<span class="token operator">*</span> currentActiveChannel_<span class="token punctuation">;</span>
+
+  <span class="token keyword">mutable</span> MutexLock mutex_<span class="token punctuation">;</span>
+  <span class="token comment">/// 任务队列</span>
+  std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>Functor<span class="token operator">></span> pendingFunctors_ <span class="token function">GUARDED_BY</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<p>EventLoop.cpp</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// 线程局部变量，event_loop</span>
+__thread EventLoop<span class="token operator">*</span> t_loopInThisThread <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token keyword">int</span> kPollTimeMs <span class="token operator">=</span> <span class="token number">10000</span><span class="token punctuation">;</span>
+
+<span class="token comment">/// eventfd</span>
+<span class="token comment">// 在Linux系统中，eventfd是一个用来通知事件的文件描述符，timerfd是的定时器事件的文件描述符</span>
+<span class="token comment">/// eventfd用来触发事件通知，timerfd用来触发将来的事件通知。</span>
+
+<span class="token comment">// eventfd在内核里的核心是一个计数器counter，它是一个uint64_t的整形变量counter，初始值为initval。</span>
+<span class="token comment">// read操作 如果当前counter > 0，那么read返回counter值，并重置counter为0；如果当前counter等于0，那么read 1)阻塞直到counter大于0</span>
+<span class="token comment">// write操作 write尝试将value加到counter上。write可以多次连续调用，但read读一次即可清零</span>
+<span class="token keyword">int</span> <span class="token function">createEventfd</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">int</span> evtfd <span class="token operator">=</span> <span class="token double-colon punctuation">::</span><span class="token function">eventfd</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> EFD_NONBLOCK <span class="token operator">|</span> EFD_CLOEXEC<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>evtfd <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    LOG_SYSERR <span class="token operator">&lt;&lt;</span> <span class="token string">"Failed in eventfd"</span><span class="token punctuation">;</span>
+    <span class="token function">abort</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> evtfd<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 当前线程的eventloop</span>
+EventLoop<span class="token operator">*</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">getEventLoopOfCurrentThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> t_loopInThisThread<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">EventLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">looping_</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">quit_</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">eventHandling_</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">callingPendingFunctors_</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">iteration_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token comment">/// 构造thread_loop的线程id</span>
+    <span class="token function">threadId_</span><span class="token punctuation">(</span><span class="token class-name">CurrentThread</span><span class="token double-colon punctuation">::</span><span class="token function">tid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+
+    <span class="token function">poller_</span><span class="token punctuation">(</span><span class="token class-name">Poller</span><span class="token double-colon punctuation">::</span><span class="token function">newDefaultPoller</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">timerQueue_</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token function">TimerQueue</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token comment">/// 创建wakeupFd_</span>
+    <span class="token function">wakeupFd_</span><span class="token punctuation">(</span><span class="token function">createEventfd</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token comment">/// 创建一个wakeChannel, 用来接收wakeup的socket</span>
+    <span class="token function">wakeupChannel_</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token function">Channel</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> wakeupFd_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">currentActiveChannel_</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  LOG_DEBUG <span class="token operator">&lt;&lt;</span> <span class="token string">"EventLoop created "</span> <span class="token operator">&lt;&lt;</span> <span class="token keyword">this</span> <span class="token operator">&lt;&lt;</span> <span class="token string">" in thread "</span> <span class="token operator">&lt;&lt;</span> threadId_<span class="token punctuation">;</span>
+  <span class="token comment">/// 当前线程已经有eventloop对象了</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>t_loopInThisThread<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    LOG_FATAL <span class="token operator">&lt;&lt;</span> <span class="token string">"Another EventLoop "</span> <span class="token operator">&lt;&lt;</span> t_loopInThisThread
+              <span class="token operator">&lt;&lt;</span> <span class="token string">" exists in this thread "</span> <span class="token operator">&lt;&lt;</span> threadId_<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">else</span>
+  <span class="token punctuation">&#123;</span>
+    t_loopInThisThread <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// eventloop会阻塞在epoll_wait, 被唤醒之后调用的回调函数</span>
+  <span class="token comment">/// wakeupChannel_ 读的回调函数</span>
+  wakeupChannel_<span class="token operator">-></span><span class="token function">setReadCallback</span><span class="token punctuation">(</span>
+      std<span class="token double-colon punctuation">::</span><span class="token function">bind</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>EventLoop<span class="token double-colon punctuation">::</span>handleRead<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// wakeupfd可读, 并调poller ->update中更新之</span>
+  wakeupChannel_<span class="token operator">-></span><span class="token function">enableReading</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">EventLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  LOG_DEBUG <span class="token operator">&lt;&lt;</span> <span class="token string">"EventLoop "</span> <span class="token operator">&lt;&lt;</span> <span class="token keyword">this</span> <span class="token operator">&lt;&lt;</span> <span class="token string">" of thread "</span> <span class="token operator">&lt;&lt;</span> threadId_
+            <span class="token operator">&lt;&lt;</span> <span class="token string">" destructs in thread "</span> <span class="token operator">&lt;&lt;</span> <span class="token class-name">CurrentThread</span><span class="token double-colon punctuation">::</span><span class="token function">tid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  wakeupChannel_<span class="token operator">-></span><span class="token function">disableAll</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  wakeupChannel_<span class="token operator">-></span><span class="token function">remove</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token double-colon punctuation">::</span><span class="token function">close</span><span class="token punctuation">(</span>wakeupFd_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  t_loopInThisThread <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// EventLoop的loop循环</span>
+<span class="token comment">/// loop是针对服务器的, 需要处理大量客户端的处理的回调函数。执行loop管理线程需要one thread one loop, 但执行这些回调函数是可以多线程的</span>
+
+<span class="token comment">/// 会有个线程池执行大量eventloop, 同时这些线程可以执行任务队列的函数</span>
+
+<span class="token keyword">void</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">loop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>looping_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 该线程是创建eventloop的线程</span>
+  <span class="token function">assertInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  looping_ <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  quit_ <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>  <span class="token comment">// FIXME: what if someone calls quit() before loop() ?</span>
+  LOG_TRACE <span class="token operator">&lt;&lt;</span> <span class="token string">"EventLoop "</span> <span class="token operator">&lt;&lt;</span> <span class="token keyword">this</span> <span class="token operator">&lt;&lt;</span> <span class="token string">" start looping"</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">!</span>quit_<span class="token punctuation">)</span>
+  <span class="token comment">/// loop循环未终止</span>
+  <span class="token punctuation">&#123;</span>
+
+    <span class="token comment">/// 使用poller_->poll获取活跃的fd所属的activeChannels_，调用注册回调函数handleEvent。</span>
+    activeChannels_<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 一般的会阻塞在poll直到有活跃的channel</span>
+    pollReturnTime_ <span class="token operator">=</span> poller_<span class="token operator">-></span><span class="token function">poll</span><span class="token punctuation">(</span>kPollTimeMs<span class="token punctuation">,</span> <span class="token operator">&amp;</span>activeChannels_<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    <span class="token operator">++</span>iteration_<span class="token punctuation">;</span>
+    <span class="token comment">/// 打印活跃的channel</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token class-name">Logger</span><span class="token double-colon punctuation">::</span><span class="token function">logLevel</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;=</span> Logger<span class="token double-colon punctuation">::</span>TRACE<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token function">printActiveChannels</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// TODO sort channel by priority</span>
+    <span class="token comment">// 执行活跃函数的回调函数</span>
+    eventHandling_ <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel <span class="token operator">:</span> activeChannels_<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      currentActiveChannel_ <span class="token operator">=</span> channel<span class="token punctuation">;</span>
+      <span class="token comment">/// 处理handleEvent函数</span>
+      currentActiveChannel_<span class="token operator">-></span><span class="token function">handleEvent</span><span class="token punctuation">(</span>pollReturnTime_<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 清空ActiveChannel_</span>
+    currentActiveChannel_ <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    eventHandling_ <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+
+    <span class="token comment">/// 注意如果此时该EventLoop中迟迟没有事件触发，那么epoll_wait一直就会阻塞。 这样会导致，pendingFunctors_迟迟不能被执行了。</span>
+    <span class="token comment">/// 这时候需要唤醒eventfd的epoll_wait，让poller_->poll解除阻塞</span>
+
+    <span class="token comment">/// 待执行的任务队列</span>
+    <span class="token function">doPendingFunctors</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  LOG_TRACE <span class="token operator">&lt;&lt;</span> <span class="token string">"EventLoop "</span> <span class="token operator">&lt;&lt;</span> <span class="token keyword">this</span> <span class="token operator">&lt;&lt;</span> <span class="token string">" stop looping"</span><span class="token punctuation">;</span>
+  looping_ <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 退出loop循环</span>
+<span class="token keyword">void</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">quit</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  quit_ <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  <span class="token comment">// 当前的线程不是创建eventloop对象的线程, 需要等待</span>
+  <span class="token comment">// 创建eventloop对象的线程负责销毁它</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">isInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">wakeup</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">runInLoop</span><span class="token punctuation">(</span>Functor cb<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">/// 创建eventloop的线程中执行cb函数, 保证始终只有一个线程执行该函数, 是创建该eventloop对象的线程</span>
+  <span class="token comment">/// </span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">isInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">cb</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">else</span>
+
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">///任务先入队列，等eventloop线程自动调用之</span>
+    <span class="token function">queueInLoop</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>cb<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 将任务加入到任务队列中</span>
+<span class="token keyword">void</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">queueInLoop</span><span class="token punctuation">(</span>Functor cb<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">/// pendingFunctors_的函数列表</span>
+  <span class="token punctuation">&#123;</span>
+  MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  pendingFunctors_<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>cb<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// 非io线程, 或callingPendingFunctors_(调用doPendingFunctors可获得)</span>
+  <span class="token comment">/// 如果调用了callingPendingFunctors_， 则再次唤醒</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">isInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">||</span> callingPendingFunctors_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// 唤醒eventloop的epoll_wait等待事件触发, 从而让eventloop线程自动执行任务队列pendingFunctors_中的函数</span>
+    <span class="token function">wakeup</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 等待io执行的函数大小</span>
+size_t <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">queueSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+<span class="token punctuation">&#123;</span>
+  MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> pendingFunctors_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 定时器, 在time时刻执行TimerCallback</span>
+TimerId <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">runAt</span><span class="token punctuation">(</span>Timestamp time<span class="token punctuation">,</span> TimerCallback cb<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> timerQueue_<span class="token operator">-></span><span class="token function">addTimer</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>cb<span class="token punctuation">)</span><span class="token punctuation">,</span> time<span class="token punctuation">,</span> <span class="token number">0.0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 定时器, 延迟执行TimerCallback</span>
+TimerId <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">runAfter</span><span class="token punctuation">(</span><span class="token keyword">double</span> delay<span class="token punctuation">,</span> TimerCallback cb<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  Timestamp <span class="token function">time</span><span class="token punctuation">(</span><span class="token function">addTime</span><span class="token punctuation">(</span><span class="token class-name">Timestamp</span><span class="token double-colon punctuation">::</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> delay<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token function">runAt</span><span class="token punctuation">(</span>time<span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>cb<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 定时器, 每间隔interval执行TimerCallback</span>
+TimerId <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">runEvery</span><span class="token punctuation">(</span><span class="token keyword">double</span> interval<span class="token punctuation">,</span> TimerCallback cb<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  Timestamp <span class="token function">time</span><span class="token punctuation">(</span><span class="token function">addTime</span><span class="token punctuation">(</span><span class="token class-name">Timestamp</span><span class="token double-colon punctuation">::</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> interval<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> timerQueue_<span class="token operator">-></span><span class="token function">addTimer</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>cb<span class="token punctuation">)</span><span class="token punctuation">,</span> time<span class="token punctuation">,</span> interval<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 定时器队列取消timerId</span>
+<span class="token keyword">void</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">cancel</span><span class="token punctuation">(</span>TimerId timerId<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> timerQueue_<span class="token operator">-></span><span class="token function">cancel</span><span class="token punctuation">(</span>timerId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 更新此eventloop 监听的channel,基于poller_修改fd, 被channel调用</span>
+<span class="token keyword">void</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">updateChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>channel<span class="token operator">-></span><span class="token function">ownerLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assertInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  poller_<span class="token operator">-></span><span class="token function">updateChannel</span><span class="token punctuation">(</span>channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 删除channel, 基于poller_删除注册的fd, 被channel调用</span>
+<span class="token keyword">void</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">removeChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>channel<span class="token operator">-></span><span class="token function">ownerLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assertInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>eventHandling_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>currentActiveChannel_ <span class="token operator">==</span> channel <span class="token operator">||</span>
+        std<span class="token double-colon punctuation">::</span><span class="token function">find</span><span class="token punctuation">(</span>activeChannels_<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> activeChannels_<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> channel<span class="token punctuation">)</span> <span class="token operator">==</span> activeChannels_<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  poller_<span class="token operator">-></span><span class="token function">removeChannel</span><span class="token punctuation">(</span>channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// eventloop has_channel, 一个channel是一个监听的fd, 实际是调用poller_判断监听的channel</span>
+<span class="token keyword">bool</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">hasChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>channel<span class="token operator">-></span><span class="token function">ownerLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assertInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> poller_<span class="token operator">-></span><span class="token function">hasChannel</span><span class="token punctuation">(</span>channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 对这个wakeupFd_进行写操作，以触发wakeupFd_的可读事件。解除loop阻塞在epoll_wait。</span>
+<span class="token keyword">void</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">wakeup</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">uint64_t</span> one <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 使wakeupFd_可读</span>
+  ssize_t n <span class="token operator">=</span> sockets<span class="token double-colon punctuation">::</span><span class="token function">write</span><span class="token punctuation">(</span>wakeupFd_<span class="token punctuation">,</span> <span class="token operator">&amp;</span>one<span class="token punctuation">,</span> <span class="token keyword">sizeof</span> one<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">!=</span> <span class="token keyword">sizeof</span> one<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    LOG_ERROR <span class="token operator">&lt;&lt;</span> <span class="token string">"EventLoop::wakeup() writes "</span> <span class="token operator">&lt;&lt;</span> n <span class="token operator">&lt;&lt;</span> <span class="token string">" bytes instead of 8"</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// wakeupFd_读的回调函数</span>
+<span class="token keyword">void</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">handleRead</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">uint64_t</span> one <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+  ssize_t n <span class="token operator">=</span> sockets<span class="token double-colon punctuation">::</span><span class="token function">read</span><span class="token punctuation">(</span>wakeupFd_<span class="token punctuation">,</span> <span class="token operator">&amp;</span>one<span class="token punctuation">,</span> <span class="token keyword">sizeof</span> one<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">!=</span> <span class="token keyword">sizeof</span> one<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    LOG_ERROR <span class="token operator">&lt;&lt;</span> <span class="token string">"EventLoop::handleRead() reads "</span> <span class="token operator">&lt;&lt;</span> n <span class="token operator">&lt;&lt;</span> <span class="token string">" bytes instead of 8"</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 运行任务队列</span>
+<span class="token keyword">void</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">doPendingFunctors</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>Functor<span class="token operator">></span> functors<span class="token punctuation">;</span>
+  <span class="token comment">/// 需要唤醒epoll_wait了</span>
+  callingPendingFunctors_ <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  <span class="token comment">/// CAS操作， 有可能线程正在执行pendingFunctors_, 因此需要CAS防止竞态</span>
+  <span class="token punctuation">&#123;</span>
+  MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  functors<span class="token punctuation">.</span><span class="token function">swap</span><span class="token punctuation">(</span>pendingFunctors_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// 执行完pendingFunctors_</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> Functor<span class="token operator">&amp;</span> functor <span class="token operator">:</span> functors<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">functor</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  callingPendingFunctors_ <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 打印activeChannels_</span>
+<span class="token keyword">void</span> <span class="token class-name">EventLoop</span><span class="token double-colon punctuation">::</span><span class="token function">printActiveChannels</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> Channel<span class="token operator">*</span> channel <span class="token operator">:</span> activeChannels_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    LOG_TRACE <span class="token operator">&lt;&lt;</span> <span class="token string">"&#123;"</span> <span class="token operator">&lt;&lt;</span> channel<span class="token operator">-></span><span class="token function">reventsToString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token string">"&#125; "</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="poller"><a href="#poller" class="headerlink" title="poller"></a>poller</h4><ul>
+<li>poller用来监听多个fd, 也就是多个channel</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Channel</span><span class="token punctuation">;</span>
+
+<span class="token comment">///</span>
+<span class="token comment">/// Base class for IO Multiplexing</span>
+<span class="token comment">///</span>
+<span class="token comment">/// This class doesn't own the Channel objects.</span>
+<span class="token keyword">class</span> <span class="token class-name">Poller</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token comment">/// 监听的channel 列表</span>
+  <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>Channel<span class="token operator">*</span><span class="token operator">></span> ChannelList<span class="token punctuation">;</span>
+
+  <span class="token comment">// 传入EventLoop</span>
+  <span class="token function">Poller</span><span class="token punctuation">(</span>EventLoop<span class="token operator">*</span> loop<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">virtual</span> <span class="token operator">~</span><span class="token function">Poller</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// Polls the I/O events.</span>
+  <span class="token comment">/// Must be called in the loop thread.</span>
+  <span class="token comment">/// poll函数是一个虚函数，具体的io多路复用方法poll, select, epoll对其重写</span>
+  <span class="token comment">/// 返回活跃的channel</span>
+  <span class="token keyword">virtual</span> Timestamp <span class="token function">poll</span><span class="token punctuation">(</span><span class="token keyword">int</span> timeoutMs<span class="token punctuation">,</span> ChannelList<span class="token operator">*</span> activeChannels<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// Changes the interested I/O events.</span>
+  <span class="token comment">/// Must be called in the loop thread.</span>
+  <span class="token comment">/// 更新channel的函数</span>
+  <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">updateChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// Remove the channel, when it destructs.</span>
+  <span class="token comment">/// Must be called in the loop thread.</span>
+  <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">removeChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">virtual</span> <span class="token keyword">bool</span> <span class="token function">hasChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">static</span> Poller<span class="token operator">*</span> <span class="token function">newDefaultPoller</span><span class="token punctuation">(</span>EventLoop<span class="token operator">*</span> loop<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">void</span> <span class="token function">assertInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span>
+    ownerLoop_<span class="token operator">-></span><span class="token function">assertInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">protected</span><span class="token operator">:</span>
+ <span class="token comment">/// 一个fd->channel 的map</span>
+  <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>map<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> Channel<span class="token operator">*</span><span class="token operator">></span> ChannelMap<span class="token punctuation">;</span>
+  ChannelMap channels_<span class="token punctuation">;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  EventLoop<span class="token operator">*</span> ownerLoop_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+
+<span class="token comment">/// epoll</span>
+
+<span class="token keyword">class</span> <span class="token class-name">EPollPoller</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">Poller</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token function">EPollPoller</span><span class="token punctuation">(</span>EventLoop<span class="token operator">*</span> loop<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">EPollPoller</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 重写方法</span>
+  Timestamp <span class="token function">poll</span><span class="token punctuation">(</span><span class="token keyword">int</span> timeoutMs<span class="token punctuation">,</span> ChannelList<span class="token operator">*</span> activeChannels<span class="token punctuation">)</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">updateChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">removeChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span> <span class="token keyword">override</span><span class="token punctuation">;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">int</span> kInitEventListSize <span class="token operator">=</span> <span class="token number">16</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> <span class="token function">operationToString</span><span class="token punctuation">(</span><span class="token keyword">int</span> op<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 找到活跃的channel</span>
+  <span class="token keyword">void</span> <span class="token function">fillActiveChannels</span><span class="token punctuation">(</span><span class="token keyword">int</span> numEvents<span class="token punctuation">,</span>
+                          ChannelList<span class="token operator">*</span> activeChannels<span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+  <span class="token comment">// update channel</span>
+  <span class="token keyword">void</span> <span class="token function">update</span><span class="token punctuation">(</span><span class="token keyword">int</span> operation<span class="token punctuation">,</span> Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// event 列表, event是一个epoll_event 结构体</span>
+  <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">struct</span> <span class="token class-name">epoll_event</span><span class="token operator">></span> EventList<span class="token punctuation">;</span>
+  <span class="token comment">/// epoll文件描述符</span>
+  <span class="token keyword">int</span> epollfd_<span class="token punctuation">;</span>
+  <span class="token comment">/// EventList</span>
+  EventList events_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<ul>
+<li>EpollPoller.cpp</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// 初始化 (1) 初始化父类Poller</span>
+<span class="token comment">/// (2) 创建epoll_fd 通过epoll_create1</span>
+<span class="token class-name">EPollPoller</span><span class="token double-colon punctuation">::</span><span class="token function">EPollPoller</span><span class="token punctuation">(</span>EventLoop<span class="token operator">*</span> loop<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">Poller</span><span class="token punctuation">(</span>loop<span class="token punctuation">)</span><span class="token punctuation">,</span> 
+    <span class="token function">epollfd_</span><span class="token punctuation">(</span><span class="token double-colon punctuation">::</span><span class="token function">epoll_create1</span><span class="token punctuation">(</span>EPOLL_CLOEXEC<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">events_</span><span class="token punctuation">(</span>kInitEventListSize<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>epollfd_ <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    LOG_SYSFATAL <span class="token operator">&lt;&lt;</span> <span class="token string">"EPollPoller::EPollPoller"</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 关闭epoll描述符</span>
+<span class="token class-name">EPollPoller</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">EPollPoller</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token double-colon punctuation">::</span><span class="token function">close</span><span class="token punctuation">(</span>epollfd_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">/// poll调用epoll_wait返回活跃的channel</span>
+Timestamp <span class="token class-name">EPollPoller</span><span class="token double-colon punctuation">::</span><span class="token function">poll</span><span class="token punctuation">(</span><span class="token keyword">int</span> timeoutMs<span class="token punctuation">,</span> ChannelList<span class="token operator">*</span> activeChannels<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  LOG_TRACE <span class="token operator">&lt;&lt;</span> <span class="token string">"fd total count "</span> <span class="token operator">&lt;&lt;</span> channels_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 调用epoll_wait从获取活跃的事件存储到events_中</span>
+  <span class="token keyword">int</span> numEvents <span class="token operator">=</span> <span class="token double-colon punctuation">::</span><span class="token function">epoll_wait</span><span class="token punctuation">(</span>epollfd_<span class="token punctuation">,</span>
+                               <span class="token operator">&amp;</span><span class="token operator">*</span>events_<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                               <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>events_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                               timeoutMs<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> savedErrno <span class="token operator">=</span> errno<span class="token punctuation">;</span>
+  Timestamp <span class="token function">now</span><span class="token punctuation">(</span><span class="token class-name">Timestamp</span><span class="token double-colon punctuation">::</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>numEvents <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    LOG_TRACE <span class="token operator">&lt;&lt;</span> numEvents <span class="token operator">&lt;&lt;</span> <span class="token string">" events happened"</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 将活跃事件添加到activeChannels中</span>
+    <span class="token function">fillActiveChannels</span><span class="token punctuation">(</span>numEvents<span class="token punctuation">,</span> activeChannels<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token generic-function"><span class="token function">implicit_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>size_t<span class="token operator">></span></span></span><span class="token punctuation">(</span>numEvents<span class="token punctuation">)</span> <span class="token operator">==</span> events_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      events_<span class="token punctuation">.</span><span class="token function">resize</span><span class="token punctuation">(</span>events_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">*</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>numEvents <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    LOG_TRACE <span class="token operator">&lt;&lt;</span> <span class="token string">"nothing happened"</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">else</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">// error happens, log uncommon ones</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>savedErrno <span class="token operator">!=</span> EINTR<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      errno <span class="token operator">=</span> savedErrno<span class="token punctuation">;</span>
+      LOG_SYSERR <span class="token operator">&lt;&lt;</span> <span class="token string">"EPollPoller::poll()"</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> now<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 将活跃的events 转型channel, channel的revents就是epoll_event的event成员, 形成activeChannels</span>
+<span class="token keyword">void</span> <span class="token class-name">EPollPoller</span><span class="token double-colon punctuation">::</span><span class="token function">fillActiveChannels</span><span class="token punctuation">(</span><span class="token keyword">int</span> numEvents<span class="token punctuation">,</span>
+                                     ChannelList<span class="token operator">*</span> activeChannels<span class="token punctuation">)</span> <span class="token keyword">const</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span><span class="token generic-function"><span class="token function">implicit_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>size_t<span class="token operator">></span></span></span><span class="token punctuation">(</span>numEvents<span class="token punctuation">)</span> <span class="token operator">&lt;=</span> events_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> numEvents<span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// 转型events_[i].data.ptr指针转为channel指针</span>
+    Channel<span class="token operator">*</span> channel <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>Channel<span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>events_<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>data<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">ifndef</span> <span class="token expression">NDEBUG</span></span>
+    <span class="token comment">/// fd</span>
+    <span class="token keyword">int</span> fd <span class="token operator">=</span> channel<span class="token operator">-></span><span class="token function">fd</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 在channels_中查找活跃的fd key</span>
+    ChannelMap<span class="token double-colon punctuation">::</span>const_iterator it <span class="token operator">=</span> channels_<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>it <span class="token operator">!=</span> channels_<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>it<span class="token operator">-></span>second <span class="token operator">==</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span></span>
+  <span class="token comment">/// events是epoll注册的事件</span>
+    channel<span class="token operator">-></span><span class="token function">set_revents</span><span class="token punctuation">(</span>events_<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>events<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    activeChannels<span class="token operator">-></span><span class="token function">push_back</span><span class="token punctuation">(</span>channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 更新channel, 也就是调用update更新fd监听的事件</span>
+<span class="token comment">/// fd和events构成了监听对象</span>
+<span class="token keyword">void</span> <span class="token class-name">EPollPoller</span><span class="token double-colon punctuation">::</span><span class="token function">updateChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token class-name">Poller</span><span class="token double-colon punctuation">::</span><span class="token function">assertInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token keyword">int</span> index <span class="token operator">=</span> channel<span class="token operator">-></span><span class="token function">index</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  LOG_TRACE <span class="token operator">&lt;&lt;</span> <span class="token string">"fd = "</span> <span class="token operator">&lt;&lt;</span> channel<span class="token operator">-></span><span class="token function">fd</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token operator">&lt;&lt;</span> <span class="token string">" events = "</span> <span class="token operator">&lt;&lt;</span> channel<span class="token operator">-></span><span class="token function">events</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token string">" index = "</span> <span class="token operator">&lt;&lt;</span> index<span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>index <span class="token operator">==</span> kNew <span class="token operator">||</span> index <span class="token operator">==</span> kDeleted<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">// a new one, add with EPOLL_CTL_ADD</span>
+    <span class="token keyword">int</span> fd <span class="token operator">=</span> channel<span class="token operator">-></span><span class="token function">fd</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>index <span class="token operator">==</span> kNew<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">/// 对fd设置新的channel</span>
+      <span class="token function">assert</span><span class="token punctuation">(</span>channels_<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span> <span class="token operator">==</span> channels_<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      channels_<span class="token punctuation">[</span>fd<span class="token punctuation">]</span> <span class="token operator">=</span> channel<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">else</span> <span class="token comment">// index == kDeleted</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token function">assert</span><span class="token punctuation">(</span>channels_<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span> <span class="token operator">!=</span> channels_<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">assert</span><span class="token punctuation">(</span>channels_<span class="token punctuation">[</span>fd<span class="token punctuation">]</span> <span class="token operator">==</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 添加操作</span>
+    channel<span class="token operator">-></span><span class="token function">set_index</span><span class="token punctuation">(</span>kAdded<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">/// 在epoll中添加注册channel的fd</span>
+    <span class="token function">update</span><span class="token punctuation">(</span>EPOLL_CTL_ADD<span class="token punctuation">,</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">else</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">// update existing one with EPOLL_CTL_MOD/DEL</span>
+    <span class="token keyword">int</span> fd <span class="token operator">=</span> channel<span class="token operator">-></span><span class="token function">fd</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>fd<span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>channels_<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span> <span class="token operator">!=</span> channels_<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>channels_<span class="token punctuation">[</span>fd<span class="token punctuation">]</span> <span class="token operator">==</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>index <span class="token operator">==</span> kAdded<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>channel<span class="token operator">-></span><span class="token function">isNoneEvent</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token function">update</span><span class="token punctuation">(</span>EPOLL_CTL_DEL<span class="token punctuation">,</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">/// delete操作</span>
+      channel<span class="token operator">-></span><span class="token function">set_index</span><span class="token punctuation">(</span>kDeleted<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">else</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token function">update</span><span class="token punctuation">(</span>EPOLL_CTL_MOD<span class="token punctuation">,</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 在channelmap中删除关联</span>
+<span class="token keyword">void</span> <span class="token class-name">EPollPoller</span><span class="token double-colon punctuation">::</span><span class="token function">removeChannel</span><span class="token punctuation">(</span>Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token class-name">Poller</span><span class="token double-colon punctuation">::</span><span class="token function">assertInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// channel的fd</span>
+  <span class="token keyword">int</span> fd <span class="token operator">=</span> channel<span class="token operator">-></span><span class="token function">fd</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  LOG_TRACE <span class="token operator">&lt;&lt;</span> <span class="token string">"fd = "</span> <span class="token operator">&lt;&lt;</span> fd<span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>channels_<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span> <span class="token operator">!=</span> channels_<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>channels_<span class="token punctuation">[</span>fd<span class="token punctuation">]</span> <span class="token operator">==</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>channel<span class="token operator">-></span><span class="token function">isNoneEvent</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> index <span class="token operator">=</span> channel<span class="token operator">-></span><span class="token function">index</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>index <span class="token operator">==</span> kAdded <span class="token operator">||</span> index <span class="token operator">==</span> kDeleted<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  size_t n <span class="token operator">=</span> channels_<span class="token punctuation">.</span><span class="token function">erase</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>n<span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>n <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 在epoll中删除channel的fd</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>index <span class="token operator">==</span> kAdded<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">update</span><span class="token punctuation">(</span>EPOLL_CTL_DEL<span class="token punctuation">,</span> channel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  channel<span class="token operator">-></span><span class="token function">set_index</span><span class="token punctuation">(</span>kNew<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 更新poll的fd， ::epoll_ctl更新fd的event</span>
+<span class="token keyword">void</span> <span class="token class-name">EPollPoller</span><span class="token double-colon punctuation">::</span><span class="token function">update</span><span class="token punctuation">(</span><span class="token keyword">int</span> operation<span class="token punctuation">,</span> Channel<span class="token operator">*</span> channel<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">epoll_event</span> event<span class="token punctuation">;</span>
+  <span class="token function">memZero</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>event<span class="token punctuation">,</span> <span class="token keyword">sizeof</span> event<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 注册事件对象的元素, events, data.ptr</span>
+  event<span class="token punctuation">.</span>events <span class="token operator">=</span> channel<span class="token operator">-></span><span class="token function">events</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  event<span class="token punctuation">.</span>data<span class="token punctuation">.</span>ptr <span class="token operator">=</span> channel<span class="token punctuation">;</span>
+  <span class="token keyword">int</span> fd <span class="token operator">=</span> channel<span class="token operator">-></span><span class="token function">fd</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  LOG_TRACE <span class="token operator">&lt;&lt;</span> <span class="token string">"epoll_ctl op = "</span> <span class="token operator">&lt;&lt;</span> <span class="token function">operationToString</span><span class="token punctuation">(</span>operation<span class="token punctuation">)</span>
+    <span class="token operator">&lt;&lt;</span> <span class="token string">" fd = "</span> <span class="token operator">&lt;&lt;</span> fd <span class="token operator">&lt;&lt;</span> <span class="token string">" event = &#123; "</span> <span class="token operator">&lt;&lt;</span> channel<span class="token operator">-></span><span class="token function">eventsToString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token string">" &#125;"</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token double-colon punctuation">::</span><span class="token function">epoll_ctl</span><span class="token punctuation">(</span>epollfd_<span class="token punctuation">,</span> operation<span class="token punctuation">,</span> fd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>event<span class="token punctuation">)</span> <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>operation <span class="token operator">==</span> EPOLL_CTL_DEL<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      LOG_SYSERR <span class="token operator">&lt;&lt;</span> <span class="token string">"epoll_ctl op ="</span> <span class="token operator">&lt;&lt;</span> <span class="token function">operationToString</span><span class="token punctuation">(</span>operation<span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token string">" fd ="</span> <span class="token operator">&lt;&lt;</span> fd<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">else</span>
+    <span class="token punctuation">&#123;</span>
+      LOG_SYSFATAL <span class="token operator">&lt;&lt;</span> <span class="token string">"epoll_ctl op ="</span> <span class="token operator">&lt;&lt;</span> <span class="token function">operationToString</span><span class="token punctuation">(</span>operation<span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token string">" fd ="</span> <span class="token operator">&lt;&lt;</span> fd<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="eventloopthread"><a href="#eventloopthread" class="headerlink" title="eventloopthread"></a>eventloopthread</h4><ul>
+<li><p>初始化时在thread绑定thread_(std::bind(&amp;EventLoopThread::threadFunc, this))函数</p>
+</li>
+<li><p>startLoop 调用<code>thread.start()</code>使线程开始执行。子线程会创建一个eventloop对象并调用loop, 主线程会等待子线程创建完loop对象返回。</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">EventLoop</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">EventLoopThread</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+ <span class="token comment">/// eventloop thread创建之后的回调函数, 参数为void(EventLoop*)</span>
+  <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>function<span class="token operator">&lt;</span><span class="token keyword">void</span><span class="token punctuation">(</span>EventLoop<span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">></span> ThreadInitCallback<span class="token punctuation">;</span>
+
+  <span class="token function">EventLoopThread</span><span class="token punctuation">(</span><span class="token keyword">const</span> ThreadInitCallback<span class="token operator">&amp;</span> cb <span class="token operator">=</span> <span class="token function">ThreadInitCallback</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                  <span class="token keyword">const</span> string<span class="token operator">&amp;</span> name <span class="token operator">=</span> <span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">EventLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// EventloopThread的startLoop()</span>
+  EventLoop<span class="token operator">*</span> <span class="token function">startLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">void</span> <span class="token function">threadFunc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 线程内部的loop对象</span>
+  EventLoop<span class="token operator">*</span> loop_ <span class="token function">GUARDED_BY</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">bool</span> exiting_<span class="token punctuation">;</span>
+  <span class="token comment">// 新thread创建</span>
+  Thread thread_<span class="token punctuation">;</span>
+  MutexLock mutex_<span class="token punctuation">;</span>
+  Condition cond_ <span class="token function">GUARDED_BY</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  ThreadInitCallback callback_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+
+<span class="token class-name">EventLoopThread</span><span class="token double-colon punctuation">::</span><span class="token function">EventLoopThread</span><span class="token punctuation">(</span><span class="token keyword">const</span> ThreadInitCallback<span class="token operator">&amp;</span> cb<span class="token punctuation">,</span>
+                                 <span class="token keyword">const</span> string<span class="token operator">&amp;</span> name<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">loop_</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">exiting_</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token comment">//初始化时 绑定线程执行的函数, EventLoopThread::threadFunc</span>
+    <span class="token function">thread_</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">bind</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>EventLoopThread<span class="token double-colon punctuation">::</span>threadFunc<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> name<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">mutex_</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">cond_</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">callback_</span><span class="token punctuation">(</span>cb<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">EventLoopThread</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">EventLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  exiting_ <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>loop_ <span class="token operator">!=</span> <span class="token constant">NULL</span><span class="token punctuation">)</span> <span class="token comment">// not 100% race-free, eg. threadFunc could be running callback_.</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">// still a tiny chance to call destructed object, if threadFunc exits just now.</span>
+    <span class="token comment">// but when EventLoopThread destructs, usually programming is exiting anyway.</span>
+    loop_<span class="token operator">-></span><span class="token function">quit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    thread_<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// （主线程)开启线程(执行函数)</span>
+EventLoop<span class="token operator">*</span> <span class="token class-name">EventLoopThread</span><span class="token double-colon punctuation">::</span><span class="token function">startLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>thread_<span class="token punctuation">.</span><span class="token function">started</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// 开启新线程thread执行start()</span>
+  <span class="token comment">/// 线程执行绑定好的函数, 即threadFunc()</span>
+  thread_<span class="token punctuation">.</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  EventLoop<span class="token operator">*</span> loop <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#123;</span>
+    MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// main线程等待loop_</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>loop_ <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      cond_<span class="token punctuation">.</span><span class="token function">wait</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">/// loop有了(新线程创建的), 返回loop对象</span>
+    loop <span class="token operator">=</span> loop_<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// </span>
+  <span class="token keyword">return</span> loop<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 新线程执行的函数</span>
+<span class="token keyword">void</span> <span class="token class-name">EventLoopThread</span><span class="token double-colon punctuation">::</span><span class="token function">threadFunc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+   <span class="token comment">/// 在线程栈上运行的eventloop， 创建eventloop对象</span>
+  EventLoop loop<span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>callback_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">// 执行回调函数ThreadInitCallback</span>
+    <span class="token function">callback_</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>loop<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token punctuation">&#123;</span>
+    MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    loop_ <span class="token operator">=</span> <span class="token operator">&amp;</span>loop<span class="token punctuation">;</span>
+    <span class="token comment">/// 唤醒主线程返回loop</span>
+    cond_<span class="token punctuation">.</span><span class="token function">notify</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token comment">// 线程执行loop循环</span>
+  loop<span class="token punctuation">.</span><span class="token function">loop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">//assert(exiting_);</span>
+  MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  loop_ <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="eventloopthreadPool"><a href="#eventloopthreadPool" class="headerlink" title="eventloopthreadPool"></a>eventloopthreadPool</h4><ul>
+<li>线程池, 维护一个threads列表和EventLoop*对象列表</li>
+<li>start(会生成一个线程对象列表, 创建线程对象子线程执行loop, 将子线程对象thread和执行的loop对象加入列表中。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">EventLoop</span><span class="token punctuation">;</span>
+<span class="token keyword">class</span> <span class="token class-name">EventLoopThread</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">EventLoopThreadPool</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+ <span class="token comment">/// 线程初始化回调函数</span>
+  <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>function<span class="token operator">&lt;</span><span class="token keyword">void</span><span class="token punctuation">(</span>EventLoop<span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">></span> ThreadInitCallback<span class="token punctuation">;</span>
+
+  <span class="token function">EventLoopThreadPool</span><span class="token punctuation">(</span>EventLoop<span class="token operator">*</span> baseLoop<span class="token punctuation">,</span> <span class="token keyword">const</span> string<span class="token operator">&amp;</span> nameArg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">EventLoopThreadPool</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">setThreadNum</span><span class="token punctuation">(</span><span class="token keyword">int</span> numThreads<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> numThreads_ <span class="token operator">=</span> numThreads<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">void</span> <span class="token function">start</span><span class="token punctuation">(</span><span class="token keyword">const</span> ThreadInitCallback<span class="token operator">&amp;</span> cb <span class="token operator">=</span> <span class="token function">ThreadInitCallback</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// valid after calling start()</span>
+  <span class="token comment">/// round-robin</span>
+  EventLoop<span class="token operator">*</span> <span class="token function">getNextLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// with the same hash code, it will always return the same EventLoop</span>
+  EventLoop<span class="token operator">*</span> <span class="token function">getLoopForHash</span><span class="token punctuation">(</span>size_t hashCode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>EventLoop<span class="token operator">*</span><span class="token operator">></span> <span class="token function">getAllLoops</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">bool</span> <span class="token function">started</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> started_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">const</span> string<span class="token operator">&amp;</span> <span class="token function">name</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> name_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+
+  EventLoop<span class="token operator">*</span> baseLoop_<span class="token punctuation">;</span>
+  string name_<span class="token punctuation">;</span>
+  
+  <span class="token keyword">bool</span> started_<span class="token punctuation">;</span>
+  <span class="token keyword">int</span> numThreads_<span class="token punctuation">;</span>
+  <span class="token keyword">int</span> next_<span class="token punctuation">;</span>
+  <span class="token comment">/// 线程列表</span>
+  std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>EventLoopThread<span class="token operator">>></span> threads_<span class="token punctuation">;</span>
+  <span class="token comment">/// loop 列表</span>
+  std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>EventLoop<span class="token operator">*</span><span class="token operator">></span> loops_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+
+<span class="token class-name">EventLoopThreadPool</span><span class="token double-colon punctuation">::</span><span class="token function">EventLoopThreadPool</span><span class="token punctuation">(</span>EventLoop<span class="token operator">*</span> baseLoop<span class="token punctuation">,</span> <span class="token keyword">const</span> string<span class="token operator">&amp;</span> nameArg<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">baseLoop_</span><span class="token punctuation">(</span>baseLoop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token comment">/// 线程名</span>
+    <span class="token function">name_</span><span class="token punctuation">(</span>nameArg<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">started_</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">numThreads_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">next_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">EventLoopThreadPool</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">EventLoopThreadPool</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">// Don't delete loop, it's stack variable</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 开启线程池</span>
+<span class="token keyword">void</span> <span class="token class-name">EventLoopThreadPool</span><span class="token double-colon punctuation">::</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token keyword">const</span> ThreadInitCallback<span class="token operator">&amp;</span> cb<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>started_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 当前loop创建线程, 也就是主线程</span>
+  baseLoop_<span class="token operator">-></span><span class="token function">assertInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// 开启线程池</span>
+  started_ <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  <span class="token comment">// 创建threads和loops</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> numThreads_<span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// buf, 储存线程名</span>
+    <span class="token keyword">char</span> buf<span class="token punctuation">[</span>name_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">32</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token function">snprintf</span><span class="token punctuation">(</span>buf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span> buf<span class="token punctuation">,</span> <span class="token string">"%s%d"</span><span class="token punctuation">,</span> name_<span class="token punctuation">.</span><span class="token function">c_str</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 构造EventLoopThread对象, 初始化thread对象执行函数</span>
+    EventLoopThread<span class="token operator">*</span> t <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">EventLoopThread</span><span class="token punctuation">(</span>cb<span class="token punctuation">,</span> buf<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// threads 列表</span>
+    threads_<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">unique_ptr</span><span class="token generic class-name"><span class="token operator">&lt;</span>EventLoopThread<span class="token operator">></span></span></span><span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 创建新线程执行startLoop()函数,子线程创建loop对象并执行loop(), 主线程返回子线程的loop对象</span>
+    loops_<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>t<span class="token operator">-></span><span class="token function">startLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// 不创建新线程， 当前线程执行cb</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>numThreads_ <span class="token operator">==</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> cb<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">cb</span><span class="token punctuation">(</span>baseLoop_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// loop 是一个vector, 得到下一个loop(每个子线程一个loop对象, 下一个loop每个loop都来自不同的线程)</span>
+EventLoop<span class="token operator">*</span> <span class="token class-name">EventLoopThreadPool</span><span class="token double-colon punctuation">::</span><span class="token function">getNextLoop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  baseLoop_<span class="token operator">-></span><span class="token function">assertInLoopThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>started_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  EventLoop<span class="token operator">*</span> loop <span class="token operator">=</span> baseLoop_<span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>loops_<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">// round-robin</span>
+    loop <span class="token operator">=</span> loops_<span class="token punctuation">[</span>next_<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token operator">++</span>next_<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token generic-function"><span class="token function">implicit_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>size_t<span class="token operator">></span></span></span><span class="token punctuation">(</span>next_<span class="token punctuation">)</span> <span class="token operator">>=</span> loops_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      next_ <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> loop<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre></div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-08-29-muduo%E6%BA%90%E7%A0%815/" rel="prev" title="muduo网络库 05 TimerQueue socket"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">muduo网络库 05 TimerQueue socket</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E7%AE%97%E6%B3%95/2021-08-25-%E5%9B%BE%E6%9C%80%E7%9F%AD%E8%B7%AF/" rel="next" title="图最短路"><span class="post-nav-text">图最短路</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-08-28-muduo%E6%BA%90%E7%A0%813/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

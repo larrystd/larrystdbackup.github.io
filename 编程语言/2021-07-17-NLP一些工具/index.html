@@ -1,0 +1,232 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>NLP tools | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="我爱自然语言处理https:&#x2F;&#x2F;www.52nlp.cn&#x2F;ainlp pip--no-dependencies  ### Conda  Python的版本比较多，并且它的库也非常广泛，同时库和库之间存在很多依赖关系，所以在库的安装和版本的管理上很麻烦。Conda是一个管理版本和Python环境的工具。  #### 环境管理  * 创建环境 &#96;&#96;&#96;sh # 创建一个名为pyt">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NLP tools">
+<meta property="og:url" content="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-17-NLP%E4%B8%80%E4%BA%9B%E5%B7%A5%E5%85%B7/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="我爱自然语言处理https:&#x2F;&#x2F;www.52nlp.cn&#x2F;ainlp pip--no-dependencies  ### Conda  Python的版本比较多，并且它的库也非常广泛，同时库和库之间存在很多依赖关系，所以在库的安装和版本的管理上很麻烦。Conda是一个管理版本和Python环境的工具。  #### 环境管理  * 创建环境 &#96;&#96;&#96;sh # 创建一个名为pyt">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-07-16T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-16T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="python">
+<meta property="article:tag" content="机器学习">
+<meta name="twitter:card" content="summary"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#pip"><span class="toc-number">1.</span> <span class="toc-text">pip</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8C%85%E7%AE%A1%E7%90%86"><span class="toc-number">1.1.</span> <span class="toc-text">包管理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#anaconda%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AEpytorch"><span class="toc-number">1.2.</span> <span class="toc-text">anaconda虚拟环境配置pytorch</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#AllenNLP"><span class="toc-number">2.</span> <span class="toc-text">AllenNLP</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86"><span class="toc-number">2.1.</span> <span class="toc-text">基本知识</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#nltk"><span class="toc-number">3.</span> <span class="toc-text">nltk</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gluonnlp"><span class="toc-number">4.</span> <span class="toc-text">gluonnlp</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#mexnet"><span class="toc-number">5.</span> <span class="toc-text">mexnet</span></a></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-17-NLP%E4%B8%80%E4%BA%9B%E5%B7%A5%E5%85%B7/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">NLP tools<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/编程语言/2021-07-17-NLP一些工具.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-07-17 00:00:00" itemprop="dateCreated datePublished" datetime="2021-07-17T00:00:00+08:00">2021-07-17</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">1.5k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">6m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/language/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">language</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/python/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">python</span></a><a class="tag-item" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">机器学习</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><p>我爱自然语言处理<br><a target="_blank" rel="noopener" href="https://www.52nlp.cn/ainlp">https://www.52nlp.cn/ainlp</a></p>
+<h3 id="pip"><a href="#pip" class="headerlink" title="pip"></a>pip</h3><pre class="language-none"><code class="language-none">--no-dependencies
+
+### Conda
+
+Python的版本比较多，并且它的库也非常广泛，同时库和库之间存在很多依赖关系，所以在库的安装和版本的管理上很麻烦。Conda是一个管理版本和Python环境的工具。
+
+#### 环境管理
+
+* 创建环境
+&#96;&#96;&#96;sh
+# 创建一个名为python34的环境，指定Python版本是3.5（不用管是3.5.x，conda会为我们自动寻找3.５.x中的最新版本）
+conda create --name py35 python&#x3D;3.5</code></pre>
+<ul>
+<li><p>激活环境</p>
+<pre class="language-py" data-language="py"><code class="language-py"># 安装好后，使用activate激活某个环境
+activate py35 # for Windows
+source activate py35 # for Linux &amp; Mac
+(py35) user@user-XPS-8920:~$
+ # 激活后，会发现terminal输入的地方多了py35的字样，实际上，此时系统做的事情就是把默认2.7环境从PATH中去除，再把3.4对应的命令加入PATH
+
+(py35) user@user-XPS-8920:~$ python --version</code></pre></li>
+<li><p>返回主环境</p>
+<pre class="language-py" data-language="py"><code class="language-py">deactivate py35 # for Windows
+source deactivate py35 # for Linux &amp; Mac</code></pre></li>
+<li><p>删除环境</p>
+</li>
+</ul>
+<span id="more"></span>
+
+<pre class="language-py" data-language="py"><code class="language-py"># 删除一个已有的环境
+conda remove --name py35 --all</code></pre>
+
+<ul>
+<li>查看系统中的所有环境</li>
+</ul>
+<p>用户安装的不同Python环境会放在~/anaconda/envs目录下。查看当前系统中已经安装了哪些环境，使用conda info -e。</p>
+<h4 id="包管理"><a href="#包管理" class="headerlink" title="包管理"></a>包管理</h4><ul>
+<li><p>安装库</p>
+<pre class="language-py" data-language="py"><code class="language-py">conda install numpy
+# conda会从从远程搜索numpy的相关信息和依赖项目</code></pre></li>
+<li><p>查看已经安装的库</p>
+</li>
+</ul>
+<pre class="language-py" data-language="py"><code class="language-py"># 查看已经安装的packages
+conda list
+# 最新版的conda是从site-packages文件夹中搜索已经安装的包，可以显示出通过各种方式安装的包</code></pre>
+
+<ul>
+<li><p>查看某个环境的已安装包 <code>conda list -n py35</code></p>
+</li>
+<li><p>搜索package的信息<br><code>conda search numpy</code></p>
+</li>
+<li><p>安装package到指定的环境</p>
+<pre class="language-py" data-language="py"><code class="language-py"># 安装package
+conda install -n py35 numpy
+# 如果不用-n指定环境名称，则被安装在当前活跃环境
+# 也可以通过-c指定通过某个channel安装</code></pre></li>
+<li><p>更新package<br><code>conda update -n py35 numpy</code></p>
+</li>
+<li><p>删除package<br><code>conda remove -n py35 numpy</code></p>
+</li>
+<li><p>更新conda<br><code> conda update conda</code></p>
+</li>
+<li><p>Anaconda仓库的镜像</p>
+<pre class="language-py" data-language="py"><code class="language-py">conda config --add channels https:&#x2F;&#x2F;mirrors.tuna.tsinghua.edu.cn&#x2F;anaconda&#x2F;pkgs&#x2F;free&#x2F; 
+conda config --add channels https:&#x2F;&#x2F;mirrors.tuna.tsinghua.edu.cn&#x2F;anaconda&#x2F;pkgs&#x2F;main&#x2F; 
+conda config --set show_channel_urls yes</code></pre></li>
+</ul>
+<h4 id="anaconda虚拟环境配置pytorch"><a href="#anaconda虚拟环境配置pytorch" class="headerlink" title="anaconda虚拟环境配置pytorch"></a>anaconda虚拟环境配置pytorch</h4><pre class="language-sh" data-language="sh"><code class="language-sh">
+#创建pytorch的虚拟环境
+conda create -n pytorch python&#x3D;3.6
+
+
+#使用activate激活该环境 
+source activate pytorch
+
+#确认一下python3和pip是当前虚拟环境下的地址 路径在envs下面
+which python3
+which pip
+
+# 虚拟环境中，配置pytorch框架
+
+可以使用conda或者pip安装
+
+conda install pytorch torchvision cuda80 -c pytorch
+pip3 install http:&#x2F;&#x2F;download.pytorch.org&#x2F;whl&#x2F;cu80&#x2F;torch-0.4.1-cp36-cp36m-linux_x86_64.whl
+pip3 install torchvision
+</code></pre>
+<h3 id="AllenNLP"><a href="#AllenNLP" class="headerlink" title="AllenNLP"></a>AllenNLP</h3><h4 id="基本知识"><a href="#基本知识" class="headerlink" title="基本知识"></a>基本知识</h4><p>从学习pytorch到学习处理NLP问题，中间有很长的路要走。NLP数据预处理要比CV的麻烦很多，比如去除停用词，建立词典，加载各种预训练词向量，Sentence -&gt; Word ID -&gt; Word Embedding的过程。不仅需要学习pytorch，可能还要学习spacy，NLTK，numpy，pandas，tensorboardX等常用python包。</p>
+<p>AllenNLP是在pytorch基础上的封装，目标是处理NLP任务，可以减少很多额外的学习。比如，分词，帮你用spacy，NLTK，或者简单的按空格分词处理。数据集的读取，它内置了很多数据集的读取，你可以在通过学习它的读取方式，在它的基础上对自己需要的数据集进行读取。在Sentence -&gt; Word ID -&gt; Word Embedding的过程中，Glove，ELMo，BERT等常用的都可以直接使用，需要word，char粒度的都可以。log打印输出，在内置的输出项之外，你可以很方便地加入想要输出的信息。模型的各个组件中的参数都可以存在一个json/jsonnet文件中，修改参数进行实验很方便。</p>
+<h3 id="nltk"><a href="#nltk" class="headerlink" title="nltk"></a>nltk</h3><p>NLTK（natural language toolkit）是一套基于python的自然语言处理工具集。</p>
+<p>首先需要离线下载nltk_data<br><a target="_blank" rel="noopener" href="https://blog.csdn.net/u010099177/article/details/102900515">https://blog.csdn.net/u010099177/article/details/102900515</a></p>
+<p>NLTK 中的FreqDist( ) 类主要记录了每个词出现的次数，根据统计数据生成表格或绘图。其结构简单，用一个有序词典进行实现。</p>
+<pre class="language-py" data-language="py"><code class="language-py">import nltk
+tokens&#x3D;[ &#39;my&#39;,&#39;dog&#39;,&#39;has&#39;,&#39;flea&#39;,&#39;problems&#39;,&#39;help&#39;,&#39;please&#39;,
+         &#39;maybe&#39;,&#39;not&#39;,&#39;take&#39;,&#39;him&#39;,&#39;to&#39;,&#39;dog&#39;,&#39;park&#39;,&#39;stupid&#39;,
+         &#39;my&#39;,&#39;dalmation&#39;,&#39;is&#39;,&#39;so&#39;,&#39;cute&#39;,&#39;I&#39;,&#39;love&#39;,&#39;him&#39;  ]
+#统计词频
+freq &#x3D; nltk.FreqDist(tokens)
+ 
+#输出词和相应的频率
+for key,val in freq.items():
+    print (str(key) + &#39;:&#39; + str(val))
+ 
+#可以把最常用的5个单词拿出来
+standard_freq&#x3D;freq.most_common(5)
+print(standard_freq)
+ 
+#绘图函数为这些词频绘制一个图形
+freq.plot(20, cumulative&#x3D;False)</code></pre>
+
+<p>去除停用词（stopwords）</p>
+<pre class="language-py" data-language="py"><code class="language-py">from nltk.corpus import stopwords
+tokens&#x3D;[ &#39;my&#39;,&#39;dog&#39;,&#39;has&#39;,&#39;flea&#39;,&#39;problems&#39;,&#39;help&#39;,&#39;please&#39;,
+         &#39;maybe&#39;,&#39;not&#39;,&#39;take&#39;,&#39;him&#39;,&#39;to&#39;,&#39;dog&#39;,&#39;park&#39;,&#39;stupid&#39;,
+         &#39;my&#39;,&#39;dalmation&#39;,&#39;is&#39;,&#39;so&#39;,&#39;cute&#39;,&#39;I&#39;,&#39;love&#39;,&#39;him&#39;  ]
+ 
+clean_tokens&#x3D;tokens[:]
+stwords&#x3D;stopwords.words(&#39;english&#39;)
+for token in tokens:
+    if token in stwords:
+        clean_tokens.remove(token)
+ 
+print(clean_tokens)</code></pre>
+
+<p>分句和分词（tokenize）</p>
+<pre class="language-py" data-language="py"><code class="language-py">from nltk.tokenize import sent_tokenize
+mytext &#x3D; &quot;Hello Adam, how are you? I hope everything is going well. Today is a good day, see you dude.&quot;
+print(sent_tokenize(mytext)
+
+
+
+from nltk.tokenize import word_tokenize
+mytext &#x3D; &quot;Hello Mr. Adam, how are you? I hope everything is going well. Today is a good day, see you dude.&quot;
+print(word_tokenize(mytext))</code></pre>
+
+<h3 id="gluonnlp"><a href="#gluonnlp" class="headerlink" title="gluonnlp"></a>gluonnlp</h3><p>GluonNLP提供了NLP中最先进的(SOTA)深度学习模型的实现，并为文本数据管道和模型构建块。它是为工程师，研究人员和学生设计的，以快速原型研究想法和产品基于这些模型。这个工具包提供了三个主要特性:</p>
+<p>1、训练脚本复制SOTA结果报告在研究论文。</p>
+<p>2、针对普通NLP任务的预训练模型。</p>
+<p>3、精心设计的api大大降低了实现的复杂性。</p>
+<h3 id="mexnet"><a href="#mexnet" class="headerlink" title="mexnet"></a>mexnet</h3></div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-18-tensorflow/" rel="prev" title="tensorflow"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">tensorflow</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-15-pytorch%E5%92%8Ctensorflow/" rel="next" title="pytorch"><span class="post-nav-text">pytorch</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-17-NLP%E4%B8%80%E4%BA%9B%E5%B7%A5%E5%85%B7/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

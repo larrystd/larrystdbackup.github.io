@@ -1,0 +1,465 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>LRU Trie 单调栈 | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="LRU涉及的主要技术，  LRU存储的数据是key-value型数据  链表使用虚拟节点方便进行节点的删除和插入。单向链表使用虚拟头节点，双向链表使用虚拟头节点和虚拟尾节点。  使用一个map&lt;int, LinkedNode&gt;可以轻松根据key映射到LinkedNode，查询数据  双向链表来维护数据存储，起到队列的作用, 新数据从头节点插入，而旧数据需要从尾节点删除。原本的旧数据一旦">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LRU Trie 单调栈">
+<meta property="og:url" content="https://larrystd.github.io/%E7%AE%97%E6%B3%95/2021-06-11-%E8%AE%BE%E8%AE%A1%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84LRU/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="LRU涉及的主要技术，  LRU存储的数据是key-value型数据  链表使用虚拟节点方便进行节点的删除和插入。单向链表使用虚拟头节点，双向链表使用虚拟头节点和虚拟尾节点。  使用一个map&lt;int, LinkedNode&gt;可以轻松根据key映射到LinkedNode，查询数据  双向链表来维护数据存储，起到队列的作用, 新数据从头节点插入，而旧数据需要从尾节点删除。原本的旧数据一旦">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/%E7%AE%97%E6%B3%95/assets/images/trie.jpg">
+<meta property="article:published_time" content="2021-06-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-06-10T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="leetcode">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/%E7%AE%97%E6%B3%95/assets/images/trie.jpg"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#LRU"><span class="toc-number">1.</span> <span class="toc-text">LRU</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Leetcode-207-%E8%AF%BE%E7%A8%8B%E8%A1%A8"><span class="toc-number">2.</span> <span class="toc-text">Leetcode 207 课程表</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E9%87%8D%E8%BF%B0"><span class="toc-number">2.1.</span> <span class="toc-text">题目重述</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%86%E6%9E%90"><span class="toc-number">2.2.</span> <span class="toc-text">分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#dfs%E6%B1%82%E8%A7%A3"><span class="toc-number">2.3.</span> <span class="toc-text">dfs求解</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bfs%E6%B1%82%E8%A7%A3"><span class="toc-number">3.</span> <span class="toc-text">bfs求解</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%84%9F%E6%82%9F"><span class="toc-number">3.1.</span> <span class="toc-text">感悟</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Leetcode-%E5%89%8D%E7%BC%80%E6%A0%91"><span class="toc-number">4.</span> <span class="toc-text">Leetcode 前缀树</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5dfs"><span class="toc-number">5.</span> <span class="toc-text">深入dfs</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95%E8%B0%83%E6%A0%88"><span class="toc-number">6.</span> <span class="toc-text">单调栈</span></a></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E7%AE%97%E6%B3%95/2021-06-11-%E8%AE%BE%E8%AE%A1%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84LRU/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">LRU Trie 单调栈<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/算法/2021-06-11-设计数据结构LRU.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-06-11 00:00:00" itemprop="dateCreated datePublished" datetime="2021-06-11T00:00:00+08:00">2021-06-11</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">3.2k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">13m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/algorithm/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">algorithm</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/leetcode/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">leetcode</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h3 id="LRU"><a href="#LRU" class="headerlink" title="LRU"></a>LRU</h3><p>涉及的主要技术，</p>
+<ul>
+<li><p>LRU存储的数据是key-value型数据</p>
+</li>
+<li><p>链表使用虚拟节点方便进行节点的删除和插入。单向链表使用虚拟头节点，双向链表使用虚拟头节点和虚拟尾节点。</p>
+</li>
+<li><p>使用一个<code>map&lt;int, LinkedNode&gt;</code>可以轻松根据<code>key</code>映射到<code>LinkedNode</code>，查询数据</p>
+</li>
+<li><p>双向链表来维护数据存储，起到队列的作用, 新数据从头节点插入，而旧数据需要从尾节点删除。原本的旧数据一旦被处理应该移动到头节点变成新数据。这里的处理策略也是需要学习的。</p>
+</li>
+<li><p>查找, 添加，删除的时间复杂度都是O(1), map支持查找, list支持添加删除</p>
+</li>
+</ul>
+<span id="more"></span>
+
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// 双向链表，作为存储单元</span>
+<span class="token comment">// 存储的数据是key-value</span>
+<span class="token keyword">struct</span> <span class="token class-name">DLinkedNode</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> key<span class="token punctuation">,</span> value<span class="token punctuation">;</span>
+    DLinkedNode<span class="token operator">*</span> prev<span class="token punctuation">;</span>
+    DLinkedNode<span class="token operator">*</span> next<span class="token punctuation">;</span>
+    <span class="token function">DLinkedNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token function">key</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">value</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">prev</span><span class="token punctuation">(</span><span class="token keyword">nullptr</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">next</span><span class="token punctuation">(</span><span class="token keyword">nullptr</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+    <span class="token function">DLinkedNode</span><span class="token punctuation">(</span><span class="token keyword">int</span> _key<span class="token punctuation">,</span> <span class="token keyword">int</span> _value<span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token function">key</span><span class="token punctuation">(</span>_key<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">value</span><span class="token punctuation">(</span>_value<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">prev</span><span class="token punctuation">(</span><span class="token keyword">nullptr</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">next</span><span class="token punctuation">(</span><span class="token keyword">nullptr</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">// LRU 最近最少使用，这个使用包括geth和put，也就是一旦执行get或者put就要移动节点到头部</span>
+<span class="token comment">// 对于size > capaity的情况要删除尾部节点</span>
+<span class="token comment">// map可以通过key定位到节点，实现查询O(1)复杂度。get步骤实际通过map进行</span>
+<span class="token comment">// Put步骤需要判断存在否，</span>
+<span class="token comment">// 四个子方法，添加节点头部，删除某个节点，删除尾部节点并返回，移动某个节点到头节点</span>
+<span class="token keyword">class</span> <span class="token class-name">LRUCache</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+    <span class="token comment">// 使用hash表，直接根据key定位存储的节点</span>
+    <span class="token comment">// 使用链表修改元素</span>
+    unordered_map<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token punctuation">,</span> DLinkedNode<span class="token operator">*</span> <span class="token operator">></span> cache<span class="token punctuation">;</span>
+    DLinkedNode<span class="token operator">*</span> head<span class="token punctuation">;</span>
+    DLinkedNode<span class="token operator">*</span> tail<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> size<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> capacity<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token function">LRUCache</span><span class="token punctuation">(</span><span class="token keyword">int</span> _capacity<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token function">capacity</span><span class="token punctuation">(</span>_capacity<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">size</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// 使用伪头部和伪尾部节点，构建head和tail节点</span>
+        <span class="token comment">// head和tail不存储数据，实际是虚拟节点，方便进行插入删除定位的。</span>
+        <span class="token comment">// 同理，链表增加一个虚拟头节点便于数据插入删除处理</span>
+        <span class="token comment">// 初始化capacity和size</span>
+        head <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">DLinkedNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        tail <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">DLinkedNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        head<span class="token operator">-></span>next <span class="token operator">=</span> tail<span class="token punctuation">;</span>
+        tail<span class="token operator">-></span>prev <span class="token operator">=</span> head<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    
+    <span class="token keyword">int</span> <span class="token function">get</span><span class="token punctuation">(</span><span class="token keyword">int</span> key<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>cache<span class="token punctuation">.</span><span class="token function">count</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token comment">// 如果 key 存在，先通过哈希表定位，再移到头部</span>
+        DLinkedNode<span class="token operator">*</span> node <span class="token operator">=</span> cache<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token function">moveToHead</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> node<span class="token operator">-></span>value<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    
+    <span class="token keyword">void</span> <span class="token function">put</span><span class="token punctuation">(</span><span class="token keyword">int</span> key<span class="token punctuation">,</span> <span class="token keyword">int</span> value<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>cache<span class="token punctuation">.</span><span class="token function">count</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// 如果 key 不存在，创建一个新的节点</span>
+            DLinkedNode<span class="token operator">*</span> node <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">DLinkedNode</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment">// 添加进哈希表</span>
+            cache<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> node<span class="token punctuation">;</span>
+            <span class="token comment">// 添加至双向链表的头部</span>
+            <span class="token function">addToHead</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token operator">++</span>size<span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>size <span class="token operator">></span> capacity<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token comment">// 如果超出容量，删除双向链表的尾部节点</span>
+                DLinkedNode<span class="token operator">*</span> removed <span class="token operator">=</span> <span class="token function">removeTail</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token comment">// 删除哈希表中对应的项</span>
+                cache<span class="token punctuation">.</span><span class="token function">erase</span><span class="token punctuation">(</span>removed<span class="token operator">-></span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token comment">// 防止内存泄漏</span>
+                <span class="token keyword">delete</span> removed<span class="token punctuation">;</span>
+                <span class="token operator">--</span>size<span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span><span class="token keyword">else</span><span class="token punctuation">&#123;</span>
+            <span class="token comment">// 如果 key 存在，先通过哈希表定位，再修改 value，并移到头部</span>
+            DLinkedNode<span class="token operator">*</span> node <span class="token operator">=</span> cache<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">;</span>
+            node<span class="token operator">-></span>value <span class="token operator">=</span> value<span class="token punctuation">;</span>
+            <span class="token function">moveToHead</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">// 添加到第一个数据，一共四个link</span>
+    <span class="token comment">// 分别是node->prev node->next</span>
+    <span class="token comment">// head->next->prev head->next </span>
+    <span class="token keyword">void</span> <span class="token function">addToHead</span><span class="token punctuation">(</span>DLinkedNode<span class="token operator">*</span> node<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        node<span class="token operator">-></span>prev <span class="token operator">=</span> head<span class="token punctuation">;</span>
+        node<span class="token operator">-></span>next <span class="token operator">=</span> head<span class="token operator">-></span>next<span class="token punctuation">;</span>
+        head<span class="token operator">-></span>next<span class="token operator">-></span>prev <span class="token operator">=</span> node<span class="token punctuation">;</span>
+        head<span class="token operator">-></span>next <span class="token operator">=</span> node<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    
+    <span class="token comment">// 删除某个节点node</span>
+    <span class="token comment">// 调整两个link</span>
+    <span class="token comment">// node->prev->next node->next->prev</span>
+    <span class="token keyword">void</span> <span class="token function">removeNode</span><span class="token punctuation">(</span>DLinkedNode<span class="token operator">*</span> node<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        node<span class="token operator">-></span>prev<span class="token operator">-></span>next <span class="token operator">=</span> node<span class="token operator">-></span>next<span class="token punctuation">;</span>
+        node<span class="token operator">-></span>next<span class="token operator">-></span>prev <span class="token operator">=</span> node<span class="token operator">-></span>prev<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">// 移动节点到头节点，两个步骤</span>
+    <span class="token comment">// 删除该节点</span>
+    <span class="token comment">// 在头部插入该节点</span>
+    <span class="token keyword">void</span> <span class="token function">moveToHead</span><span class="token punctuation">(</span>DLinkedNode<span class="token operator">*</span> node<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">removeNode</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">addToHead</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">// 删除尾部节点</span>
+    DLinkedNode<span class="token operator">*</span> <span class="token function">removeTail</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        DLinkedNode<span class="token operator">*</span> node <span class="token operator">=</span> tail<span class="token operator">-></span>prev<span class="token punctuation">;</span>
+        <span class="token function">removeNode</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> node<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token comment">/**
+ * Your LRUCache object will be instantiated and called as such:
+ * LRUCache* obj = new LRUCache(capacity);
+ * int param_1 = obj->get(key);
+ * obj->put(key,value);
+ */</span></code></pre>
+
+<h3 id="Leetcode-207-课程表"><a href="#Leetcode-207-课程表" class="headerlink" title="Leetcode 207 课程表"></a>Leetcode 207 课程表</h3><h4 id="题目重述"><a href="#题目重述" class="headerlink" title="题目重述"></a>题目重述</h4><p>你这个学期必须选修 numCourses 门课程，记为 0 到 numCourses - 1 。</p>
+<p>在选修某些课程之前需要一些先修课程。 先修课程按数组 prerequisites 给出，其中 prerequisites[i] = [ai, bi] ，表示如果要学习课程 ai 则 必须 先学习课程  bi 。</p>
+<pre><code>例如，先修课程对 [0, 1] 表示：想要学习课程 0 ，你需要先完成课程 1 。
+</code></pre>
+<p>请你判断是否可能完成所有课程的学习？如果可以，返回 true ；否则，返回 false 。</p>
+<h4 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h4><p>要求我们判定图中是否存在环，或者拓扑排序原理，可以使用bfs或者dfs进行。</p>
+<p>一些小trick,</p>
+<ol>
+<li><p>基于vector来描述图的邻接表，</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token function">visited</span><span class="token punctuation">(</span>numCourses<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 长为numCourses的vector，初始化为0</span>
+vector<span class="token operator">&lt;</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">>></span> <span class="token function">adj</span><span class="token punctuation">(</span>numCourses<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 形成长为numCourses的vector，不会初始化</span>
+<span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> info<span class="token operator">:</span> prerequisites<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    adj<span class="token punctuation">[</span>info<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>info<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 可以看成邻接表</span>
+<span class="token punctuation">&#125;</span></code></pre></li>
+<li><p>递归时设置合理的全局变量，可以提高清晰性。</p>
+</li>
+<li><p>分析递归代码，看递归了几层，每层卡在哪个地方，当前主要变量值是什么。</p>
+</li>
+</ol>
+<h4 id="dfs求解"><a href="#dfs求解" class="headerlink" title="dfs求解"></a>dfs求解</h4><p>主要思路</p>
+<ol>
+<li>合理生成邻接表</li>
+<li>从未访问开始进行dfs。如果存在环，则从环上每个节点遍历都能判定环。例如有a,b,c点，<strong>从a点dfs访问到b，未发现环，则之后也没必要再以b为起点进行访问了。但注意以c为起点进行dfs时是可以访问b的</strong>。</li>
+<li>visited需要有三个标注，visited=0表示没有访问过，visited=1表示当前dfs访问到的，一旦dfs到visited=1说明有环，visited=2表示已经访问完的。visited=1和visited2的区别就是dfs访问到visited=1的节点说明有环。<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Solution</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">bool</span> valid <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">void</span> <span class="token function">dfs</span><span class="token punctuation">(</span><span class="token keyword">int</span> start<span class="token punctuation">,</span> vector<span class="token operator">&lt;</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">>></span><span class="token operator">&amp;</span> adj<span class="token punctuation">,</span> vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span><span class="token operator">&amp;</span> visited<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+
+        visited<span class="token punctuation">[</span>start<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> e <span class="token operator">:</span> adj<span class="token punctuation">[</span>start<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>visited<span class="token punctuation">[</span>e<span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>   <span class="token comment">// =0说明可以访问</span>
+                <span class="token function">dfs</span><span class="token punctuation">(</span>e<span class="token punctuation">,</span>adj<span class="token punctuation">,</span>visited<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>valid<span class="token punctuation">)</span>
+                    <span class="token keyword">return</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span><span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>visited<span class="token punctuation">[</span>e<span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span> <span class="token comment">// 访问到=1的节点说明有环，也就是访问到在栈里面的元素</span>
+                valid <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                <span class="token keyword">return</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+        visited<span class="token punctuation">[</span>start<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span> <span class="token comment">// =2与1区别，已经访问完递归回来的，或已经出栈的    </span>
+    <span class="token punctuation">&#125;</span>
+
+
+    <span class="token keyword">bool</span> <span class="token function">canFinish</span><span class="token punctuation">(</span><span class="token keyword">int</span> numCourses<span class="token punctuation">,</span> vector<span class="token operator">&lt;</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">>></span><span class="token operator">&amp;</span> prerequisites<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> visited<span class="token punctuation">;</span>
+
+        vector<span class="token operator">&lt;</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">>></span> adj<span class="token punctuation">;</span>
+
+        visited<span class="token punctuation">.</span><span class="token function">resize</span><span class="token punctuation">(</span>numCourses<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        adj<span class="token punctuation">.</span><span class="token function">resize</span><span class="token punctuation">(</span>numCourses<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> info<span class="token operator">:</span> prerequisites<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            adj<span class="token punctuation">[</span>info<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>info<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> numCourses <span class="token operator">&amp;&amp;</span> valid<span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>visited<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token function">dfs</span><span class="token punctuation">(</span>i<span class="token punctuation">,</span>adj<span class="token punctuation">,</span>visited<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">return</span> valid<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre></li>
+</ol>
+<h3 id="bfs求解"><a href="#bfs求解" class="headerlink" title="bfs求解"></a>bfs求解</h3><p>bfs求解拓扑排序是一般的解法，基本步骤如下</p>
+<ol>
+<li>选取入度为0的顶点，全部入队</li>
+<li>队首元素出队，并删除队首元素连接的边，也就是队首连接的元素入度减1</li>
+<li>对队首元素，使入度为0的节点入队</li>
+</ol>
+<p>经过以上步骤，倘若存在环，环中的元素不可能入度。因此只需要判定入过队的元素数量是否为全部节点，即可判定是否存在环。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Solution</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">bool</span> <span class="token function">canFinish</span><span class="token punctuation">(</span><span class="token keyword">int</span> numCourses<span class="token punctuation">,</span> vector<span class="token operator">&lt;</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">>></span><span class="token operator">&amp;</span> prerequisites<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        vector<span class="token operator">&lt;</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">>></span> <span class="token function">adj</span><span class="token punctuation">(</span>numCourses<span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//邻接表</span>
+        vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token function">inDegree</span><span class="token punctuation">(</span>numCourses<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">//入度</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> v <span class="token operator">:</span> prerequisites<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+            adj<span class="token punctuation">[</span>v<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>v<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// x[1]->x[0]</span>
+            inDegree<span class="token punctuation">[</span>v<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token operator">++</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        queue<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> q<span class="token punctuation">;</span>
+        <span class="token comment">// 找一个入度为0的点</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> numCourses<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>inDegree<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+                q<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>   
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">int</span> count <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">!</span>q<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+            <span class="token keyword">int</span> f <span class="token operator">=</span> q<span class="token punctuation">.</span><span class="token function">front</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            q<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            count<span class="token operator">++</span><span class="token punctuation">;</span>
+            <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> k <span class="token operator">:</span> adj<span class="token punctuation">[</span>f<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+                inDegree<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token operator">--</span><span class="token punctuation">;</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>inDegree<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">)</span>
+                    q<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>k<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>         
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">return</span> count <span class="token operator">==</span> numCourses<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<h4 id="感悟"><a href="#感悟" class="headerlink" title="感悟"></a>感悟</h4><ol>
+<li>使用vector模拟的邻接表处理图更方便</li>
+<li>分析dfs时注意递归层数，每层卡在哪里，主要变量值是什么</li>
+<li>bfs处理搜索问题有时效果很好，而且清晰易懂，编程不易出错。</li>
+</ol>
+<h3 id="Leetcode-前缀树"><a href="#Leetcode-前缀树" class="headerlink" title="Leetcode 前缀树"></a>Leetcode 前缀树</h3><p>trie树(前缀树)，也就是单词查找树。Trie树和其他的各种查找树一样也是由链接的节点组成的数据结构，这些节点可以为空，也可以指向其他的节点。</p>
+<p>trie由一个根节点引出所有的节点，且根部不储存任何的属性。<br><img src="../assets/images/trie.jpg" alt="avatar" loading="lazy"></p>
+<ul>
+<li><p>插入操作，遍历需要插入的string，同时指针p从root一直往下next，如果对应字符的next为NULL，就创建一个新的TrieNode，遍历完后，在最终那个TireNode标记为True，表示这个TrieNode对应的词在这课Trie树中存在。</p>
+</li>
+<li><p>查找操作，从第一字符开始检索查找的单词，若第一个字符查找到，则检索其下一层是否有第二个字符，直到查找完最后一位字符； 若中途只能查找到空节点(子节点有26个，没有查到的是空节点)，或是最后节点isword==false,则返回false，否则返回true； </p>
+</li>
+<li><p>删除操作，查找到目标单词的最后一个单词所在的节点，将这个单词节点设置isword=false，同时从这个节点开始向根节点回溯，<strong>如果一个节点的下一层节点全为空节点则删除该节点</strong>。树的删除往往比较复杂, 删除操作可以使用递归解决。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">struct</span> <span class="token class-name">TrieNode</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">char</span> val<span class="token punctuation">;</span>
+    <span class="token comment">/// val->node*</span>
+    unordered_map<span class="token operator">&lt;</span><span class="token keyword">char</span><span class="token punctuation">,</span> TrieNode<span class="token operator">*</span><span class="token operator">></span> next<span class="token punctuation">;</span>
+    <span class="token keyword">bool</span> isend<span class="token punctuation">;</span>
+
+    <span class="token function">TrieNode</span><span class="token punctuation">(</span><span class="token keyword">char</span> val_<span class="token punctuation">)</span><span class="token operator">:</span><span class="token function">val</span><span class="token punctuation">(</span>val_<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">isend</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Trie</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token comment">/** Initialize your data structure here. */</span>
+    <span class="token function">Trie</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// 根节点不存储</span>
+        root <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">TrieNode</span><span class="token punctuation">(</span><span class="token string">'0'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    
+    <span class="token comment">/** Inserts a word into the trie. */</span>
+    <span class="token keyword">void</span> <span class="token function">insert</span><span class="token punctuation">(</span>string word<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        TrieNode<span class="token operator">*</span> p <span class="token operator">=</span> root<span class="token punctuation">;</span>
+        <span class="token keyword">bool</span> isin <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">char</span> c <span class="token operator">:</span> word<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>isin <span class="token operator">&amp;&amp;</span> p<span class="token operator">-></span>next<span class="token punctuation">.</span><span class="token function">count</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                p <span class="token operator">=</span> p<span class="token operator">-></span>next<span class="token punctuation">[</span>c<span class="token punctuation">]</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span><span class="token keyword">else</span><span class="token punctuation">&#123;</span>
+                isin <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                TrieNode<span class="token operator">*</span> node <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">TrieNode</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                p<span class="token operator">-></span>next<span class="token punctuation">[</span>c<span class="token punctuation">]</span> <span class="token operator">=</span> node<span class="token punctuation">;</span>
+                p <span class="token operator">=</span> node<span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+        p<span class="token operator">-></span>isend <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    
+    <span class="token comment">/** Returns if the word is in the trie. */</span>
+    <span class="token comment">/// 区分word还是前缀</span>
+    <span class="token comment">/// 加一个结束标识</span>
+    <span class="token keyword">bool</span> <span class="token function">search</span><span class="token punctuation">(</span>string word<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        TrieNode<span class="token operator">*</span> p <span class="token operator">=</span> root<span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">char</span> c <span class="token operator">:</span> word<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>p<span class="token operator">-></span>next<span class="token punctuation">.</span><span class="token function">count</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                p <span class="token operator">=</span> p<span class="token operator">-></span>next<span class="token punctuation">[</span>c<span class="token punctuation">]</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span><span class="token keyword">else</span><span class="token punctuation">&#123;</span>
+                <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">return</span> p<span class="token operator">-></span>isend<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    
+    <span class="token comment">/** Returns if there is any word in the trie that starts with the given prefix. */</span>
+    <span class="token keyword">bool</span> <span class="token function">startsWith</span><span class="token punctuation">(</span>string prefix<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        TrieNode<span class="token operator">*</span> p <span class="token operator">=</span> root<span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">char</span> c <span class="token operator">:</span> prefix<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>p<span class="token operator">-></span>next<span class="token punctuation">.</span><span class="token function">count</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                p <span class="token operator">=</span> p<span class="token operator">-></span>next<span class="token punctuation">[</span>c<span class="token punctuation">]</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span><span class="token keyword">else</span><span class="token punctuation">&#123;</span>
+                <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">return</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+<span class="token keyword">private</span><span class="token operator">:</span>
+    TrieNode<span class="token operator">*</span> root<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre></li>
+</ul>
+<h3 id="深入dfs"><a href="#深入dfs" class="headerlink" title="深入dfs"></a>深入dfs</h3><p>bfs具有优先访问最近的元素的特性，该特性使bfs在求最短路径类似题目具有优势，同时很方便的给出某顶点到出发点的距离，树的深度。<br>dfs可以使用递归实现，其优势在于往往可以实现记忆化搜索，只要找到重复子问题，使用vector或map做缓存，可以大大减少计算时间。<br>如果重复子问题与多种元素有关，往往需要设置hash函数，作为key。dfs因此成为一种很一般的算法，可以解决大量优化问题。</p>
+<p>leetcode310最小高度树，可以用dfs做搜索，使用map储存记忆化的缓存。<br><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/minimum-height-trees/solution/c-xun-xu-jian-jin-de-si-lu-bfsdfstuo-bu-hmk2y/">leetcode题解</a></p>
+<h3 id="单调栈"><a href="#单调栈" class="headerlink" title="单调栈"></a>单调栈</h3><p>单调栈，是在栈的先进后出基础之上额外添加一个特性：从栈顶到栈底的元素是严格递增（or递减）。<br>单调栈由于其有序性，方便处理要求序列输出有序的问题。</p>
+<p>具体进栈过程如下：</p>
+<ul>
+<li>对于单调递增栈，若当前进栈元素为 e，从栈顶开始遍历元素，把小于 e 或者等于 e 的元素弹出栈，直接遇到一个大于 e 的元素或者栈为空为止，然后再把 e 压入栈中。</li>
+<li>对于单调递减栈，则每次弹出的是大于 e 或者等于 e 的元素。</li>
+</ul>
+<p>字符串的字典序，对两个字符串，大小关系取决于两个字符串从左到右第一个不同字符的 ASCII 值的大小关系。</p>
+<blockquote>
+<p>leetcode 316<br>给你一个字符串 s ，请你去除字符串中重复的字母，使得每个字母只出现一次。需保证 返回结果的字典序最小（要求不能打乱其他字符的相对位置）。<br>输入：s = “bcabc”<br>输出：”abc”</p>
+</blockquote>
+<p>简要分析得到</p>
+<ul>
+<li>要去重。</li>
+<li>去重字符串中的字符顺序不能打乱 s 中字符出现的相对顺序。</li>
+<li>在所有符合上一条要求的去重字符串中，字典序最小的作为最终结果。</li>
+<li>注意在不打乱相对顺序的情况下，输出字典序最小的结果。</li>
+</ul>
+<p>使用栈这种数据结构，使字符串的顺序不变。<br>对于去重，记住当前栈中元素，若出现过则后续元素不再入栈。这样可以做到要求1和要求2，不会打乱相对顺序，也能去重，但不能输出字典序。</p>
+<p>重新对入栈逻辑进行调整，类似单调栈，当字符入栈时，检查栈中元素，若<strong>栈顶元素字典序大于该字符且后续还有该栈顶元素（后面也可以入栈）</strong>，则该栈顶元素出栈。保证了字典序。</p>
+<p>检查栈中元素，检查top()，若满足则出栈继续检查top()，直到不符合出栈情况。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Solution</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    string <span class="token function">removeDuplicateLetters</span><span class="token punctuation">(</span>string s<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token function">count</span><span class="token punctuation">(</span><span class="token number">26</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//Count</span>
+        vector<span class="token operator">&lt;</span><span class="token keyword">bool</span><span class="token operator">></span> <span class="token function">isInStack</span><span class="token punctuation">(</span><span class="token number">26</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        stack<span class="token operator">&lt;</span><span class="token keyword">char</span><span class="token operator">></span> st<span class="token punctuation">;</span>
+        string res<span class="token punctuation">;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">auto</span> c <span class="token operator">:</span> s<span class="token punctuation">)</span>
+        <span class="token punctuation">&#123;</span>
+            count<span class="token punctuation">[</span>c <span class="token operator">-</span> <span class="token string">'a'</span><span class="token punctuation">]</span><span class="token operator">++</span><span class="token punctuation">;</span>   <span class="token comment">// 字符出现次数</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> s<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span>
+        <span class="token punctuation">&#123;</span>
+            count<span class="token punctuation">[</span>s<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">-</span> <span class="token string">'a'</span><span class="token punctuation">]</span><span class="token operator">--</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>isInStack<span class="token punctuation">[</span>s<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">-</span> <span class="token string">'a'</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token boolean">false</span><span class="token punctuation">)</span> <span class="token comment">// 栈中没有该元素</span>
+            <span class="token punctuation">&#123;</span>
+                <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">!</span>st<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> st<span class="token punctuation">.</span><span class="token function">top</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">></span> s<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+                <span class="token punctuation">&#123;</span>
+                    <span class="token comment">//如果只有这一个字符，不出栈</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>count<span class="token punctuation">[</span>st<span class="token punctuation">.</span><span class="token function">top</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token string">'a'</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+                        <span class="token keyword">break</span><span class="token punctuation">;</span>
+                    <span class="token comment">//如果有不止一个该字符，出栈并继续循环</span>
+                    isInStack<span class="token punctuation">[</span>st<span class="token punctuation">.</span><span class="token function">top</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token string">'a'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+                    st<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">&#125;</span>
+                st<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>s<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                isInStack<span class="token punctuation">[</span>s<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">-</span> <span class="token string">'a'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">!</span>st<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#123;</span>
+            res <span class="token operator">+=</span> st<span class="token punctuation">.</span><span class="token function">top</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            st<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token function">reverse</span><span class="token punctuation">(</span>res<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> res<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> res<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-04-linux%E5%A4%9A%E7%BA%BF%E7%A8%8B%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="prev" title="chenshuo:02 线程同步精要"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">chenshuo:02 线程同步精要</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E7%AE%97%E6%B3%95/2021-06-10-XGBoost/" rel="next" title="机器学习:tree"><span class="post-nav-text">机器学习:tree</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E7%AE%97%E6%B3%95/2021-06-11-%E8%AE%BE%E8%AE%A1%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84LRU/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

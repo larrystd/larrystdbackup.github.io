@@ -1,0 +1,1009 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>muduo:01 thread mutex condition_variable | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="muduo网络库简介muduo是基于Reactor模式的网络库，核心是事件循环EventLoop，用于响应定时器和IO事件。muduo采用基于对象(object-based)而非面向对象(object-oriented)的设计风格，其事件回调接口多以boost::function+boost::bind表达，用户不需要继承其中的class。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="muduo:01 thread mutex condition_variable">
+<meta property="og:url" content="https://larrystd.github.io/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-07-11-muduo%E7%BD%91%E7%BB%9C%E5%BA%93/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="muduo网络库简介muduo是基于Reactor模式的网络库，核心是事件循环EventLoop，用于响应定时器和IO事件。muduo采用基于对象(object-based)而非面向对象(object-oriented)的设计风格，其事件回调接口多以boost::function+boost::bind表达，用户不需要继承其中的class。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/2021-1-6/1.jpg">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/muduo/1.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/muduo/2.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/muduo/3.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/muduo/4.jpg">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/muduo/5.png">
+<meta property="article:published_time" content="2021-07-13T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-13T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="muduo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/assets/images/2021-1-6/1.jpg"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#muduo%E7%BD%91%E7%BB%9C%E5%BA%93%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">muduo网络库简介</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8E%A5%E5%8F%A3%E5%92%8C%E5%AE%9E%E7%8E%B0"><span class="toc-number">1.1.</span> <span class="toc-text">接口和实现</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B"><span class="toc-number">1.2.</span> <span class="toc-text">线程模型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Tcp%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E4%B8%89%E4%B8%AA%E5%8D%8A%E4%BA%8B%E4%BB%B6"><span class="toc-number">1.3.</span> <span class="toc-text">Tcp网络编程三个半事件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#TCP%E7%A4%BA%E4%BE%8B"><span class="toc-number">1.4.</span> <span class="toc-text">TCP示例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Buffer%E5%92%8C%E6%96%87%E4%BB%B6%E4%BC%A0%E8%BE%93"><span class="toc-number">2.</span> <span class="toc-text">Buffer和文件传输</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#buffer"><span class="toc-number">2.1.</span> <span class="toc-text">buffer</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E4%BC%A0%E8%BE%93"><span class="toc-number">2.2.</span> <span class="toc-text">文件传输</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="toc-number">3.</span> <span class="toc-text">源码分析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#uncopyable-h"><span class="toc-number">3.1.</span> <span class="toc-text">uncopyable.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#noncopyable-h"><span class="toc-number">3.2.</span> <span class="toc-text">noncopyable.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Atomic-h"><span class="toc-number">3.3.</span> <span class="toc-text">Atomic.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#thread-h"><span class="toc-number">3.4.</span> <span class="toc-text">thread.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#thread-local"><span class="toc-number">3.5.</span> <span class="toc-text">thread_local</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8D%95%E4%BE%8B%E7%BA%BF%E7%A8%8B%E7%A7%81%E6%9C%89%E5%8F%98%E9%87%8F-ThreadLocalSingleton"><span class="toc-number">3.6.</span> <span class="toc-text">单例线程私有变量 ThreadLocalSingleton</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ThreadPool-%E7%BA%BF%E7%A8%8B%E6%B1%A0"><span class="toc-number">3.7.</span> <span class="toc-text">ThreadPool 线程池</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#mutex-h"><span class="toc-number">3.8.</span> <span class="toc-text">mutex.h</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9D%A1%E4%BB%B6%E5%8F%98%E9%87%8F-Condtion-h"><span class="toc-number">3.9.</span> <span class="toc-text">条件变量 Condtion.h</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-07-11-muduo%E7%BD%91%E7%BB%9C%E5%BA%93/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">muduo:01 thread mutex condition_variable<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/源码分析/2021-07-11-muduo网络库.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-07-14 00:00:00" itemprop="dateCreated datePublished" datetime="2021-07-14T00:00:00+08:00">2021-07-14</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">4.7k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">21m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/source-code/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">source code</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/muduo/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">muduo</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h3 id="muduo网络库简介"><a href="#muduo网络库简介" class="headerlink" title="muduo网络库简介"></a>muduo网络库简介</h3><p>muduo是基于Reactor模式的网络库，核心是事件循环EventLoop，用于响应定时器和IO事件。muduo采用基于对象(object-based)而非面向对象(object-oriented)的设计风格，其事件回调接口多以<code>boost::function+boost::bind</code>表达，用户不需要继承其中的class。</p>
+<p><img src="../../assets/images/2021-1-6/1.jpg" alt="avatar" loading="lazy"></p>
+<span id="more"></span>
+
+<p>基础库<br><img src="../../assets/images/muduo/1.png" alt="avatar" loading="lazy"></p>
+<p>网络核心库<br><img src="../../assets/images/muduo/2.png" alt="avatar" loading="lazy"></p>
+<h4 id="接口和实现"><a href="#接口和实现" class="headerlink" title="接口和实现"></a>接口和实现</h4><p>公开接口</p>
+<ul>
+<li>Buffer, 数据的读写通过buffer进行，用户不需要调用read(2)/write(2)</li>
+<li>InetAddress封装IPv4地址，注意不能解析域名，因为<code>gethostbyname(3)</code>解析域名会阻塞IO线程。</li>
+<li>EventLoop事件循环，每个线程只能由一个EventLoop对象，负责IO和定时器事件的分派，用eventfd(2)来异步唤醒。用TimerQueue作为定时器管理，用Poller作为IO multiplexing。</li>
+<li>EventLoopThread启动一个线程，在其中运行EventLoop::loop()</li>
+<li>TcpConnection是网络库的核心，封装一次TCP连接，但不能发起连接</li>
+<li>TcpClient用于编写网络客户端，能发起连接，重试</li>
+<li>TcpServer用于服务器，能接受客户的连接</li>
+</ul>
+<p>这些类中，TcpConnection的生命期依靠<code>shared_ptr</code>管理，用户和库共同控制，Buffer的生命期由TcpConnection控制，其余类生命期由用户控制。Buffer和InetAddress具有值语义，可以拷贝；其他class都是对象语义，不能拷贝。</p>
+<p>内部实现</p>
+<ul>
+<li>Channel负责注册和响应IO事件，但不拥有file descriptor。它是Acceptor, Connector, EventLoop, TimeQueue, TcpConnection的成员，生命期由后者控制。</li>
+<li>Socket是一个RAII handle，封装一个file descriptor，析构时关闭fd。它是Acceptor, TcpConnection的成员，生命期由后者控制。EventLoop, TimeQueue也拥有fd，但不封装为Socket class.</li>
+<li>SocketsOps封装各种Sockets系统调用。</li>
+<li>Poller是PollPoller和EPollPoller的基类，采用电平触发。它是EventLoop的成员，生命期由后者控制</li>
+<li>PollPoller和EPollPoller封装poll(2)和epoll(4)两种IO multiplexing后端，poll的存在价值便于调试，因为poll(2)调用是上下文无关的。</li>
+<li>Connector用于发起TCP连接，它是TcpClient成员，生命期由后者控制</li>
+<li>Acceptor用于接受TCP连接，它是TcpServer成员，生命期由后者控制</li>
+<li>TimeQueue用timerfd实现定时，不需要设置poll/epoll_wait(等待时长)。TimerQueue用std::map管理Timer，它是EventLoop成员，生命期由后者控制。</li>
+<li>EventLoopThreadPoll用于创建IO线程池，用于把TcpConnection分派到EventLoop线程上，是TcpServer成员，生命期由后者控制。</li>
+</ul>
+<p><img src="../../assets/images/muduo/3.png" alt="avatar" loading="lazy"></p>
+<p><img src="../../assets/images/muduo/4.jpg" alt="avatar" loading="lazy"></p>
+<h4 id="线程模型"><a href="#线程模型" class="headerlink" title="线程模型"></a>线程模型</h4><p>每个线程最多一个EventLoop，每个TcpConnection必须归某个EventLoop管理，其所有IO都会被这个线程处理。TcpConnection和EventLoop是线程安全的。</p>
+<ul>
+<li>单线程,accept(2)和TcpConnection用同一个线程处理IO连接</li>
+<li>多线程，accept(2)与EventLoop在同一个线程，另外创建一个EventLoopThreadPoll，新的连接被分配到线程池中。</li>
+</ul>
+<h4 id="Tcp网络编程三个半事件"><a href="#Tcp网络编程三个半事件" class="headerlink" title="Tcp网络编程三个半事件"></a>Tcp网络编程三个半事件</h4><p>TCP网络编程最本质是处理三个半事件</p>
+<ol>
+<li>连接的建立，包括服务端(accept)新连接和客户端成功发起(connect)新连接，TCP连接一旦建立，客户端和服务端是平等的，可以各自收发数据。</li>
+<li>连接的断开，包括主动断开(close, shutdown)和被动断开(read(2)返回0)</li>
+<li>消息到达，文件描述符可读。对该事件的处理方式决定了网络编程的风格，如阻塞非阻塞，处理分包，应用缓冲设计。   </li>
+<li>5 消息发送完毕，算半个。表示数据写入操作系统的缓冲区，将由TCP协议栈负责数据发送和重传，不代表对方收到数据。</li>
+</ol>
+<h4 id="TCP示例"><a href="#TCP示例" class="headerlink" title="TCP示例"></a>TCP示例</h4><p>muduo中，只需要编写并绑定对应事件回调函数，就能实现三个半事件的处理。</p>
+<p>例如discard只需要关注”消息/数据到达”事件，即<code>onMessage</code></p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token class-name">DiscardServer</span><span class="token double-colon punctuation">::</span><span class="token function">onMessage</span><span class="token punctuation">(</span><span class="token keyword">const</span> TcpConnectionPtr<span class="token operator">&amp;</span> conn<span class="token punctuation">,</span> Buffer<span class="token operator">*</span> buf<span class="token punctuation">,</span> TimeStamp time<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    string <span class="token function">msg</span><span class="token punctuation">(</span>buf<span class="token operator">-></span><span class="token function">retrieveAllAsString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    LOG_INFO <span class="token operator">&lt;&lt;</span> conn<span class="token operator">-></span>name <span class="token operator">&lt;&lt;</span> <span class="token string">" discards "</span> <span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<p>daytime只需要关注”连接已建立”事件</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token class-name">DaytimeServer</span><span class="token double-colon punctuation">::</span><span class="token function">onConnection</span><span class="token punctuation">(</span><span class="token keyword">const</span> TcpConnectionPtr<span class="token operator">&amp;</span> conn<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    LOG_INFO <span class="token operator">&lt;&lt;</span> <span class="token string">"DaytimeServer -"</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>conn<span class="token operator">-></span><span class="token function">connected</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        conn<span class="token operator">-></span><span class="token function">send</span><span class="token punctuation">(</span><span class="token class-name">Timestamp</span><span class="token double-colon punctuation">::</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toFormattedString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">"\n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        conn<span class="token operator">-></span><span class="token function">shutdown</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<h3 id="Buffer和文件传输"><a href="#Buffer和文件传输" class="headerlink" title="Buffer和文件传输"></a>Buffer和文件传输</h3><h4 id="buffer"><a href="#buffer" class="headerlink" title="buffer"></a>buffer</h4><p>TcpConnection必须要有output buffer，用户发送数据时数据先发送到buffer中，等socket文件操作符可写时再一并写入。同时也必须有input buffer，一次收到的数据可能不完整，接收的数据先放到buffer，等构成一条完整信息再通知程序的业务逻辑。</p>
+<p>所有muduo的IO都是缓冲IO，用户不会取操作read()或write()某个socket，只会操作TcpConnection的input buffer和output buffer。更确切的，是在<code>onMessage()</code>回调中读取input buffer; 调用TcpConnection::send()间接操作output buffer。</p>
+<p>线程安全性，Buffer不是线程安全的，其安全性与std::vector相同。</p>
+<ul>
+<li>对于input buffer, onMessage()回调始终发生在该TcpConnection所属的IO线程，应用程序应该在onMessage()完成对input buffer的操作，并且不要把input buffer暴露给其他线程。这样Buffer class不必线程安全</li>
+<li>对于output buffer，应用程序不会直接操作它，而是调用TcpConnection::send()来发送数据，后者是线程安全的。</li>
+<li>如果TcpConnection::send()调用发生在TcpConnection所属的那个IO线程，那它转而调用TcpConnection::sendInLoop(), sendInLoop会在当前线程操作output buffer; 如果在调用发生在别的线程，它会通过EventLoop::runInLoop()把sendInLoop()函数调用转移到IO线程，这样用IO线程操作output buffer，不会有线程安全问题。至于函数参数的跨线程传递，直接把数据拷贝一份即可。</li>
+</ul>
+<p><img src="../../assets/images/muduo/5.png" alt="avatar" loading="lazy"></p>
+<p>两个index即readIndex, writeIndex类型是int，记录相对于<code>vector&lt;char&gt;</code>起始位置的偏移，不是指针，这可以避免迭代器失效带来的影响。</p>
+<p>底层使用<code>vector</code>可以动态增长空间的大小，但如果原因是prependable太大导致的writable不够则不会增加空间，而是将content挪移到前面腾出writable空间。当readIndex=writeIndex时，缓冲区内容全部读取完，重置readIndex=writeIndex=初始位置。</p>
+<p>prependable默认有少量空间，这可以低代价在前面添加几个字节。例如序列化一个消息，但不知道多长，那么可以append()到序列化完成，最后在前面添加消息的长度。</p>
+<h4 id="文件传输"><a href="#文件传输" class="headerlink" title="文件传输"></a>文件传输</h4><p>TcpConnection提供的<code>send()</code>重载函数如下</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">
+<span class="token keyword">class</span> <span class="token class-name">TcpConection</span> <span class="token operator">:</span> <span class="token base-clause">boost <span class="token double-colon punctuation">::</span> <span class="token class-name">noncopyable</span><span class="token punctuation">,</span>
+    <span class="token keyword">public</span> boost<span class="token double-colon punctuation">::</span><span class="token class-name">enable_shared_from_this</span><span class="token operator">&lt;</span><span class="token class-name">TcpConnection</span><span class="token operator">></span></span>
+<span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">void</span> <span class="token function">send</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">void</span><span class="token operator">*</span> message<span class="token punctuation">,</span> size_t len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token function">send</span><span class="token punctuation">(</span><span class="token keyword">const</span> StringPiece<span class="token operator">&amp;</span> message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">void</span> <span class="token function">send</span><span class="token punctuation">(</span>Buffer<span class="token operator">*</span> message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// void send(Buffer&amp;&amp; message); // c++11</span>
+    <span class="token comment">// void send(string&amp;&amp; message); // c++11</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<ul>
+<li>send返回类型为void，意味着muduo会保证把数据发送给对方</li>
+<li>send()非阻塞，不会阻塞客户调用线程</li>
+<li>send()线程安全，原子，多个线程可以同时调用send,muduo可以保证多线程每个消息的完整性，但顺序可以不同。</li>
+<li>void send(const void* message, size_t len);可以发送任意字节序列</li>
+<li>void send(const StringPiece&amp; message) 可以发送std::string 和const char*</li>
+</ul>
+<h3 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h3><h4 id="uncopyable-h"><a href="#uncopyable-h" class="headerlink" title="uncopyable.h"></a>uncopyable.h</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">namespace</span> muduo
+<span class="token punctuation">&#123;</span>
+<span class="token comment">/// 将构造函数和析构函数设置为protected, 继承者可正常调用</span>
+<span class="token keyword">class</span> <span class="token class-name">copyable</span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">protected</span><span class="token operator">:</span>
+  <span class="token function">copyable</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">copyable</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">&#125;</span>  <span class="token comment">// namespace muduo</span>
+</code></pre>
+
+<h4 id="noncopyable-h"><a href="#noncopyable-h" class="headerlink" title="noncopyable.h"></a>noncopyable.h</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">namespace</span> muduo
+<span class="token punctuation">&#123;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">noncopyable</span>
+
+<span class="token comment">/// 拷贝构造函数和操作符设置delete</span>
+<span class="token comment">/// 派生类无法调用拷贝构造函数, 因为其父类无法执行拷贝构造</span>
+<span class="token comment">/// 构造函数析构函数protected+ default</span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token function">noncopyable</span><span class="token punctuation">(</span><span class="token keyword">const</span> noncopyable<span class="token operator">&amp;</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">delete</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token keyword">operator</span><span class="token operator">=</span><span class="token punctuation">(</span><span class="token keyword">const</span> noncopyable<span class="token operator">&amp;</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">delete</span><span class="token punctuation">;</span>
+
+ <span class="token keyword">protected</span><span class="token operator">:</span>
+  <span class="token function">noncopyable</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">noncopyable</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">default</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token punctuation">&#125;</span>  <span class="token comment">// namespace muduo</span></code></pre>
+
+<h4 id="Atomic-h"><a href="#Atomic-h" class="headerlink" title="Atomic.h"></a>Atomic.h</h4><p>原子类是int类型的原子类, 且是一个模板类, 可实例化<code>typedef AtomicIntegerT&lt;int32_t&gt; AtomicInt32;</code></p>
+<p>原子类实现的方法是gcc内置原子操作, 例如<code>__sync_fetch_and_add(&amp;value_, x)</code>对*value执行原子加法, CAS <code>__sync_val_compare_and_swap (type *ptr, type oldval, type newval, ...)</code>  如果ptr所指向的内存地址存放的值与oldval相同的话, 则将其用newval的值替换。</p>
+<pre class="language-c" data-language="c"><code class="language-c">type <span class="token function">__sync_val_compare_and_swap</span> <span class="token punctuation">(</span>type <span class="token operator">*</span>ptr<span class="token punctuation">,</span> type oldval<span class="token punctuation">,</span> type newval<span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+<span class="token comment">/* 对应的伪代码 */</span>
+<span class="token punctuation">&#123;</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>ptr <span class="token operator">==</span> oldval<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token operator">*</span>ptr <span class="token operator">=</span> newval<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span> 
+    <span class="token keyword">return</span> oldval<span class="token punctuation">;</span> 
+<span class="token punctuation">&#125;</span></code></pre>
+
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">namespace</span> muduo
+<span class="token punctuation">&#123;</span>
+
+<span class="token keyword">namespace</span> detail
+<span class="token punctuation">&#123;</span>
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">class</span> <span class="token class-name">AtomicIntegerT</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token function">AtomicIntegerT</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token operator">:</span> <span class="token function">value_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+  <span class="token punctuation">&#125;</span>
+
+  T <span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">// in gcc >= 4.7: __atomic_load_n(&amp;value_, __ATOMIC_SEQ_CST)</span>
+    <span class="token keyword">return</span> <span class="token function">__sync_val_compare_and_swap</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>value_<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  T <span class="token function">getAndAdd</span><span class="token punctuation">(</span>T x<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">// in gcc >= 4.7: __atomic_fetch_add(&amp;value_, x, __ATOMIC_SEQ_CST)</span>
+    <span class="token keyword">return</span> <span class="token function">__sync_fetch_and_add</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>value_<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  T <span class="token function">addAndGet</span><span class="token punctuation">(</span>T x<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token function">getAndAdd</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span> <span class="token operator">+</span> x<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+  T <span class="token function">getAndSet</span><span class="token punctuation">(</span>T newValue<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">// in gcc >= 4.7: __atomic_exchange_n(&amp;value_, newValue, __ATOMIC_SEQ_CST)</span>
+    <span class="token keyword">return</span> <span class="token function">__sync_lock_test_and_set</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>value_<span class="token punctuation">,</span> newValue<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">volatile</span> T value_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>  <span class="token comment">// namespace detail</span>
+
+<span class="token keyword">typedef</span> detail<span class="token double-colon punctuation">::</span>AtomicIntegerT<span class="token operator">&lt;</span><span class="token keyword">int32_t</span><span class="token operator">></span> AtomicInt32<span class="token punctuation">;</span>
+<span class="token keyword">typedef</span> detail<span class="token double-colon punctuation">::</span>AtomicIntegerT<span class="token operator">&lt;</span><span class="token keyword">int64_t</span><span class="token operator">></span> AtomicInt64<span class="token punctuation">;</span>
+
+<span class="token punctuation">&#125;</span>  <span class="token comment">// namespace muduo</span></code></pre>
+
+<h4 id="thread-h"><a href="#thread-h" class="headerlink" title="thread.h"></a>thread.h</h4><ul>
+<li><p>thread的基本功能是传入一个函数, 调用start()方法开始执行, 并可以返回线程的状态。</p>
+</li>
+<li><p>pthread id是pthread库提供的ID，在系统级别没有意义。pid都是线程组leader的进程ID, 使用<code>getpid()</code>获取。而tid是线程ID，<code>syscall(SYS_gettid)</code>获取。pid和tid均全局唯一。</p>
+</li>
+<li><p>基本逻辑, pthread_create创建线程执行startThread, startThread调用ThreadData对象执行对象runInThread()成员方法。</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// thread.h</span>
+<span class="token keyword">class</span> <span class="token class-name">Thread</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>function<span class="token operator">&lt;</span><span class="token keyword">void</span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">></span> ThreadFunc<span class="token punctuation">;</span>
+
+  <span class="token keyword">explicit</span> <span class="token function">Thread</span><span class="token punctuation">(</span>ThreadFunc<span class="token punctuation">,</span> <span class="token keyword">const</span> string<span class="token operator">&amp;</span> name <span class="token operator">=</span> <span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// FIXME: make it movable in C++11</span>
+  <span class="token operator">~</span><span class="token function">Thread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">void</span> <span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">int</span> <span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// return pthread_join()</span>
+
+  <span class="token keyword">bool</span> <span class="token function">started</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> started_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token comment">// pthread_t pthreadId() const &#123; return pthreadId_; &#125;</span>
+  pid_t <span class="token function">tid</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> tid_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token keyword">const</span> string<span class="token operator">&amp;</span> <span class="token function">name</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> name_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">numCreated</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> numCreated_<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">void</span> <span class="token function">setDefaultName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">/// 状态变量</span>
+  <span class="token keyword">bool</span>       started_<span class="token punctuation">;</span>
+  <span class="token keyword">bool</span>       joined_<span class="token punctuation">;</span>
+
+  <span class="token comment">/// pthreadId_, 用来执行pthread_join等pthread函数</span>
+  pthread_t  pthreadId_<span class="token punctuation">;</span>
+  <span class="token comment">/// tid, 用来线程标识</span>
+  pid_t      tid_<span class="token punctuation">;</span>
+
+  ThreadFunc func_<span class="token punctuation">;</span>
+  string     name_<span class="token punctuation">;</span>
+  <span class="token comment">/// 倒计时</span>
+  CountDownLatch latch_<span class="token punctuation">;</span>
+
+  <span class="token keyword">static</span> AtomicInt32 numCreated_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<p>Thread.cc</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// thread.cpp</span>
+<span class="token comment">/// 返回当前thread的tid</span>
+
+pid_t <span class="token function">gettid</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>pid_t<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token double-colon punctuation">::</span><span class="token function">syscall</span><span class="token punctuation">(</span>SYS_gettid<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token function">afterFork</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  muduo<span class="token double-colon punctuation">::</span>CurrentThread<span class="token double-colon punctuation">::</span>t_cachedTid <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  muduo<span class="token double-colon punctuation">::</span>CurrentThread<span class="token double-colon punctuation">::</span>t_threadName <span class="token operator">=</span> <span class="token string">"main"</span><span class="token punctuation">;</span>
+  <span class="token class-name">CurrentThread</span><span class="token double-colon punctuation">::</span><span class="token function">tid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// no need to call pthread_atfork(NULL, NULL, &amp;afterFork);</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">ThreadNameInitializer</span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token function">ThreadNameInitializer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    muduo<span class="token double-colon punctuation">::</span>CurrentThread<span class="token double-colon punctuation">::</span>t_threadName <span class="token operator">=</span> <span class="token string">"main"</span><span class="token punctuation">;</span>
+    <span class="token class-name">CurrentThread</span><span class="token double-colon punctuation">::</span><span class="token function">tid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">/// fork之后, 子线程调用afterFork()函数</span>
+    <span class="token function">pthread_atfork</span><span class="token punctuation">(</span><span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>afterFork<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+ThreadNameInitializer init<span class="token punctuation">;</span>
+
+
+<span class="token comment">/// 封装一个线程</span>
+<span class="token keyword">struct</span> <span class="token class-name">ThreadData</span>
+<span class="token punctuation">&#123;</span>
+<span class="token comment">/// 线程要执行的函数</span>
+  <span class="token keyword">typedef</span> muduo<span class="token double-colon punctuation">::</span>Thread<span class="token double-colon punctuation">::</span>ThreadFunc ThreadFunc<span class="token punctuation">;</span>
+  ThreadFunc func_<span class="token punctuation">;</span>
+  string name_<span class="token punctuation">;</span>
+  pid_t<span class="token operator">*</span> tid_<span class="token punctuation">;</span>
+  <span class="token comment">/// 倒计时</span>
+  CountDownLatch<span class="token operator">*</span> latch_<span class="token punctuation">;</span>
+<span class="token comment">// 线程私有变量</span>
+  <span class="token function">ThreadData</span><span class="token punctuation">(</span>ThreadFunc func<span class="token punctuation">,</span>
+             <span class="token keyword">const</span> string<span class="token operator">&amp;</span> name<span class="token punctuation">,</span>
+             pid_t<span class="token operator">*</span> tid<span class="token punctuation">,</span>
+             CountDownLatch<span class="token operator">*</span> latch<span class="token punctuation">)</span>
+    <span class="token operator">:</span> <span class="token function">func_</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>func<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+      <span class="token function">name_</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">,</span>
+      <span class="token function">tid_</span><span class="token punctuation">(</span>tid<span class="token punctuation">)</span><span class="token punctuation">,</span>
+      <span class="token function">latch_</span><span class="token punctuation">(</span>latch<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span> <span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 线程内部的具体执行</span>
+  <span class="token keyword">void</span> <span class="token function">runInThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token operator">*</span>tid_ <span class="token operator">=</span> muduo<span class="token double-colon punctuation">::</span><span class="token class-name">CurrentThread</span><span class="token double-colon punctuation">::</span><span class="token function">tid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    tid_ <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+    latch_<span class="token operator">-></span><span class="token function">countDown</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    latch_ <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+
+    muduo<span class="token double-colon punctuation">::</span>CurrentThread<span class="token double-colon punctuation">::</span>t_threadName <span class="token operator">=</span> name_<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">?</span> <span class="token string">"muduoThread"</span> <span class="token operator">:</span> name_<span class="token punctuation">.</span><span class="token function">c_str</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">/// 设置线程名</span>
+    <span class="token double-colon punctuation">::</span><span class="token function">prctl</span><span class="token punctuation">(</span>PR_SET_NAME<span class="token punctuation">,</span> muduo<span class="token double-colon punctuation">::</span>CurrentThread<span class="token double-colon punctuation">::</span>t_threadName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// 执行线程内部函数</span>
+    <span class="token keyword">try</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token function">func_</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      muduo<span class="token double-colon punctuation">::</span>CurrentThread<span class="token double-colon punctuation">::</span>t_threadName <span class="token operator">=</span> <span class="token string">"finished"</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">/// 出现异常, 打印stderr</span>
+    <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token keyword">const</span> Exception<span class="token operator">&amp;</span> ex<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      muduo<span class="token double-colon punctuation">::</span>CurrentThread<span class="token double-colon punctuation">::</span>t_threadName <span class="token operator">=</span> <span class="token string">"crashed"</span><span class="token punctuation">;</span>
+      <span class="token comment">// 将字符串拷贝到标准错误流</span>
+      <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"exception caught in Thread %s\n"</span><span class="token punctuation">,</span> name_<span class="token punctuation">.</span><span class="token function">c_str</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"reason: %s\n"</span><span class="token punctuation">,</span> ex<span class="token punctuation">.</span><span class="token function">what</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"stack trace: %s\n"</span><span class="token punctuation">,</span> ex<span class="token punctuation">.</span><span class="token function">stackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">abort</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token keyword">const</span> std<span class="token double-colon punctuation">::</span>exception<span class="token operator">&amp;</span> ex<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      muduo<span class="token double-colon punctuation">::</span>CurrentThread<span class="token double-colon punctuation">::</span>t_threadName <span class="token operator">=</span> <span class="token string">"crashed"</span><span class="token punctuation">;</span>
+      <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"exception caught in Thread %s\n"</span><span class="token punctuation">,</span> name_<span class="token punctuation">.</span><span class="token function">c_str</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"reason: %s\n"</span><span class="token punctuation">,</span> ex<span class="token punctuation">.</span><span class="token function">what</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">abort</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      muduo<span class="token double-colon punctuation">::</span>CurrentThread<span class="token double-colon punctuation">::</span>t_threadName <span class="token operator">=</span> <span class="token string">"crashed"</span><span class="token punctuation">;</span>
+      <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"unknown exception caught in Thread %s\n"</span><span class="token punctuation">,</span> name_<span class="token punctuation">.</span><span class="token function">c_str</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">throw</span><span class="token punctuation">;</span> <span class="token comment">// rethrow</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 开启线程, pthread_create执行的函数</span>
+<span class="token comment">/// 传入void*, static_cast为ThreadData*</span>
+<span class="token keyword">void</span><span class="token operator">*</span> <span class="token function">startThread</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token operator">*</span> obj<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  ThreadData<span class="token operator">*</span> data <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>ThreadData<span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>obj<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 转去执行runInThread</span>
+  data<span class="token operator">-></span><span class="token function">runInThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">delete</span> data<span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 睡眠一会</span>
+<span class="token keyword">void</span> <span class="token class-name">CurrentThread</span><span class="token double-colon punctuation">::</span><span class="token function">sleepUsec</span><span class="token punctuation">(</span><span class="token keyword">int64_t</span> usec<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">struct</span> <span class="token class-name">timespec</span> ts <span class="token operator">=</span> <span class="token punctuation">&#123;</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span> <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+  ts<span class="token punctuation">.</span>tv_sec <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>time_t<span class="token operator">></span></span></span><span class="token punctuation">(</span>usec <span class="token operator">/</span> Timestamp<span class="token double-colon punctuation">::</span>kMicroSecondsPerSecond<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  ts<span class="token punctuation">.</span>tv_nsec <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">long</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>usec <span class="token operator">%</span> Timestamp<span class="token double-colon punctuation">::</span>kMicroSecondsPerSecond <span class="token operator">*</span> <span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token double-colon punctuation">::</span><span class="token function">nanosleep</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ts<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+AtomicInt32 Thread<span class="token double-colon punctuation">::</span>numCreated_<span class="token punctuation">;</span>
+
+<span class="token comment">/// Thread class</span>
+Thread<span class="token operator">:</span><span class="token base-clause"><span class="token operator">:</span><span class="token function">Thread</span><span class="token punctuation">(</span><span class="token class-name">ThreadFunc</span> <span class="token class-name">func</span><span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token class-name">string</span><span class="token operator">&amp;</span> <span class="token class-name">n</span><span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">started_</span><span class="token punctuation">(</span><span class="token class-name">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">joined_</span><span class="token punctuation">(</span><span class="token class-name">false</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">pthreadId_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">tid_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">func_</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span><span class="token class-name">func</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">name_</span><span class="token punctuation">(</span><span class="token class-name">n</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">latch_</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span></span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">setDefaultName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">Thread</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">Thread</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>started_ <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>joined_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">pthread_detach</span><span class="token punctuation">(</span>pthreadId_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token class-name">Thread</span><span class="token double-colon punctuation">::</span><span class="token function">setDefaultName</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">int</span> num <span class="token operator">=</span> numCreated_<span class="token punctuation">.</span><span class="token function">incrementAndGet</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>name_<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">char</span> buf<span class="token punctuation">[</span><span class="token number">32</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token function">snprintf</span><span class="token punctuation">(</span>buf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span> buf<span class="token punctuation">,</span> <span class="token string">"Thread%d"</span><span class="token punctuation">,</span> num<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    name_ <span class="token operator">=</span> buf<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 创建线程并执行</span>
+<span class="token keyword">void</span> <span class="token class-name">Thread</span><span class="token double-colon punctuation">::</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>started_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  started_ <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  <span class="token comment">// FIXME: move(func_)</span>
+  <span class="token comment">/// ThreadData类</span>
+  detail<span class="token double-colon punctuation">::</span>ThreadData<span class="token operator">*</span> data <span class="token operator">=</span> <span class="token keyword">new</span> detail<span class="token double-colon punctuation">::</span><span class="token function">ThreadData</span><span class="token punctuation">(</span>func_<span class="token punctuation">,</span> name_<span class="token punctuation">,</span> <span class="token operator">&amp;</span>tid_<span class="token punctuation">,</span> <span class="token operator">&amp;</span>latch_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 创建线程, 执行startThread函数, 传入参数为ThreadData</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">pthread_create</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pthreadId_<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>detail<span class="token double-colon punctuation">::</span>startThread<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// 创建失败，返回1</span>
+  <span class="token punctuation">&#123;</span>
+    started_ <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+    <span class="token keyword">delete</span> data<span class="token punctuation">;</span> <span class="token comment">// or no delete?</span>
+    LOG_SYSFATAL <span class="token operator">&lt;&lt;</span> <span class="token string">"Failed in pthread_create"</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">else</span>
+  <span class="token comment">// 线程创建成功</span>
+  <span class="token punctuation">&#123;</span>
+    latch_<span class="token punctuation">.</span><span class="token function">wait</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>tid_ <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// pthread_join</span>
+<span class="token keyword">int</span> <span class="token class-name">Thread</span><span class="token double-colon punctuation">::</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>started_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>joined_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  joined_ <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token function">pthread_join</span><span class="token punctuation">(</span>pthreadId_<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="thread-local"><a href="#thread-local" class="headerlink" title="thread_local"></a>thread_local</h4><p>thread_local是存储在线程内部的私有变量</p>
+<ul>
+<li>使用<code>pthread_key_create</code>设置私有变量, 使用<code>pthread_getspecific</code>获取私有变量</li>
+<li>私有变量通过key-value读取, key类型为<code>pthread_key_t</code></li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">class</span> <span class="token class-name">ThreadLocal</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token function">ThreadLocal</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// 线程私有变量</span>
+    <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_key_create</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pkey_<span class="token punctuation">,</span> <span class="token operator">&amp;</span>ThreadLocal<span class="token double-colon punctuation">::</span>destructor<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token operator">~</span><span class="token function">ThreadLocal</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_key_delete</span><span class="token punctuation">(</span>pkey_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  T<span class="token operator">&amp;</span> <span class="token function">value</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    T<span class="token operator">*</span> perThreadValue <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token function">pthread_getspecific</span><span class="token punctuation">(</span>pkey_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// 读取私有数据, 获取线程内部储存的值</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>perThreadValue<span class="token punctuation">)</span>  <span class="token comment">// 如果线程内没有该对象，则重新创建一个</span>
+    <span class="token punctuation">&#123;</span>
+      T<span class="token operator">*</span> newObj <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">T</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_setspecific</span><span class="token punctuation">(</span>pkey_<span class="token punctuation">,</span> newObj<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      perThreadValue <span class="token operator">=</span> newObj<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> <span class="token operator">*</span>perThreadValue<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+
+  <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">destructor</span><span class="token punctuation">(</span><span class="token keyword">void</span> <span class="token operator">*</span>x<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// x强制转型为T*</span>
+    T<span class="token operator">*</span> obj <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">/// 如果sizeof(T) == 0(不正确), 则编译器会报错T_must_be_complete_type[-1]</span>
+    <span class="token comment">/// 下面这句话只允许sizeof(T) != 0</span>
+    <span class="token keyword">typedef</span> <span class="token keyword">char</span> T_must_be_complete_type<span class="token punctuation">[</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span>T<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token operator">?</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    T_must_be_complete_type dummy<span class="token punctuation">;</span> <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> dummy<span class="token punctuation">;</span>
+    <span class="token comment">/// delete x指向的对象</span>
+    <span class="token keyword">delete</span> obj<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+ <span class="token comment">/// 线程私有变量</span>
+  pthread_key_t pkey_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<h4 id="单例线程私有变量-ThreadLocalSingleton"><a href="#单例线程私有变量-ThreadLocalSingleton" class="headerlink" title="单例线程私有变量 ThreadLocalSingleton"></a>单例线程私有变量 ThreadLocalSingleton</h4><ul>
+<li>初始化ThreadLocalSingleton前, 静态成员变量 Deleter已经初始化, 创建单独的线程变量的键pkey_</li>
+<li>初始化ThreadLocalSingleton后, 调用static T&amp; instance(), 可以经Deleter::set() 用 <code>pthread_setspecific(pkey_, newObj)</code> 设置当前pkey_的私有变量的单一实例。</li>
+<li>调用ThreadLocalSingleton::pointer()返回私有变量对象的指针</li>
+<li>ThreadLocalSingleton与Deleter两个class关系复杂, 不知道为何</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">class</span> <span class="token class-name">ThreadLocalSingleton</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token comment">// thread_local是单例的，不提供构造函数和析构函数</span>
+  <span class="token function">ThreadLocalSingleton</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">delete</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">ThreadLocalSingleton</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">delete</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 获取线程私有变量的唯一intance</span>
+  <span class="token keyword">static</span> T<span class="token operator">&amp;</span> <span class="token function">instance</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>t_value_<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      t_value_ <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token function">T</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 线程内部对象</span>
+      deleter_<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span>t_value_<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">/// 置入线程</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> <span class="token operator">*</span>t_value_<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">static</span> T<span class="token operator">*</span> <span class="token function">pointer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> t_value_<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">destructor</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token operator">*</span> obj<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>obj <span class="token operator">==</span> t_value_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">typedef</span> <span class="token keyword">char</span> T_must_be_complete_type<span class="token punctuation">[</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span>T<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token operator">?</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    T_must_be_complete_type dummy<span class="token punctuation">;</span> <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> dummy<span class="token punctuation">;</span>
+    <span class="token keyword">delete</span> t_value_<span class="token punctuation">;</span>
+    t_value_ <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">class</span> <span class="token class-name">Deleter</span>
+  <span class="token punctuation">&#123;</span>
+   <span class="token keyword">public</span><span class="token operator">:</span>
+   
+    <span class="token function">Deleter</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+    <span class="token comment">// 创建单独的线程变量的键pkey_, 清理函数为destructor线程释放该线程存储的时候被调用。</span>
+      <span class="token function">pthread_key_create</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pkey_<span class="token punctuation">,</span> <span class="token operator">&amp;</span>ThreadLocalSingleton<span class="token double-colon punctuation">::</span>destructor<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token operator">~</span><span class="token function">Deleter</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token function">pthread_key_delete</span><span class="token punctuation">(</span>pkey_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 需要存储特殊值调用 pthread_setspcific()</span>
+    <span class="token keyword">void</span> <span class="token function">set</span><span class="token punctuation">(</span>T<span class="token operator">*</span> newObj<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token function">assert</span><span class="token punctuation">(</span><span class="token function">pthread_getspecific</span><span class="token punctuation">(</span>pkey_<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">/// 设置线程私有变量</span>
+      <span class="token function">pthread_setspecific</span><span class="token punctuation">(</span>pkey_<span class="token punctuation">,</span> newObj<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    pthread_key_t pkey_<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 前置__thread说明t_value_是私有变量</span>
+  <span class="token keyword">static</span> __thread T<span class="token operator">*</span> t_value_<span class="token punctuation">;</span>
+  <span class="token keyword">static</span> Deleter deleter_<span class="token punctuation">;</span>  
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+__thread T<span class="token operator">*</span> ThreadLocalSingleton<span class="token operator">&lt;</span>T<span class="token operator">></span><span class="token double-colon punctuation">::</span>t_value_ <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span></code></pre>
+
+<h4 id="ThreadPool-线程池"><a href="#ThreadPool-线程池" class="headerlink" title="ThreadPool 线程池"></a>ThreadPool 线程池</h4><ul>
+<li>线程池是维护若干线程, 之后想用线程池执行任务, 只需要调用<code>run</code>函数就行了</li>
+<li>run 函数使要执行的task进入任务队列, 注意进队列之前等待任务队列未满, 进队列后令条件变量任务队列非空为true</li>
+<li>thread_pool的start(), 创建线程vector, 每个线程执行runInthread函数</li>
+<li><code>runInthread</code>函数执行任务出队列, 当然要上锁等待任务队列非空</li>
+<li>线程池是一个消费者-生产者模型, task队列是生产者, 线程vector是消费者。使用一个mutex, 生产者等待queue未满, 消费者等待queue非空。queue是共享变量。</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">ThreadPool</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span>
+<span class="token keyword">class</span> <span class="token class-name">ThreadPool</span> <span class="token operator">:</span> <span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+
+ <span class="token comment">/// 线程需要执行的函数, std::function&lt;void() ></span>
+  <span class="token keyword">typedef</span> std<span class="token double-colon punctuation">::</span>function<span class="token operator">&lt;</span><span class="token keyword">void</span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">></span> Task<span class="token punctuation">;</span>
+
+  <span class="token keyword">explicit</span> <span class="token function">ThreadPool</span><span class="token punctuation">(</span><span class="token keyword">const</span> string<span class="token operator">&amp;</span> nameArg <span class="token operator">=</span> <span class="token function">string</span><span class="token punctuation">(</span><span class="token string">"ThreadPool"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token operator">~</span><span class="token function">ThreadPool</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// Must be called before start().</span>
+  <span class="token keyword">void</span> <span class="token function">setMaxQueueSize</span><span class="token punctuation">(</span><span class="token keyword">int</span> maxSize<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> maxQueueSize_ <span class="token operator">=</span> maxSize<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">/// 线程初始化之后的回调函数</span>
+  <span class="token keyword">void</span> <span class="token function">setThreadInitCallback</span><span class="token punctuation">(</span><span class="token keyword">const</span> Task<span class="token operator">&amp;</span> cb<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span> threadInitCallback_ <span class="token operator">=</span> cb<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">void</span> <span class="token function">start</span><span class="token punctuation">(</span><span class="token keyword">int</span> numThreads<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">stop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> string<span class="token operator">&amp;</span> <span class="token function">name</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> name_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// 任务队列当前大小</span>
+  size_t <span class="token function">queueSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 使用线程池执行任务</span>
+  <span class="token keyword">void</span> <span class="token function">run</span><span class="token punctuation">(</span>Task f<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">bool</span> <span class="token function">isFull</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token function">REQUIRES</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">runInThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  Task <span class="token function">take</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">mutable</span> MutexLock mutex_<span class="token punctuation">;</span>
+  <span class="token comment">/// 条件变量</span>
+  Condition notEmpty_ <span class="token function">GUARDED_BY</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  Condition notFull_ <span class="token function">GUARDED_BY</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  string name_<span class="token punctuation">;</span>
+  <span class="token comment">/// 线程初始化回调函数</span>
+  Task threadInitCallback_<span class="token punctuation">;</span>
+  <span class="token comment">/// thread vectors, 用unique_ptr维护, 因为thread不可拷贝</span>
+  std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>muduo<span class="token double-colon punctuation">::</span>Thread<span class="token operator">>></span> threads_<span class="token punctuation">;</span>
+  <span class="token comment">/// 任务队列</span>
+  std<span class="token double-colon punctuation">::</span>deque<span class="token operator">&lt;</span>Task<span class="token operator">></span> queue_ <span class="token function">GUARDED_BY</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  size_t maxQueueSize_<span class="token punctuation">;</span>
+  <span class="token keyword">bool</span> running_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<p>thread_pool.cpp</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// 线程池初始化</span>
+<span class="token class-name">ThreadPool</span><span class="token double-colon punctuation">::</span><span class="token function">ThreadPool</span><span class="token punctuation">(</span><span class="token keyword">const</span> string<span class="token operator">&amp;</span> nameArg<span class="token punctuation">)</span>
+  <span class="token operator">:</span> <span class="token function">mutex_</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">notEmpty_</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">notFull_</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">name_</span><span class="token punctuation">(</span>nameArg<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">maxQueueSize_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">running_</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token class-name">ThreadPool</span><span class="token double-colon punctuation">::</span><span class="token operator">~</span><span class="token function">ThreadPool</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>running_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">stop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 线程池start</span>
+<span class="token comment">/// 创建线程vector, 每个线程执行runInthread函数</span>
+<span class="token keyword">void</span> <span class="token class-name">ThreadPool</span><span class="token double-colon punctuation">::</span><span class="token function">start</span><span class="token punctuation">(</span><span class="token keyword">int</span> numThreads<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>threads_<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  running_ <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>  <span class="token comment">// running</span>
+  <span class="token comment">// 分配空间, 即capacity的值 </span>
+  threads_<span class="token punctuation">.</span><span class="token function">reserve</span><span class="token punctuation">(</span>numThreads<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> numThreads<span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">char</span> id<span class="token punctuation">[</span><span class="token number">32</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token function">snprintf</span><span class="token punctuation">(</span>id<span class="token punctuation">,</span> <span class="token keyword">sizeof</span> id<span class="token punctuation">,</span> <span class="token string">"%d"</span><span class="token punctuation">,</span> i<span class="token operator">+</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">/// 创建线程初始化执行runInThread函数, 并进入线程池</span>
+    threads_<span class="token punctuation">.</span><span class="token function">emplace_back</span><span class="token punctuation">(</span><span class="token keyword">new</span> muduo<span class="token double-colon punctuation">::</span><span class="token function">Thread</span><span class="token punctuation">(</span>
+          std<span class="token double-colon punctuation">::</span><span class="token function">bind</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>ThreadPool<span class="token double-colon punctuation">::</span>runInThread<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> name_<span class="token operator">+</span>id<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 该线程开始运行</span>
+    threads_<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token operator">-></span><span class="token function">start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">/// 线程数目为0</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>numThreads <span class="token operator">==</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> threadInitCallback_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">threadInitCallback_</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">/// 线程池stop</span>
+<span class="token keyword">void</span> <span class="token class-name">ThreadPool</span><span class="token double-colon punctuation">::</span><span class="token function">stop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token punctuation">&#123;</span>
+  MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 设置</span>
+  running_ <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+  <span class="token comment">/// 释放条件变量, 使剩下的线程可顺利执行完毕</span>
+  notEmpty_<span class="token punctuation">.</span><span class="token function">notifyAll</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  notFull_<span class="token punctuation">.</span><span class="token function">notifyAll</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">/// 等待所有线程执行完毕</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">auto</span><span class="token operator">&amp;</span> thr <span class="token operator">:</span> threads_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    thr<span class="token operator">-></span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 返回任务队列size</span>
+size_t <span class="token class-name">ThreadPool</span><span class="token double-colon punctuation">::</span><span class="token function">queueSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+<span class="token punctuation">&#123;</span>
+  MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> queue_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 使用线程池执行task</span>
+<span class="token keyword">void</span> <span class="token class-name">ThreadPool</span><span class="token double-colon punctuation">::</span><span class="token function">run</span><span class="token punctuation">(</span>Task task<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token comment">/// 如果线程为空, 主线程执行task</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>threads_<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">task</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">else</span>
+  <span class="token punctuation">&#123;</span>
+    MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token function">isFull</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> running_<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">/// 等待任务队列notFull_ is true</span>
+      notFull_<span class="token punctuation">.</span><span class="token function">wait</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>running_<span class="token punctuation">)</span> <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">isFull</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 任务task入队列</span>
+    queue_<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>task<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 发出任务队列非空条件变量</span>
+    notEmpty_<span class="token punctuation">.</span><span class="token function">notify</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+ThreadPool<span class="token double-colon punctuation">::</span>Task <span class="token class-name">ThreadPool</span><span class="token double-colon punctuation">::</span><span class="token function">take</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  MutexLockGuard <span class="token function">lock</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// always use a while-loop, due to spurious wakeup</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>queue_<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> running_<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// 等待任务队列非空, notEmpty_ is true</span>
+    notEmpty_<span class="token punctuation">.</span><span class="token function">wait</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  Task task<span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>queue_<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// 任务出队列</span>
+    task <span class="token operator">=</span> queue_<span class="token punctuation">.</span><span class="token function">front</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    queue_<span class="token punctuation">.</span><span class="token function">pop_front</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>maxQueueSize_ <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">/// 释放任务队列未满条件变量</span>
+      notFull_<span class="token punctuation">.</span><span class="token function">notify</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> task<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">bool</span> <span class="token class-name">ThreadPool</span><span class="token double-colon punctuation">::</span><span class="token function">isFull</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+<span class="token punctuation">&#123;</span>
+  mutex_<span class="token punctuation">.</span><span class="token function">assertLocked</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">/// queue_.size() >= maxQueueSize_说明队列满了</span>
+  <span class="token keyword">return</span> maxQueueSize_ <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> queue_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">>=</span> maxQueueSize_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 线程池的线程执行函数</span>
+<span class="token keyword">void</span> <span class="token class-name">ThreadPool</span><span class="token double-colon punctuation">::</span><span class="token function">runInThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  <span class="token keyword">try</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>threadInitCallback_<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token function">threadInitCallback_</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 控制线程的执行</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>running_<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      <span class="token comment">/// 任务出队列</span>
+      Task <span class="token function">task</span><span class="token punctuation">(</span><span class="token function">take</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token comment">/// 执行任务</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>task<span class="token punctuation">)</span>
+      <span class="token punctuation">&#123;</span>
+        <span class="token function">task</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<h4 id="mutex-h"><a href="#mutex-h" class="headerlink" title="mutex.h"></a>mutex.h</h4><ul>
+<li><p>根据<code>pthread_mutex</code>封装MutexLock, 构造和析构, 分别对应<code>pthread_mutex_init</code>和<code>pthread_mutex_destroy </code></p>
+</li>
+<li><p>上锁mutex.lock(), <code>pthread_mutex_lock(&amp;mutex_)</code>, 同时记录上锁的线程<code>CurrentThread::tid()</code> 释放锁mutex.unlock()<code>pthread_mutex_unlock(&amp;mutex_)</code></p>
+</li>
+<li><p>有一个函数<code>isLockedByThisThread</code>判断当前线程是否获得锁</p>
+</li>
+<li><p>基于MutexLock实现MutexLockGuard方法。</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">CAPABILITY</span><span class="token punctuation">(</span><span class="token string">"mutex"</span><span class="token punctuation">)</span> MutexLock <span class="token operator">:</span> noncopyable
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+<span class="token comment">// 初始化MutexLock, pthread_mutex_init(&amp;mutex)</span>
+  <span class="token function">MutexLock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token operator">:</span> <span class="token function">holder_</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+      <span class="token comment">/// MCHECK宏定义， 检查返回值, 否则直接退出程序</span>
+    <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_mutex_init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>mutex_<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token comment">// 析构MutexLock, pthread_mutex_destroy</span>
+  <span class="token operator">~</span><span class="token function">MutexLock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>holder_ <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_mutex_destroy</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">// must be called when locked, i.e. for assertion</span>
+  <span class="token keyword">bool</span> <span class="token function">isLockedByThisThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> holder_ <span class="token operator">==</span> <span class="token class-name">CurrentThread</span><span class="token double-colon punctuation">::</span><span class="token function">tid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">void</span> <span class="token function">assertLocked</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token function">ASSERT_CAPABILITY</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span><span class="token function">isLockedByThisThread</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">// internal usage</span>
+
+<span class="token comment">// 加锁,获得锁</span>
+  <span class="token keyword">void</span> <span class="token function">lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token function">ACQUIRE</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_mutex_lock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">assignHolder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token comment">// 释放锁</span>
+  <span class="token keyword">void</span> <span class="token function">unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token function">RELEASE</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">unassignHolder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_mutex_unlock</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  pthread_mutex_t<span class="token operator">*</span> <span class="token function">getPthreadMutex</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">/* non-const */</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>mutex_<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">friend</span> <span class="token keyword">class</span> <span class="token class-name">Condition</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">class</span> <span class="token class-name">UnassignGuard</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+  <span class="token punctuation">&#123;</span>
+   <span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">explicit</span> <span class="token function">UnassignGuard</span><span class="token punctuation">(</span>MutexLock<span class="token operator">&amp;</span> owner<span class="token punctuation">)</span>
+      <span class="token operator">:</span> <span class="token function">owner_</span><span class="token punctuation">(</span>owner<span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      owner_<span class="token punctuation">.</span><span class="token function">unassignHolder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token operator">~</span><span class="token function">UnassignGuard</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#123;</span>
+      owner_<span class="token punctuation">.</span><span class="token function">assignHolder</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+   <span class="token keyword">private</span><span class="token operator">:</span>
+    MutexLock<span class="token operator">&amp;</span> owner_<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">void</span> <span class="token function">unassignHolder</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    holder_ <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">void</span> <span class="token function">assignHolder</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    holder_ <span class="token operator">=</span> <span class="token class-name">CurrentThread</span><span class="token double-colon punctuation">::</span><span class="token function">tid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  pthread_mutex_t mutex_<span class="token punctuation">;</span>
+  pid_t holder_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">/// RAII方法, 实现MutexLockGuard</span>
+<span class="token keyword">class</span> <span class="token class-name">SCOPED_CAPABILITY</span> MutexLockGuard <span class="token operator">:</span> noncopyable
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token keyword">explicit</span> <span class="token function">MutexLockGuard</span><span class="token punctuation">(</span>MutexLock<span class="token operator">&amp;</span> mutex<span class="token punctuation">)</span> <span class="token function">ACQUIRE</span><span class="token punctuation">(</span>mutex<span class="token punctuation">)</span>
+    <span class="token operator">:</span> <span class="token function">mutex_</span><span class="token punctuation">(</span>mutex<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    mutex_<span class="token punctuation">.</span><span class="token function">lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token operator">~</span><span class="token function">MutexLockGuard</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token function">RELEASE</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    mutex_<span class="token punctuation">.</span><span class="token function">unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+
+  MutexLock<span class="token operator">&amp;</span> mutex_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<h4 id="条件变量-Condtion-h"><a href="#条件变量-Condtion-h" class="headerlink" title="条件变量 Condtion.h"></a>条件变量 Condtion.h</h4><ul>
+<li><p>用<code>pthread_cond</code>封装<code>Condtion</code>, 构造函数和析构函数分别为<code>pthread_cond_init(&amp;pcond_, NULL)</code>, <code>pthread_cond_destroy(&amp;pcond_)</code></p>
+</li>
+<li><p><code>wait</code>使用<code>pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)</code>, 前提是已经用mutex上锁了。<code>notify</code>用  <code>pthread_cond_signal(&amp;pcond_)</code>唤醒条件变量<code>pcond_</code></p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Condition</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">noncopyable</span></span>
+<span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+ <span class="token comment">// 初始化条件变量</span>
+ <span class="token comment">// 信号配合着mutex使用</span>
+  <span class="token keyword">explicit</span> <span class="token function">Condition</span><span class="token punctuation">(</span>MutexLock<span class="token operator">&amp;</span> mutex<span class="token punctuation">)</span>
+    <span class="token operator">:</span> <span class="token function">mutex_</span><span class="token punctuation">(</span>mutex<span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_cond_init</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pcond_<span class="token punctuation">,</span> <span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token operator">~</span><span class="token function">Condition</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_cond_destroy</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pcond_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token comment">/// wait pcond_变为true</span>
+  <span class="token keyword">void</span> <span class="token function">wait</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+      <span class="token comment">/// 先获得锁</span>
+    MutexLock<span class="token double-colon punctuation">::</span>UnassignGuard <span class="token function">ug</span><span class="token punctuation">(</span>mutex_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);</span>
+    <span class="token comment">// wait() 释放mutex并阻塞</span>
+    <span class="token comment">// wait被唤醒后，需要重新获得mutex才继续执行</span>
+
+    <span class="token comment">/// 如果wait中, 则释放锁(别的线程可以获得锁了), 等待被唤醒</span>
+    <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_cond_wait</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pcond_<span class="token punctuation">,</span> mutex_<span class="token punctuation">.</span><span class="token function">getPthreadMutex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token comment">// returns true if time out, false otherwise.</span>
+  <span class="token keyword">bool</span> <span class="token function">waitForSeconds</span><span class="token punctuation">(</span><span class="token keyword">double</span> seconds<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">/// 唤醒wait()的线程</span>
+  <span class="token keyword">void</span> <span class="token function">notify</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_cond_signal</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pcond_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+  <span class="token keyword">void</span> <span class="token function">notifyAll</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">&#123;</span>
+    <span class="token function">MCHECK</span><span class="token punctuation">(</span><span class="token function">pthread_cond_broadcast</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>pcond_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  MutexLock<span class="token operator">&amp;</span> mutex_<span class="token punctuation">;</span>
+  pthread_cond_t pcond_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre></div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-14-python%E6%95%B0%E6%8D%AE%E7%A7%91%E5%AD%A6%E6%89%8B%E5%86%8C/" rel="prev" title="python数据分析"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">python数据分析</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-13-golang%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1/" rel="next" title="golang入门"><span class="post-nav-text">golang入门</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-07-11-muduo%E7%BD%91%E7%BB%9C%E5%BA%93/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

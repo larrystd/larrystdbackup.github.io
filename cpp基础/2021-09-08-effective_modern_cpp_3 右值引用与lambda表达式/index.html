@@ -1,0 +1,332 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>modern_cpp_3:右值引用与lambda | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="右值引用, 移动语义, 完美转发条款 23, 理解std::move和std::forward 移动语义使编译器最有可能用廉价的移动操作来代替昂贵的复制操作, 如同复制构造函数和复制赋值操作符赋值对象, 移动构造函数和移动赋值操作具有控制移动语义的权利。此外, 有些类型只可移动(move-only), 例如std::unique, std::future, std::thread。  完美转发使接">
+<meta property="og:type" content="article">
+<meta property="og:title" content="modern_cpp_3:右值引用与lambda">
+<meta property="og:url" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-08-effective_modern_cpp_3%20%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E4%B8%8Elambda%E8%A1%A8%E8%BE%BE%E5%BC%8F/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="右值引用, 移动语义, 完美转发条款 23, 理解std::move和std::forward 移动语义使编译器最有可能用廉价的移动操作来代替昂贵的复制操作, 如同复制构造函数和复制赋值操作符赋值对象, 移动构造函数和移动赋值操作具有控制移动语义的权利。此外, 有些类型只可移动(move-only), 例如std::unique, std::future, std::thread。  完美转发使接">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-09-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-07T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="cpp">
+<meta property="article:tag" content="modern cpp">
+<meta name="twitter:card" content="summary"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8-%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89-%E5%AE%8C%E7%BE%8E%E8%BD%AC%E5%8F%91"><span class="toc-number">1.</span> <span class="toc-text">右值引用, 移动语义, 完美转发</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE-23-%E7%90%86%E8%A7%A3std-move%E5%92%8Cstd-forward"><span class="toc-number">1.1.</span> <span class="toc-text">条款 23, 理解std::move和std::forward</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%8D%E8%A6%81%E5%AF%B9%E6%83%B3%E7%A7%BB%E5%8A%A8%E7%9A%84%E5%AF%B9%E8%B1%A1%E5%A3%B0%E6%98%8E%E4%B8%BA%E5%B8%B8%E9%87%8F"><span class="toc-number">1.1.1.</span> <span class="toc-text">不要对想移动的对象声明为常量</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#std-forward%E5%8F%AA%E6%8A%8A%E5%8F%B3%E5%80%BC%E5%8F%82%E6%95%B0%E8%BD%AC%E6%8D%A2%E6%88%90%E5%8F%B3%E5%80%BC"><span class="toc-number">1.1.2.</span> <span class="toc-text">std::forward只把右值参数转换成右值</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE24-%E5%8C%BA%E5%88%86%E9%80%9A%E7%94%A8%E5%BC%95%E7%94%A8%E5%92%8C%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8"><span class="toc-number">1.2.</span> <span class="toc-text">条款24 区分通用引用和右值引用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE25-%E5%AF%B9%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E4%BD%BF%E7%94%A8std-move-%E5%AF%B9%E9%80%9A%E7%94%A8%E5%BC%95%E7%94%A8%E4%BD%BF%E7%94%A8std-forward"><span class="toc-number">1.3.</span> <span class="toc-text">条款25 对右值引用使用std::move, 对通用引用使用std::forward</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%81%BF%E5%85%8D%E4%BD%BF%E7%94%A8%E9%BB%98%E8%AE%A4%E6%8D%95%E8%8E%B7%E6%A8%A1%E5%BC%8F"><span class="toc-number">1.4.</span> <span class="toc-text">避免使用默认捕获模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE-41-%E5%8F%82%E6%95%B0%E6%8B%B7%E8%B4%9D%E5%92%8C%E7%A7%BB%E5%8A%A8%E5%BC%80%E9%94%80%E4%BD%8E%EF%BC%8C%E5%8F%AF%E4%BB%A5%E6%80%BB%E6%98%AF%E8%80%83%E8%99%91%E6%8C%89%E5%80%BC%E4%BC%A0%E9%80%92"><span class="toc-number">1.5.</span> <span class="toc-text">条款 41 参数拷贝和移动开销低，可以总是考虑按值传递</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%A1%E6%AC%BE42-%E8%80%83%E8%99%91%E7%94%A8emplacement%E4%BB%A3%E6%9B%BFinsert"><span class="toc-number">1.6.</span> <span class="toc-text">条款42 考虑用emplacement代替insert</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-08-effective_modern_cpp_3%20%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E4%B8%8Elambda%E8%A1%A8%E8%BE%BE%E5%BC%8F/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">modern_cpp_3:右值引用与lambda<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/cpp基础/2021-09-08-effective_modern_cpp_3 右值引用与lambda表达式.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-09-08 00:00:00" itemprop="dateCreated datePublished" datetime="2021-09-08T00:00:00+08:00">2021-09-08</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">2.4k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">9m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/cpp-base/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">cpp base</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">cpp</span></a><a class="tag-item" href="/tags/modern-cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">modern cpp</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h2 id="右值引用-移动语义-完美转发"><a href="#右值引用-移动语义-完美转发" class="headerlink" title="右值引用, 移动语义, 完美转发"></a>右值引用, 移动语义, 完美转发</h2><h3 id="条款-23-理解std-move和std-forward"><a href="#条款-23-理解std-move和std-forward" class="headerlink" title="条款 23, 理解std::move和std::forward"></a>条款 23, 理解<code>std::move</code>和<code>std::forward</code></h3><ul>
+<li><p>移动语义使编译器最有可能用廉价的移动操作来代替昂贵的复制操作, 如同复制构造函数和复制赋值操作符赋值对象, 移动构造函数和移动赋值操作具有控制移动语义的权利。此外, 有些类型只可移动(move-only), 例如<code>std::unique</code>, <code>std::future</code>, <code>std::thread</code>。</p>
+</li>
+<li><p>完美转发使接受任意数量参数的函数模板成为可能, 它可以将参数转发到其他的函数, 使目标函数接受的参数和转发函数的参数(左值右值)一致。</p>
+</li>
+<li><p>移动的实现依赖于内部的指针, 例如对象a移动构造对象b来自于a把内部的指针直接给b(显然前提是a不能再用这个指针了, 对于右值来说自然不会用了), 但对于数组等连续开辟内存的对象, 内部并没有指针的, 移动构造的优势可能没有那么大(但不妨碍底层可能用到了指针, 指针的使用在底层如此广泛, 移动的优势依然存在)。</p>
+</li>
+<li><p><code>std::swap</code>是移动语义的一种常用实现方案 (显然<code>swap</code>也是移动内部指针)。</p>
+</li>
+</ul>
+<p>事实上, <code>std::move</code>和<code>std::forward</code>仅仅使执行转换cast的函数(也就是函数模板), <code>std::move</code>无条件将参数转换为右值<code>, </code>std::forward`只在指定情况下满足时转换。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//std::move近似的实现</span>
+
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">typename</span> <span class="token class-name">remove_reference</span><span class="token operator">&lt;</span>T<span class="token operator">></span><span class="token double-colon punctuation">::</span>type<span class="token operator">&amp;&amp;</span> <span class="token function">move</span><span class="token punctuation">(</span>T<span class="token operator">&amp;&amp;</span> param<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">using</span> ReturnType <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">remove_reference</span><span class="token operator">&lt;</span>T<span class="token operator">></span><span class="token double-colon punctuation">::</span>type<span class="token operator">&amp;&amp;</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token keyword">static_cast</span><span class="token operator">&lt;</span>ReturnType<span class="token operator">></span>param<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>以上</p>
+<ul>
+<li><p>move函数接收一个通用引用(T&amp;&amp;), 返回一个右值引用(<code>remove_reference&lt;T&gt;::type&amp;&amp;</code>。</p>
+</li>
+<li><p>使用了萃取的手法, 如果传入的时一个引用(T&amp;), 将<code>remove_reference&lt;T&gt;</code>应用到T&amp;上, 萃取出类型T, 保证<code>remove_reference&lt;T&gt;::type&amp;&amp;</code>返回值是一个右值引用。</p>
+</li>
+<li><p>最后的<code>static_cast</code>将param转化成一个右值</p>
+</li>
+<li><p><code>std::move</code>就是把参数转换成一个右值</p>
+</li>
+</ul>
+<span id="more"></span>
+
+<h4 id="不要对想移动的对象声明为常量"><a href="#不要对想移动的对象声明为常量" class="headerlink" title="不要对想移动的对象声明为常量"></a>不要对想移动的对象声明为常量</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Annoation</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">explicit</span> <span class="token function">Annoation</span><span class="token punctuation">(</span><span class="token keyword">const</span> std<span class="token double-colon punctuation">::</span>string text<span class="token punctuation">)</span> 
+        <span class="token operator">:</span> <span class="token function">value</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span>
+    
+    <span class="token function">string</span><span class="token punctuation">(</span><span class="token keyword">const</span> string<span class="token operator">&amp;</span> ths<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// 拷贝构造函数</span>
+    <span class="token function">string</span><span class="token punctuation">(</span>string<span class="token operator">&amp;&amp;</span> rhs<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">//移动构造函数</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>以上text是赋值到value中而不是拷贝。原因在于text参数类型为const, 然而移动构造函数只能接收非const右值。这样<code>std::move</code>将text转化为const右值后,该右值与拷贝构造函数绑定。(<strong>指向常量的左值引用允许绑定到一个常量右值上</strong>)</p>
+<p>而且,<code>std::move</code>并不保证移动, 它只是复制将参数转换成右值而已。</p>
+<h4 id="std-forward只把右值参数转换成右值"><a href="#std-forward只把右值参数转换成右值" class="headerlink" title="std::forward只把右值参数转换成右值"></a><code>std::forward</code>只把右值参数转换成右值</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token function">process</span><span class="token punctuation">(</span><span class="token keyword">const</span> Widget<span class="token operator">&amp;</span> lvalArg<span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 左值处理</span>
+<span class="token keyword">void</span> <span class="token function">process</span><span class="token punctuation">(</span>Widget<span class="token operator">&amp;&amp;</span> rvalArg<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 右值处理</span>
+
+<span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">logAndProcess</span><span class="token punctuation">(</span>T<span class="token operator">&amp;&amp;</span> param<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">auto</span> now <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span>chrono<span class="token double-colon punctuation">::</span>system_clock<span class="token double-colon punctuation">::</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">process</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token operator">></span></span></span><span class="token punctuation">(</span>param<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment">// 传入的为右值, 转右值</span>
+<span class="token punctuation">&#125;</span>
+
+Widget w<span class="token punctuation">;</span>
+
+<span class="token function">logAndProcess</span><span class="token punctuation">(</span>w<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// 传入参数为左值, 调void process(const Widget&amp; lvalArg); </span>
+<span class="token function">logAndProcess</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>w<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 传入参数为右值, 调void process(Widget&amp;&amp; rvalArg); </span></code></pre>
+
+<ul>
+<li><code>std::forward&lt;T&gt;</code>需要一个模板类型参数, <code>std::move</code>不需要</li>
+<li><code>std::move</code>和<code>std::forward&lt;T&gt;</code>只在编译期起作用, 运行期什么也不做。</li>
+<li><code>std::move</code>无条件转右值, <code>std::forward&lt;T&gt;</code>保留原有的左值或者右值属性。</li>
+</ul>
+<h3 id="条款24-区分通用引用和右值引用"><a href="#条款24-区分通用引用和右值引用" class="headerlink" title="条款24 区分通用引用和右值引用"></a>条款24 区分通用引用和右值引用</h3><p><code>T&amp;&amp;</code>有两种意思, 右值引用, 以及通用引用。</p>
+<p>两种情况下会出现通用引用</p>
+<ol>
+<li>函数模板参数或者<code>auto</code>声明</li>
+<li>存在类型推导。</li>
+</ol>
+<p>如果没有类型推导, 则是右值引用。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>T<span class="token operator">&amp;&amp;</span> param<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// 通用引用</span>
+
+Widget w<span class="token punctuation">;</span>
+<span class="token function">f</span><span class="token punctuation">(</span>w<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// 传入左值</span>
+<span class="token function">f</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>w<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// 传入右值</span>
+
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+<span class="token keyword">void</span> <span class="token function">f</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span><span class="token operator">&amp;&amp;</span> param<span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">// param是一个右值引用</span></code></pre>
+
+<p>类型声明为<code>auto&amp;&amp;</code>是通用引用, 因为等价于模板<code>T&amp;&amp;</code>参数的类型推导。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">auto</span> timeFuncInvcation <span class="token operator">=</span> 
+<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token keyword">auto</span><span class="token operator">&amp;&amp;</span> func<span class="token punctuation">,</span> <span class="token keyword">auto</span><span class="token operator">&amp;&amp;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> params<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">decltype</span><span class="token punctuation">(</span>func<span class="token punctuation">)</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>func<span class="token punctuation">)</span> <span class="token punctuation">(</span>
+        std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">decltype</span><span class="token punctuation">(</span>params<span class="token punctuation">)</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>params<span class="token punctuation">)</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>以上<code>auto&amp;&amp;</code>的<code>func</code>和<code>params</code>都是通用引用</p>
+<ul>
+<li>通用引用的类型推导是通过引用折叠reference collapsing实现的</li>
+<li>通用引用, 如果被右值初始化就会成为右值引用, 被左值初始化会成为左值引用</li>
+<li>type&amp;&amp; 如果可以发生类型推导, 是一个通用引用, 不发生类型推导, 是一个右值引用。</li>
+</ul>
+<h3 id="条款25-对右值引用使用std-move-对通用引用使用std-forward"><a href="#条款25-对右值引用使用std-move-对通用引用使用std-forward" class="headerlink" title="条款25 对右值引用使用std::move, 对通用引用使用std::forward"></a>条款25 对右值引用使用<code>std::move</code>, 对通用引用使用<code>std::forward</code></h3><ul>
+<li>右值引用仅绑定可以移动的对象, 既然这个对象可以移动, 自然需要对对象的车成员变量以右值的形式传递给其他对象</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token function">widget</span><span class="token punctuation">(</span>Widget<span class="token operator">&amp;&amp;</span> rhs<span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token function">name</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>rhs<span class="token punctuation">.</span>name<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">p</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>rhs<span class="token punctuation">.</span>p<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">&#125;</span> <span class="token comment">// 右值形式传参</span>
+
+<span class="token keyword">private</span><span class="token operator">:</span>
+    std<span class="token double-colon punctuation">::</span>string name<span class="token punctuation">;</span>
+    std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>Object<span class="token operator">></span> p<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li>基于通用引用的特点, 被右值初始化就会成为右值引用, 被左值初始化会成为左值引用。用<code>std::forward</code>更为贴切</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+    <span class="token keyword">void</span> <span class="token function">setName</span><span class="token punctuation">(</span>T<span class="token operator">&amp;&amp;</span> newName<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        name <span class="token operator">=</span> std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token operator">></span></span></span><span class="token punctuation">(</span>newName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<p>lambda表达式</p>
+<h3 id="避免使用默认捕获模式"><a href="#避免使用默认捕获模式" class="headerlink" title="避免使用默认捕获模式"></a>避免使用默认捕获模式</h3><p>cpp11有两种lambda表达式捕获模式, 按引用捕获和按值捕获, 分别表示为<code>[&amp;]</code>, <code>[=]</code></p>
+<ul>
+<li><p>lambda创建的运行时对象是闭包对象, 依赖捕获模式。闭包类是实例化闭包对象的类。</p>
+</li>
+<li><p>按引用捕获使闭包中包含了对局部变量或某个形参的引用, 如果闭包对象生命周期超过了局部变量的生命周期, 闭包中的引用会变成悬空引用。</p>
+</li>
+</ul>
+<p>例如</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token function">addDivisorFilter</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">auto</span> calc1 <span class="token operator">=</span> <span class="token function">computeSomeValue1</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">auto</span> calc2 <span class="token operator">=</span> <span class="token function">computeSomeValue2</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">auto</span> divisor <span class="token operator">=</span> <span class="token function">computeDivisor</span><span class="token punctuation">(</span>calc1<span class="token punctuation">,</span> calc2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    filters<span class="token punctuation">.</span><span class="token function">emplace_back</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token operator">&amp;</span><span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token keyword">int</span> value<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> value <span class="token operator">%</span> divisor <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>以上filter添加了一个lambda表达式对象, 该对象捕获了外界的元素<code>divisor</code>, 但<code>divisor</code>在<code>addDisvisorFilter</code>退出后即被销毁, 之后再从<code>filter</code>中调用lambda表达式对象就会出错。</p>
+<ul>
+<li><p>按值捕获也不一定解决该问题, 引用有可能按值捕获的只是指针, 有可能指向的对象被析构掉(但这种比捕获引用安全一些)。</p>
+</li>
+<li><p>对象里的lambda表达式默认会捕获this指针</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token function">addFilter</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">&#123;</span>
+    filters<span class="token punctuation">.</span><span class="token function">emplace_back</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token operator">=</span><span class="token punctuation">]</span> <span class="token punctuation">(</span><span class="token keyword">int</span> value<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> value <span class="token operator">%</span> divisor <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 会捕获this指针, 等价于如下</span>
+<span class="token keyword">void</span> <span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token function">addFilter</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">auto</span> currentObjectPtr <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">;</span>
+
+    filters<span class="token punctuation">.</span><span class="token function">emplace_back</span><span class="token punctuation">(</span>
+        <span class="token punctuation">[</span>currentObjectPtr<span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token keyword">int</span> value<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">return</span> value <span class="token operator">%</span> currentObjectPtr<span class="token operator">-></span>divisor <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li>闭包内含有this指针的拷贝, 可能会发生指针悬空,一个方法使做一个局部拷贝</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token class-name">Widget</span><span class="token double-colon punctuation">::</span><span class="token function">addFilter</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">auto</span> divisorCopy <span class="token operator">=</span> divisor<span class="token punctuation">;</span>
+    filters<span class="token punctuation">.</span><span class="token function">emplace_back</span> <span class="token punctuation">(</span>
+        <span class="token punctuation">[</span>divisorCopy<span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token keyword">int</span> value<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">return</span> value <span class="token operator">%</span> divisorCopy <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li>尽量显示捕获变量, 而不是采用<code>[],[=],[&amp;]</code>等默认捕获全部变量。</li>
+</ul>
+<h3 id="条款-41-参数拷贝和移动开销低，可以总是考虑按值传递"><a href="#条款-41-参数拷贝和移动开销低，可以总是考虑按值传递" class="headerlink" title="条款 41 参数拷贝和移动开销低，可以总是考虑按值传递"></a>条款 41 参数拷贝和移动开销低，可以总是考虑按值传递</h3><p>一般的, 为了提高效率, 应该(左值引用)左值, (右值移动)右值。这样对传入的参数, 不论左值右值, 都能高效率。</p>
+<p>如下</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token comment">// 当传入的是左值, 进入左值引用, 传地址</span>
+    <span class="token keyword">void</span> <span class="token function">addName</span><span class="token punctuation">(</span><span class="token keyword">const</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">&amp;</span> newName<span class="token punctuation">)</span>   <span class="token punctuation">&#123;</span>
+        <span class="token comment">/// 这里是将newName拷贝进去, 要调拷贝构造</span>
+        names<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>newName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// 传入的是右值, 执行右值引用函数</span>
+    <span class="token keyword">void</span> <span class="token function">addName</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>string<span class="token operator">&amp;&amp;</span> newName<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">/// 直接将右值移动进names中</span>
+        names<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>newName<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+    std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>string<span class="token operator">></span> names<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<p>还可以借助通用引用, 一个函数实现上述功能</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+
+    <span class="token comment">/// 根据传入的左值右值自动转换</span>
+    <span class="token keyword">template</span><span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">T</span><span class="token operator">></span>
+    <span class="token keyword">void</span> <span class="token function">addName</span><span class="token punctuation">(</span>T<span class="token operator">&amp;&amp;</span> newName<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        names<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span>T<span class="token operator">></span></span></span><span class="token punctuation">(</span>newName<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li>但模板的问题是, 如果参数不同, 编译器会对模板实例成多个函数(每个参数类型都不同),</li>
+</ul>
+<p>如果拷贝构造和移动开销低, 可以使用左值拷贝右值移动的办法。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">Widget</span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span> 
+    <span class="token comment">/// cpp98中传左值右值都是拷贝构造</span>
+    <span class="token comment">/// cpp11中传左值是拷贝构造, 传右值则是移动</span>
+    <span class="token keyword">void</span> <span class="token function">addName</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>string newName<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        names<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>newName<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li><p>使用第一种左右值重载的方法, 在传参时左右值零开销, 但push_back执行时, 传左值需要一次拷贝, 右值需要一次移动</p>
+</li>
+<li><p>通用模板方式, 可以自适应左值右值, 实际上等价于左值右值(传不同值时模板实际上实例化多个函数), 开销等同于第一种</p>
+</li>
+<li><p>第三种按值传递时, 传左值一次拷贝一次移动, 传右值两次移动, 比重载多了一次拷贝+一次移动。</p>
+</li>
+<li><p>这个条款也就了解下, 还是第一，二种办法比较靠谱</p>
+</li>
+</ul>
+<h3 id="条款42-考虑用emplacement代替insert"><a href="#条款42-考虑用emplacement代替insert" class="headerlink" title="条款42 考虑用emplacement代替insert"></a>条款42 考虑用emplacement代替insert</h3><p><code>std::vector</code>的<code>push_back</code>按左值和右值分别重载</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">T</span><span class="token punctuation">,</span> <span class="token keyword">class</span> <span class="token class-name">Allocator</span> <span class="token operator">=</span> allocator<span class="token operator">&lt;</span>T<span class="token operator">>></span>
+<span class="token keyword">class</span> <span class="token class-name">vector</span><span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    <span class="token comment">/// 左值</span>
+    <span class="token keyword">void</span> <span class="token function">push_back</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token operator">&amp;</span>T x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 右值</span>
+    <span class="token keyword">void</span> <span class="token function">push_back</span><span class="token punctuation">(</span>T<span class="token operator">&amp;&amp;</span> <span class="token punctuation">)</span><span class="token punctuation">;</span>   
+<span class="token punctuation">&#125;</span></code></pre>
+
+<p>但问题在于, 如果传入的是<strong>类字面量</strong>,例如<code>&quot;xyz&quot;</code>, 在push_back过程种会将类字面量重新创建一个string对象, push_back到vector中, 这增加了开销。</p>
+<ul>
+<li><p>注意<code>std::vector&lt;&gt;</code>只接受拷贝的对象!</p>
+</li>
+<li><p><code>emplace_back</code>直接将传递的参数(无论是不是<code>std::string</code>)直接传递到<code>std::vector</code>的内部, 没有临时变量生成(显然<code>vector</code>的内部有相关的实现支持。<strong>内部使用的是完美转发</strong>, 只要没受完美转发的限制。<code>push_back</code>显然只是在表层用了两种引用, 内部没有改变。</p>
+</li>
+</ul>
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E7%AE%97%E6%B3%95/2021-09-11-01%E5%89%8D%E7%BC%80/" rel="prev" title="01前缀 多重哈希 暴力回溯 分解质因数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">01前缀 多重哈希 暴力回溯 分解质因数</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/cpp%E5%9F%BA%E7%A1%80/2021-09-07-effective_modern_cpp_2/" rel="next" title="modern_cpp_2:智能指针"><span class="post-nav-text">modern_cpp_2:智能指针</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/cpp%E5%9F%BA%E7%A1%80/2021-09-08-effective_modern_cpp_3%20%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E4%B8%8Elambda%E8%A1%A8%E8%BE%BE%E5%BC%8F/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

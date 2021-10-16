@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>文瑞的小站</title>
-  <icon>https://www.yunyoujun.cn/favicon.png</icon>
+  <title>拉瑞君の小窝</title>
+  <icon>https://larrystd.github.io/favicon.png</icon>
   
-  <link href="https://www.yunyoujun.cn/atom.xml" rel="self"/>
+  <link href="https://larrystd.github.io/atom.xml" rel="self"/>
   
-  <link href="https://www.yunyoujun.cn/"/>
-  <updated>2021-01-20T16:00:00.000Z</updated>
-  <id>https://www.yunyoujun.cn/</id>
+  <link href="https://larrystd.github.io/"/>
+  <updated>2021-10-11T16:00:00.000Z</updated>
+  <id>https://larrystd.github.io/</id>
   
   <author>
     <name>larry</name>
@@ -17,73 +17,670 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>cpp对象模型:构造解构语义学</title>
-    <link href="https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-21-3%E6%9E%84%E9%80%A0%E8%A7%A3%E6%9E%84%E8%AF%AD%E4%B9%89%E5%AD%A6/"/>
-    <id>https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-21-3%E6%9E%84%E9%80%A0%E8%A7%A3%E6%9E%84%E8%AF%AD%E4%B9%89%E5%AD%A6/</id>
-    <published>2021-01-20T16:00:00.000Z</published>
-    <updated>2021-01-20T16:00:00.000Z</updated>
+    <title>优先队列 目标和双DFS C/C++风格字符串转换 dfs摆放火柴 约瑟夫环 摆动序列</title>
+    <link href="https://larrystd.github.io/%E7%AE%97%E6%B3%95/2021-10-11-%E4%BC%98%E5%85%88%E9%98%9F%E5%88%97/"/>
+    <id>https://larrystd.github.io/%E7%AE%97%E6%B3%95/2021-10-11-%E4%BC%98%E5%85%88%E9%98%9F%E5%88%97/</id>
+    <published>2021-10-11T16:00:00.000Z</published>
+    <updated>2021-10-11T16:00:00.000Z</updated>
     
     
-    <summary type="html">&lt;p&gt;考虑下面的abstract base class声明&lt;/p&gt;
-&lt;pre class=&quot;language-cpp&quot; data-language=&quot;cpp&quot;&gt;&lt;code class=&quot;language-cpp&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;Abstract_base&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&amp;#123;&lt;/span&gt; 
-&lt;span class=&quot;token keyword&quot;&gt;public&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; 
-    &lt;span class=&quot;token keyword&quot;&gt;virtual&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;~&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;Abstract_base&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;  &lt;span class=&quot;token comment&quot;&gt;// pure virtual function &lt;/span&gt;
-    &lt;span class=&quot;token keyword&quot;&gt;virtual&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;token function&quot;&gt;interface&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; 
-    &lt;span class=&quot;token keyword&quot;&gt;virtual&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;char&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;token function&quot;&gt;mumble&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&amp;#123;&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;return&lt;/span&gt; _mumble&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&amp;#125;&lt;/span&gt; 
-&lt;span class=&quot;token keyword&quot;&gt;protected&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; 
-    &lt;span class=&quot;token keyword&quot;&gt;char&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt; _mumble&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; 
-&lt;span class=&quot;token punctuation&quot;&gt;&amp;#125;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; &lt;/code&gt;&lt;/pre&gt;</summary>
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;计算机真是奇妙又可气的东西, 功能写多了算法和数学就慢慢忘记，算法写多了业务又不熟练了。好的公司基本搞定中等题，稍微懂些困难题才比较稳。刷题数量感觉要400+&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;优先队列使用&quot;&gt;&lt;a href=&quot;#优先队列使用&quot; class=&quot;headerlink&quot; title=&quot;优先队列使用&quot;&gt;&lt;/a&gt;优先队列使用&lt;/h3&gt;&lt;pre class=&quot;language-none&quot;&gt;&lt;code class=&quot;language-none&quot;&gt;给你一支股票价格的数据流。数据流中每一条记录包含一个 时间戳 和该时间点股票对应的 价格 。
+
+不巧的是，由于股票市场内在的波动性，股票价格记录可能不是按时间顺序到来的。某些情况下，有的记录可能是错的。如果两个有相同时间戳的记录出现在数据流中，前一条记录视为错误记录，后出现的记录 更正 前一条错误的记录。
+
+请你设计一个算法，实现：
+
+更新 股票在某一时间戳的股票价格，如果有之前同一时间戳的价格，这一操作将 更正 之前的错误价格。
+找到当前记录里 最新股票价格 。最新股票价格 定义为时间戳最晚的股票价格。
+找到当前记录里股票的 最高价格 。
+找到当前记录里股票的 最低价格 &lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;优先队列存储最大值和最小值&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;基本思路, 使用两个优先队列维护最大值和最小值。使用map维护查询。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;因为可能存在后来插入的覆盖前面插入的，因此这里使用&lt;code&gt;stocks[timestamp] = price;&lt;/code&gt;起到覆盖作用, 而&lt;code&gt;stocks.insert(&amp;#123;timestamp, price&amp;#125;);&lt;/code&gt;调用&lt;code&gt;unique_insert&lt;/code&gt;不能起到覆盖的作用。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;由于可能被覆盖，因此最大堆出队不一定是最大值，这时候需要判断该值是否已经被覆盖，判断的方法只需要判断该price值是否存在map中即可。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;</summary>
     
     
     
-    <category term="cpp对象模型" scheme="https://www.yunyoujun.cn/categories/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/"/>
+    <category term="algorithm" scheme="https://larrystd.github.io/categories/algorithm/"/>
     
     
-    <category term="cpp" scheme="https://www.yunyoujun.cn/tags/cpp/"/>
+    <category term="leetcode" scheme="https://larrystd.github.io/tags/leetcode/"/>
     
   </entry>
   
   <entry>
-    <title>cpp对象模型:Data和function</title>
-    <link href="https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-18-2Data%E5%92%8Cfunction/"/>
-    <id>https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-18-2Data%E5%92%8Cfunction/</id>
-    <published>2021-01-17T16:00:00.000Z</published>
-    <updated>2021-01-17T16:00:00.000Z</updated>
+    <title>浅谈C/C++ mysql-client</title>
+    <link href="https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-10-08-%E6%B5%85%E8%B0%88C++%E8%BF%9E%E6%95%B0%E6%8D%AE%E5%BA%93/"/>
+    <id>https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-10-08-%E6%B5%85%E8%B0%88C++%E8%BF%9E%E6%95%B0%E6%8D%AE%E5%BA%93/</id>
+    <published>2021-10-08T16:00:00.000Z</published>
+    <updated>2021-10-08T16:00:00.000Z</updated>
     
     
-    <summary type="html">&lt;blockquote&gt;
-&lt;p&gt;C++中的Data语义&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;h2 id=&quot;Data语义学&quot;&gt;&lt;a href=&quot;#Data语义学&quot; class=&quot;headerlink&quot; title=&quot;Data语义学&quot;&gt;&lt;/a&gt;Data语义学&lt;/h2&gt;&lt;h3 id=&quot;Data-Member&quot;&gt;&lt;a href=&quot;#Data-Member&quot; class=&quot;headerlink&quot; title=&quot;Data Member&quot;&gt;&lt;/a&gt;Data Member&lt;/h3&gt;&lt;p&gt;Data members的布局&lt;/p&gt;</summary>
+    <summary type="html">&lt;h2 id=&quot;C-C-mysql-client&quot;&gt;&lt;a href=&quot;#C-C-mysql-client&quot; class=&quot;headerlink&quot; title=&quot;C/C++ mysql client&quot;&gt;&lt;/a&gt;C/C++ mysql client&lt;/h2&gt;&lt;h3 id=&quot;C-api&quot;&gt;&lt;a href=&quot;#C-api&quot; class=&quot;headerlink&quot; title=&quot;C api&quot;&gt;&lt;/a&gt;C api&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;直接使用以下语句安装c api的头文件和库文件&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre class=&quot;language-none&quot;&gt;&lt;code class=&quot;language-none&quot;&gt;sudo apt-get install libmysqlclient-dev
+
+mysql一些位置
+&amp;#x2F;usr&amp;#x2F;bin                 客户端程序和脚本
+&amp;#x2F;usr&amp;#x2F;sbin                mysqld 服务器
+&amp;#x2F;var&amp;#x2F;lib&amp;#x2F;mysql           日志文件，数据库  ［重点要知道这个］
+&amp;#x2F;usr&amp;#x2F;share&amp;#x2F;doc&amp;#x2F;packages  文档
+&amp;#x2F;usr&amp;#x2F;include&amp;#x2F;mysql       包含( 头) 文件
+&amp;#x2F;usr&amp;#x2F;lib&amp;#x2F;mysql           库
+&amp;#x2F;usr&amp;#x2F;share&amp;#x2F;mysql         错误消息和字符集文件
+&amp;#x2F;usr&amp;#x2F;share&amp;#x2F;sql-bench     基准程序
+
+快速查找包, 使用apt-file
+sudo apt-get install apt-file
+sudo apt-file update
+sudo apt-file search libmysqlclient.so
+
+libmysqlclient-dev: &amp;#x2F;usr&amp;#x2F;lib&amp;#x2F;x86_64-linux-gnu&amp;#x2F;libmysqlclient.so
+
+g++内部有库文件和头文件的查询路径, 一般包括&amp;#x2F;usr&amp;#x2F;include &amp;#x2F;usr&amp;#x2F;local&amp;#x2F;include, &amp;#x2F;usr&amp;#x2F;lib &amp;#x2F;usr&amp;#x2F;local&amp;#x2F;lib。注意该路径下的所有文件都会被搜索&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;在&lt;code&gt;ubuntu&lt;/code&gt;系统中使用&lt;code&gt;apt-get&lt;/code&gt;安装, 自动将头文件安装到&lt;code&gt;/usr/include&lt;/code&gt;目录中, 库文件安装到到&lt;code&gt;/usr/lib&lt;/code&gt;中&lt;/p&gt;</summary>
     
     
     
-    <category term="cpp对象模型" scheme="https://www.yunyoujun.cn/categories/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/"/>
+    <category term="cpp advanced" scheme="https://larrystd.github.io/categories/cpp-advanced/"/>
     
     
-    <category term="cpp" scheme="https://www.yunyoujun.cn/tags/cpp/"/>
+    <category term="cpp" scheme="https://larrystd.github.io/tags/cpp/"/>
+    
+    <category term="mysql" scheme="https://larrystd.github.io/tags/mysql/"/>
     
   </entry>
   
   <entry>
-    <title>cpp对象模型</title>
-    <link href="https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-15-1%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/"/>
-    <id>https://www.yunyoujun.cn/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/2021-01-15-1%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/</id>
-    <published>2021-01-14T16:00:00.000Z</published>
-    <updated>2021-01-14T16:00:00.000Z</updated>
+    <title>浅谈对象控制——AOP和反射</title>
+    <link href="https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-10-08-%E6%B5%85%E8%B0%88%E5%AF%B9%E8%B1%A1%E6%8E%A7%E5%88%B6/"/>
+    <id>https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-10-08-%E6%B5%85%E8%B0%88%E5%AF%B9%E8%B1%A1%E6%8E%A7%E5%88%B6/</id>
+    <published>2021-10-07T16:00:00.000Z</published>
+    <updated>2021-10-07T16:00:00.000Z</updated>
     
     
     <summary type="html">&lt;blockquote&gt;
-&lt;p&gt;C语言中，数据和处理数据的操作（函数)是分开声明的，不支持数据函数之间的关联性，称之为程序性的(procedural)。&lt;/p&gt;
+&lt;p&gt;学习计算机过程老有一些所谓高大上的名词, 但是如果理解了会发现很简单。比如IOC控制反转, 反正不论什么名词, 都比数学简单的多。所以不要惧怕它。&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;h3 id=&quot;1-对象类型&quot;&gt;&lt;a href=&quot;#1-对象类型&quot; class=&quot;headerlink&quot; title=&quot;1. 对象类型&quot;&gt;&lt;/a&gt;1. 对象类型&lt;/h3&gt;</summary>
+&lt;p&gt;这篇文章想讨论下java spring等框架一些特殊控制对象的逻辑, 以及是否适用于C++。&lt;/p&gt;
+&lt;h3 id=&quot;spring&quot;&gt;&lt;a href=&quot;#spring&quot; class=&quot;headerlink&quot; title=&quot;spring&quot;&gt;&lt;/a&gt;spring&lt;/h3&gt;&lt;p&gt;Spring的两个核心概念是IOC（控制反转）和AOP（面向切面编程）。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;IOC（控制翻转）是一种编程范式，可以在一定程度上解决复杂系统对象耦合度太高的问题。IOC最常见的方式是DI（依赖注入, 对象依赖容器, 容器注入生成对象），可以通过一个容器，将Bean维护起来，方便在其他地方直接使用，而不是重新new。我理解的一般是通过XML配置文件, 写明对象的成员, 方法依赖关系, IOC容器会自动配置对象不用程序员new。这里的Bean可以视为一种特殊的对象, 有特定的规范(比如具有set.., get..这些), 统一格式方便进行处理。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;AOP（Aspect-OrientedProgramming，面向方面编程）, 基本思路是将共同调用的逻辑或责任封装起来，便于减少系统的重复代码(例如多个对象都需要引入日志行为, 鉴权)。一个可行的办法是使用代理, 将业务相同的逻辑逻辑经由代理类分发(代理类可以理解为中介)。换言之, 对象作为参数传入代理类, 代理类对所有对象先执行日志行为, 再调用对象方法, 就实现了公用逻辑(日志)的通用。一般传入对象使用反射字符串, 可以运行时按需运行对象(有反射这样称为动态代理)。但&lt;strong&gt;单纯的AOP思想, 完全可以用C++的回调函数实现&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;</summary>
     
     
     
-    <category term="cpp对象模型" scheme="https://www.yunyoujun.cn/categories/cpp%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B/"/>
+    <category term="cpp advanced" scheme="https://larrystd.github.io/categories/cpp-advanced/"/>
     
     
-    <category term="cpp" scheme="https://www.yunyoujun.cn/tags/cpp/"/>
+    <category term="cpp" scheme="https://larrystd.github.io/tags/cpp/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>排序算法汇总</title>
+    <link href="https://larrystd.github.io/%E7%AE%97%E6%B3%95/2021-09-27-%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E6%B1%87%E6%80%BB/"/>
+    <id>https://larrystd.github.io/%E7%AE%97%E6%B3%95/2021-09-27-%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E6%B1%87%E6%80%BB/</id>
+    <published>2021-09-26T16:00:00.000Z</published>
+    <updated>2021-09-26T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;h3 id=&quot;冒泡排序&quot;&gt;&lt;a href=&quot;#冒泡排序&quot; class=&quot;headerlink&quot; title=&quot;冒泡排序&quot;&gt;&lt;/a&gt;冒泡排序&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;稳定排序&lt;/li&gt;
+&lt;li&gt;相邻比较交换, 大数移动到后面&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre class=&quot;language-cpp&quot; data-language=&quot;cpp&quot;&gt;&lt;code class=&quot;language-cpp&quot;&gt;&lt;span class=&quot;token keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;token function&quot;&gt;bubbleSort&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;vector&lt;span class=&quot;token operator&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; arr&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&amp;#123;&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt; temp &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt; i &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; arr&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;token function&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; i &lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; i&lt;span class=&quot;token operator&quot;&gt;--&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&amp;#123;&lt;/span&gt; &lt;span class=&quot;token comment&quot;&gt;// 每次需要排序的长度&lt;/span&gt;
+        &lt;span class=&quot;token keyword&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt; j &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; j &lt;span class=&quot;token operator&quot;&gt;&amp;lt;&lt;/span&gt; i&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt; j&lt;span class=&quot;token operator&quot;&gt;++&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&amp;#123;&lt;/span&gt; &lt;span class=&quot;token comment&quot;&gt;// 从第一个元素到第i个元素&lt;/span&gt;
+            &lt;span class=&quot;token keyword&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;arr&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;j&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; arr&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;j &lt;span class=&quot;token operator&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&amp;#123;&lt;/span&gt;  &lt;span class=&quot;token comment&quot;&gt;// 相邻交换, 大数冒泡到后面&lt;/span&gt;
+                temp &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; arr&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;j&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+                arr&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;j&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; arr&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;j &lt;span class=&quot;token operator&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+                arr&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;j &lt;span class=&quot;token operator&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; temp&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+            &lt;span class=&quot;token punctuation&quot;&gt;&amp;#125;&lt;/span&gt;
+        &lt;span class=&quot;token punctuation&quot;&gt;&amp;#125;&lt;/span&gt;&lt;span class=&quot;token comment&quot;&gt;//loop j&lt;/span&gt;
+    &lt;span class=&quot;token punctuation&quot;&gt;&amp;#125;&lt;/span&gt;&lt;span class=&quot;token comment&quot;&gt;//loop i&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;&amp;#125;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;</summary>
+    
+    
+    
+    <category term="algorithm" scheme="https://larrystd.github.io/categories/algorithm/"/>
+    
+    
+    <category term="leetcode" scheme="https://larrystd.github.io/tags/leetcode/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>grpc简单使用</title>
+    <link href="https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-27-grpc/"/>
+    <id>https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-27-grpc/</id>
+    <published>2021-09-26T16:00:00.000Z</published>
+    <updated>2021-09-26T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;h3 id=&quot;grpc&quot;&gt;&lt;a href=&quot;#grpc&quot; class=&quot;headerlink&quot; title=&quot;grpc&quot;&gt;&lt;/a&gt;grpc&lt;/h3&gt;&lt;p&gt;gRPC是一个高性能、通用的开源RPC框架，其由Google主要面向移动应用开发并基于HTTP/2协议标准而设计，基于ProtoBuf(Protocol Buffers)序列化协议开发。&lt;/p&gt;
+&lt;h4 id=&quot;hello-world-demo&quot;&gt;&lt;a href=&quot;#hello-world-demo&quot; class=&quot;headerlink&quot; title=&quot;hello world demo&quot;&gt;&lt;/a&gt;hello world demo&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;helloworld.proto&lt;br&gt;其中有一个service为Greeter, 将会生成一个Greeter class。service作用是作为rpc服务接口, 可以封装message&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;HelloRequest为message, 也就是服务端和客户端可以交互的消息格式。&lt;/p&gt;
+&lt;pre class=&quot;language-none&quot;&gt;&lt;code class=&quot;language-none&quot;&gt;package helloworld;
+
+&amp;#x2F;&amp;#x2F; The greeting service definition.
+service Greeter &amp;#123;
+  &amp;#x2F;&amp;#x2F; Sends a greeting
+  rpc SayHello (HelloRequest) returns (HelloReply) &amp;#123;&amp;#125;
+  &amp;#x2F;&amp;#x2F;&amp;#x2F; add sayhello again
+  rpc SayHelloAgain (HelloRequest) returns (HelloReply) &amp;#123;&amp;#125;
+&amp;#125;
+
+&amp;#x2F;&amp;#x2F;声明两个message The request message containing the user&amp;#39;s name.
+message HelloRequest &amp;#123;
+  string name &amp;#x3D; 1;
+&amp;#125;
+
+&amp;#x2F;&amp;#x2F; The response message containing the greetings
+message HelloReply &amp;#123;
+  string message &amp;#x3D; 1;
+&amp;#125;&lt;/code&gt;&lt;/pre&gt;</summary>
+    
+    
+    
+    <category term="cpp advanced" scheme="https://larrystd.github.io/categories/cpp-advanced/"/>
+    
+    
+    <category term="grpc" scheme="https://larrystd.github.io/tags/grpc/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>常用类实现 shared_ptr skip_list heap</title>
+    <link href="https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-25-%E5%B8%B8%E7%94%A8%E7%B1%BB%E7%9A%84%E5%AE%9E%E7%8E%B0/"/>
+    <id>https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-25-%E5%B8%B8%E7%94%A8%E7%B1%BB%E7%9A%84%E5%AE%9E%E7%8E%B0/</id>
+    <published>2021-09-24T16:00:00.000Z</published>
+    <updated>2021-09-24T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;会用只是皮毛, 需要对常用类进行简单实现, 例如shared_ptr, mutex等&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;shared-ptr&quot;&gt;&lt;a href=&quot;#shared-ptr&quot; class=&quot;headerlink&quot; title=&quot;shared_ptr&quot;&gt;&lt;/a&gt;shared_ptr&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;核心, thread加锁, 对象计数, 封装的原始指针&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;重载operator*, operator-&amp;gt;操作符&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;实现release()， reset()&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;</summary>
+    
+    
+    
+    <category term="cpp advanced" scheme="https://larrystd.github.io/categories/cpp-advanced/"/>
+    
+    
+    <category term="wheel" scheme="https://larrystd.github.io/tags/wheel/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>分布式协调zookeeper, RPC</title>
+    <link href="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-09-22-%E5%88%86%E5%B8%83%E5%BC%8F%E5%8D%8F%E8%B0%83,%20zookeeper,%20rpc/"/>
+    <id>https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-09-22-%E5%88%86%E5%B8%83%E5%BC%8F%E5%8D%8F%E8%B0%83,%20zookeeper,%20rpc/</id>
+    <published>2021-09-21T16:00:00.000Z</published>
+    <updated>2021-09-21T16:00:00.000Z</updated>
+    
+    
+      
+      
+        
+        
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;分布式是如今服务端架构的基本形式&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;分布式理论&quot;&gt;&lt;a href=&quot;#分布式理论&quot; class=&quot;headerlink&quot; title=&quot;分布式理论&quot;&gt;&lt;/a&gt;分布式理论&lt;/h3&gt;&lt;h4</summary>
+        
+      
+    
+    
+    
+    <category term="network" scheme="https://larrystd.github.io/categories/network/"/>
+    
+    
+    <category term="distribute" scheme="https://larrystd.github.io/tags/distribute/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>洗牌算法</title>
+    <link href="https://larrystd.github.io/%E7%AE%97%E6%B3%95/2021-09-23-%E6%B4%97%E7%89%8C%E7%AE%97%E6%B3%95/"/>
+    <id>https://larrystd.github.io/%E7%AE%97%E6%B3%95/2021-09-23-%E6%B4%97%E7%89%8C%E7%AE%97%E6%B3%95/</id>
+    <published>2021-09-21T16:00:00.000Z</published>
+    <updated>2021-09-21T16:00:00.000Z</updated>
+    
+    
+      
+      
+        
+        
+    <summary type="html">&lt;h3 id=&quot;洗牌算法&quot;&gt;&lt;a href=&quot;#洗牌算法&quot; class=&quot;headerlink&quot; title=&quot;洗牌算法&quot;&gt;&lt;/a&gt;洗牌算法&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;传统的办法是假设我们把每个数都放在一个 帽子</summary>
+        
+      
+    
+    
+    
+    <category term="algorithm" scheme="https://larrystd.github.io/categories/algorithm/"/>
+    
+    
+    <category term="leetcode" scheme="https://larrystd.github.io/tags/leetcode/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Hash和STL</title>
+    <link href="https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-21-hash%E5%92%8CSTL/"/>
+    <id>https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-21-hash%E5%92%8CSTL/</id>
+    <published>2021-09-20T16:00:00.000Z</published>
+    <updated>2021-09-20T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;hash是应用最广泛的数据结构之一结构, STL主要应用于unordered_map, ordered_set&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;HASH&quot;&gt;&lt;a href=&quot;#HASH&quot; class=&quot;headerlink&quot; title=&quot;HASH&quot;&gt;&lt;/a&gt;HASH&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;HASH的数据结构很简单, 可以由一段数组和链表构成。对象基于定义的hash函数映射到该数组某个位置(映射范围不超过数组长度, 定长), 如果多个对象映射到同一个位置(hash碰撞), 则添加到链表中(开链法)。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&quot;../../assets/images/algorithm/26.png&quot; alt=&quot;avatar&quot;&gt;&lt;br&gt;数组中的元素成为buckets.&lt;/p&gt;
+&lt;p&gt;下面从STL源码中看hash表的结构&lt;/p&gt;
+&lt;h4 id=&quot;hash-buckets&quot;&gt;&lt;a href=&quot;#hash-buckets&quot; class=&quot;headerlink&quot; title=&quot;hash buckets&quot;&gt;&lt;/a&gt;hash buckets&lt;/h4&gt;&lt;pre class=&quot;language-cpp&quot; data-language=&quot;cpp&quot;&gt;&lt;code class=&quot;language-cpp&quot;&gt;&lt;span class=&quot;token comment&quot;&gt;//// 定义hashtable, 也就是vector&lt;/span&gt;
+&lt;span class=&quot;token keyword&quot;&gt;template&lt;/span&gt; &lt;span class=&quot;token operator&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;token keyword&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;_Aliter&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt;
+&lt;span class=&quot;token keyword&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;_Hash_vec&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&amp;#123;&lt;/span&gt;
+    &lt;span class=&quot;token comment&quot;&gt;// TRANSITION, ABI: &quot;vector&quot; for ABI compatibility that doesn&#39;t call allocator::construct&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;using&lt;/span&gt; _Aliter_traits    &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; allocator_traits&lt;span class=&quot;token operator&quot;&gt;&amp;lt;&lt;/span&gt;_Aliter&lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;using&lt;/span&gt; value_type        &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;typename&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;_Aliter&lt;/span&gt;&lt;span class=&quot;token double-colon punctuation&quot;&gt;::&lt;/span&gt;value_type&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;using&lt;/span&gt; size_type         &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;typename&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;_Aliter_traits&lt;/span&gt;&lt;span class=&quot;token double-colon punctuation&quot;&gt;::&lt;/span&gt;size_type&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;using&lt;/span&gt; difference_type   &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;typename&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;_Aliter_traits&lt;/span&gt;&lt;span class=&quot;token double-colon punctuation&quot;&gt;::&lt;/span&gt;difference_type&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;using&lt;/span&gt; pointer           &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token keyword&quot;&gt;typename&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;_Aliter_traits&lt;/span&gt;&lt;span class=&quot;token double-colon punctuation&quot;&gt;::&lt;/span&gt;pointer&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;</summary>
+    
+    
+    
+    <category term="cpp advanced" scheme="https://larrystd.github.io/categories/cpp-advanced/"/>
+    
+    
+    <category term="STL" scheme="https://larrystd.github.io/tags/STL/"/>
+    
+    <category term="HASH" scheme="https://larrystd.github.io/tags/HASH/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>红黑树和STL</title>
+    <link href="https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-20-%E7%BA%A2%E9%BB%91%E6%A0%91%E5%92%8Cmap/"/>
+    <id>https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-20-%E7%BA%A2%E9%BB%91%E6%A0%91%E5%92%8Cmap/</id>
+    <published>2021-09-19T16:00:00.000Z</published>
+    <updated>2021-09-19T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;红黑树也许是应用最广泛的树结构, STL主要应用于map, set&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;红黑树&quot;&gt;&lt;a href=&quot;#红黑树&quot; class=&quot;headerlink&quot; title=&quot;红黑树&quot;&gt;&lt;/a&gt;红黑树&lt;/h3&gt;&lt;h4 id=&quot;红黑树具有以下特征&quot;&gt;&lt;a href=&quot;#红黑树具有以下特征&quot; class=&quot;headerlink&quot; title=&quot;红黑树具有以下特征&quot;&gt;&lt;/a&gt;红黑树具有以下特征&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;性质1：每个节点要么是黑色，要么是红色。&lt;/li&gt;
+&lt;li&gt;性质2：根节点是黑色。&lt;/li&gt;
+&lt;li&gt;性质3：每个叶子节点（NIL）是黑色。&lt;/li&gt;
+&lt;li&gt;性质4：每个红色结点的两个子结点一定都是黑色。&lt;/li&gt;
+&lt;li&gt;性质5：任意一结点到每个叶子结点的路径都包含数量相同的黑结点。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;性质5保证了, &lt;strong&gt;任意一个结点到到每个叶子结点的路径都包含数量相同的黑结点&lt;/strong&gt;。红黑树这种平衡为黑色完美平衡。&lt;/p&gt;
+&lt;h4 id=&quot;红黑树的平衡&quot;&gt;&lt;a href=&quot;#红黑树的平衡&quot; class=&quot;headerlink&quot; title=&quot;红黑树的平衡&quot;&gt;&lt;/a&gt;红黑树的平衡&lt;/h4&gt;&lt;p&gt;相比于AVL树的左旋右旋, 红黑树平衡靠三种操作：左旋、右旋和变色。&lt;/p&gt;
+&lt;h4 id=&quot;红黑树的查找&quot;&gt;&lt;a href=&quot;#红黑树的查找&quot; class=&quot;headerlink&quot; title=&quot;红黑树的查找&quot;&gt;&lt;/a&gt;红黑树的查找&lt;/h4&gt;&lt;p&gt;和二叉搜索树的查找相同, 即从根节点开始进行二分查找, 直到节点为null。&lt;/p&gt;</summary>
+    
+    
+    
+    <category term="cpp advanced" scheme="https://larrystd.github.io/categories/cpp-advanced/"/>
+    
+    
+    <category term="STL" scheme="https://larrystd.github.io/tags/STL/"/>
+    
+    <category term="红黑树" scheme="https://larrystd.github.io/tags/%E7%BA%A2%E9%BB%91%E6%A0%91/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>STL到右值引用再到static_cast</title>
+    <link href="https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-19-%E6%B7%B1%E5%85%A5%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/"/>
+    <id>https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-19-%E6%B7%B1%E5%85%A5%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/</id>
+    <published>2021-09-18T16:00:00.000Z</published>
+    <updated>2021-09-18T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;现代stl是模板编程的优秀例子&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;容器的左值和右值&quot;&gt;&lt;a href=&quot;#容器的左值和右值&quot; class=&quot;headerlink&quot; title=&quot;容器的左值和右值&quot;&gt;&lt;/a&gt;容器的左值和右值&lt;/h3&gt;&lt;h4 id=&quot;左值还是右值&quot;&gt;&lt;a href=&quot;#左值还是右值&quot; class=&quot;headerlink&quot; title=&quot;左值还是右值&quot;&gt;&lt;/a&gt;左值还是右值&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;vector&lt;/code&gt; 内部元素返回的是左值还是右值呢? 答案是左值&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre class=&quot;language-cpp&quot; data-language=&quot;cpp&quot;&gt;&lt;code class=&quot;language-cpp&quot;&gt;vector&lt;span class=&quot;token operator&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&gt;&lt;/span&gt; vect &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&amp;#123;&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;&amp;#125;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt; b &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; vect&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&amp;amp;&lt;/span&gt; b2 &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; vect&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token comment&quot;&gt;// 输出&lt;/span&gt;
+&lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt;
+&lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&amp;amp;&lt;/span&gt; b2 &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; vect&lt;span class=&quot;token punctuation&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token comment&quot;&gt;// 无法通过编译&lt;/span&gt;
+param&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;cpp&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;19&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;token number&quot;&gt;11&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; error&lt;span class=&quot;token operator&quot;&gt;:&lt;/span&gt; conflicting declaration ‘&lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;token operator&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; b’&lt;/code&gt;&lt;/pre&gt;</summary>
+    
+    
+    
+    <category term="cpp advanced" scheme="https://larrystd.github.io/categories/cpp-advanced/"/>
+    
+    
+    <category term="右值引用" scheme="https://larrystd.github.io/tags/%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>密码学简要</title>
+    <link href="https://larrystd.github.io/%E6%95%B0%E5%AD%A6/2021-09-18-%E5%AF%86%E7%A0%81%E5%AD%A6%E7%AE%80%E8%A6%81/"/>
+    <id>https://larrystd.github.io/%E6%95%B0%E5%AD%A6/2021-09-18-%E5%AF%86%E7%A0%81%E5%AD%A6%E7%AE%80%E8%A6%81/</id>
+    <published>2021-09-17T16:00:00.000Z</published>
+    <updated>2021-09-17T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;这周做了些密码学的题,记之避免忘记&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;AES&quot;&gt;&lt;a href=&quot;#AES&quot; class=&quot;headerlink&quot; title=&quot;AES&quot;&gt;&lt;/a&gt;AES&lt;/h3&gt;&lt;p&gt;AES(Advanced Encryption Standard), 又称Rijndael加密法&lt;br&gt;AES中s-box生成, 行移位, 列混淆, 轮密钥加等都是可逆的, 仿射变换(乘矩阵)是可逆的, 因此解密就是逆运算。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;../../../../assets/images/ciper/10.png&quot; alt=&quot;avatar&quot;&gt;&lt;/p&gt;</summary>
+    
+    
+    
+    <category term="math" scheme="https://larrystd.github.io/categories/math/"/>
+    
+    
+    <category term="Cryptography" scheme="https://larrystd.github.io/tags/Cryptography/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>glibc常用函数</title>
+    <link href="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-18-glibc%E5%B8%B8%E7%94%A8%E5%BA%93%E5%87%BD%E6%95%B0/"/>
+    <id>https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-18-glibc%E5%B8%B8%E7%94%A8%E5%BA%93%E5%87%BD%E6%95%B0/</id>
+    <published>2021-09-17T16:00:00.000Z</published>
+    <updated>2021-09-17T16:00:00.000Z</updated>
+    
+    
+      
+      
+        
+        
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;glibc是C语言的库函数, 持有系统调用的底层接口和常用处理函数。cpp也许不常用malloc, 但字符串函数常常在cpp使用&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;string&quot;&gt;&lt;a href=&quot;#string&quot;</summary>
+        
+      
+    
+    
+    
+    <category term="cpp base" scheme="https://larrystd.github.io/categories/cpp-base/"/>
+    
+    
+    <category term="glibc" scheme="https://larrystd.github.io/tags/glibc/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>http和tcp</title>
+    <link href="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-09-18-http/"/>
+    <id>https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-09-18-http/</id>
+    <published>2021-09-17T16:00:00.000Z</published>
+    <updated>2021-09-17T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;http协议也许是使用最广泛的应用层协议&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;HTTP报文&quot;&gt;&lt;a href=&quot;#HTTP报文&quot; class=&quot;headerlink&quot; title=&quot;HTTP报文&quot;&gt;&lt;/a&gt;HTTP报文&lt;/h3&gt;&lt;h4 id=&quot;请求报文&quot;&gt;&lt;a href=&quot;#请求报文&quot; class=&quot;headerlink&quot; title=&quot;请求报文&quot;&gt;&lt;/a&gt;请求报文&lt;/h4&gt;&lt;p&gt;一个HTTP请求报文由请求行（request line）、请求头部（header）、空行和请求数据4个部分组成&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;../../assets/images/net/1.png&quot; alt=&quot;avatar&quot;&gt;&lt;/p&gt;
+&lt;p&gt;get请求举例&lt;/p&gt;
+&lt;pre class=&quot;language-none&quot;&gt;&lt;code class=&quot;language-none&quot;&gt;GET &amp;#x2F;favicon.ico HTTP&amp;#x2F;1.1\r\nHost: 172.20.109.213:9006\r\nConnection: keep-alive\r\nPragma: no-cache\r\nCache-Control: no-cache\r\nUser-Agent: Mozilla&amp;#x2F;5.0 (Windows NT 10.0; Win64; x64) AppleWebKit&amp;#x2F;537.36 (KHTML, like Gecko) Chrome&amp;#x2F;93.0.4577.82 Safari&amp;#x2F;537.36\r\nAccept: image&amp;#x2F;avif,image&amp;#x2F;webp,image&amp;#x2F;apng,image&amp;#x2F;svg+xml,image&amp;#x2F;*,*&amp;#x2F;*;q&amp;#x3D;0.8\r\nReferer: http:&amp;#x2F;&amp;#x2F;172.20.109.213:9006&amp;#x2F;5\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: en,zh-CN;q&amp;#x3D;0.9,zh;q&amp;#x3D;0.8,bs;q&amp;#x3D;0.7,zh-TW;q&amp;#x3D;0.6\r\n\r\n&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;post请求举例&lt;/p&gt;
+&lt;pre class=&quot;language-none&quot;&gt;&lt;code class=&quot;language-none&quot;&gt;&amp;quot;POST &amp;#x2F;3CGISQL.cgi HTTP&amp;#x2F;1.1\r\nHost: 172.20.109.213:9006\r\nConnection: keep-alive\r\nContent-Length: 21\r\nCache-Control: max-age&amp;#x3D;0\r\nUpgrade-Insecure-Requests: 1\r\nOrigin: http:&amp;#x2F;&amp;#x2F;172.20.109.213:9006\r\nContent-Type: application&amp;#x2F;x-www-form-urlencoded\r\nUser-Agent: Mozilla&amp;#x2F;5.0 (Windows NT 10.0; Win64; x64) AppleWebKit&amp;#x2F;537.36 (KHTML, like Gecko) Chrome&amp;#x2F;93.0.4577.82 Safari&amp;#x2F;537.36\r\nAccept: text&amp;#x2F;html,application&amp;#x2F;xhtml+xml,application&amp;#x2F;xml;q&amp;#x3D;0.9,image&amp;#x2F;avif,image&amp;#x2F;webp,image&amp;#x2F;apng,*&amp;#x2F;*;q&amp;#x3D;0.8,application&amp;#x2F;signed-exchange;v&amp;#x3D;b3;q&amp;#x3D;0.9\r\nReferer: http:&amp;#x2F;&amp;#x2F;172.20.109.213:9006&amp;#x2F;0\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: en,zh-CN;q&amp;#x3D;0.6\r\n\r\nuser&amp;#x3D;test&amp;amp;password&amp;#x3D;go&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;请求数据和请求头部的区分在于&lt;code&gt;\r\n\r\n&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;第一个&lt;code&gt;\r\n&lt;/code&gt;前面的是请求行&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;中间的是请求头部, 请求头部每一行都是&lt;code&gt;字段名:值&lt;/code&gt;的形式&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;POST方法将请求参数封装在HTTP请求数据中，以名称/值的形式出现，可以传输大量数据，这样POST方式对传送的数据大小没有限制，而且也不会显示在URL中。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;请求数据不在GET方法中使用，而是在POST方法中使用&lt;/strong&gt;。Get方法的请求body是空的, POST方法适用于需要客户填写表单的场合。与请求数据相关的最常使用的请求头是Content-Type和Content-Length。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;</summary>
+    
+    
+    
+    <category term="network" scheme="https://larrystd.github.io/categories/network/"/>
+    
+    
+    <category term="network" scheme="https://larrystd.github.io/tags/network/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Java复习</title>
+    <link href="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-09-17-Java%E6%9F%A5%E7%BC%BA%E8%A1%A5%E6%BC%8F/"/>
+    <id>https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-09-17-Java%E6%9F%A5%E7%BC%BA%E8%A1%A5%E6%BC%8F/</id>
+    <published>2021-09-16T16:00:00.000Z</published>
+    <updated>2021-09-16T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;之前学过Java, 记录下容易忘的东西&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;基础&quot;&gt;&lt;a href=&quot;#基础&quot; class=&quot;headerlink&quot; title=&quot;基础&quot;&gt;&lt;/a&gt;基础&lt;/h3&gt;&lt;h4 id=&quot;访问控制修饰符&quot;&gt;&lt;a href=&quot;#访问控制修饰符&quot; class=&quot;headerlink&quot; title=&quot;访问控制修饰符&quot;&gt;&lt;/a&gt;访问控制修饰符&lt;/h4&gt;&lt;p&gt;Java中，可以使用访问控制符来保护对类、变量、方法和构造方法的访问。Java 支持 4 种不同的访问权限。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;default (即默认，什么也不写）: &lt;strong&gt;在同一包内可见&lt;/strong&gt;，不使用任何修饰符。使用对象：类、接口、变量、方法。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;private : 在同一类内可见。使用对象：变量、方法。 注意：&lt;strong&gt;不能修饰类（外部类）&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;public : 对所有类可见。使用对象：类、接口、变量、方法&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;protected : 对同一包内的类和所有子类可见。使用对象：变量、方法。 注意：不能修饰类（外部类）。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;此外, 文件被调用的类(含有&lt;code&gt;main&lt;/code&gt;的类), 需要设置为&lt;code&gt;public class 文件名&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;</summary>
+    
+    
+    
+    <category term="language" scheme="https://larrystd.github.io/categories/language/"/>
+    
+    
+    <category term="Java" scheme="https://larrystd.github.io/tags/Java/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>股票dp 前缀树剪枝 map自定义对象 运算符设置优先级</title>
+    <link href="https://larrystd.github.io/%E7%AE%97%E6%B3%95/2021-09-15-%E8%82%A1%E7%A5%A8dp/"/>
+    <id>https://larrystd.github.io/%E7%AE%97%E6%B3%95/2021-09-15-%E8%82%A1%E7%A5%A8dp/</id>
+    <published>2021-09-14T16:00:00.000Z</published>
+    <updated>2021-09-14T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;h3 id=&quot;leetcode-122-买卖股票的最佳时机-II&quot;&gt;&lt;a href=&quot;#leetcode-122-买卖股票的最佳时机-II&quot; class=&quot;headerlink&quot; title=&quot;leetcode 122 买卖股票的最佳时机 II&quot;&gt;&lt;/a&gt;leetcode 122 买卖股票的最佳时机 II&lt;/h3&gt;&lt;pre class=&quot;language-none&quot;&gt;&lt;code class=&quot;language-none&quot;&gt;给定一个数组 prices ，其中 prices[i] 是一支给定股票第 i 天的价格。
+
+设计一个算法来计算你所能获取的最大利润。你可以尽可能地完成更多的交易（多次买卖一支股票）。
+
+注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+
+输入: prices &amp;#x3D; [7,1,5,3,6,4]
+输出: 7
+解释: 在第 2 天（股票价格 &amp;#x3D; 1）的时候买入，在第 3 天（股票价格 &amp;#x3D; 5）的时候卖出, 这笔交易所能获得利润 &amp;#x3D; 5-1 &amp;#x3D; 4 。
+     随后，在第 4 天（股票价格 &amp;#x3D; 3）的时候买入，在第 5 天（股票价格 &amp;#x3D; 6）的时候卖出, 这笔交易所能获得利润 &amp;#x3D; 6-3 &amp;#x3D; 3 。&lt;/code&gt;&lt;/pre&gt;</summary>
+    
+    
+    
+    <category term="algorithm" scheme="https://larrystd.github.io/categories/algorithm/"/>
+    
+    
+    <category term="leetcode" scheme="https://larrystd.github.io/tags/leetcode/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>系统shell工具</title>
+    <link href="https://larrystd.github.io/%E7%BC%96%E7%A8%8Btools/2021-09-15-%E7%B3%BB%E7%BB%9Fshell%E5%B7%A5%E5%85%B7/"/>
+    <id>https://larrystd.github.io/%E7%BC%96%E7%A8%8Btools/2021-09-15-%E7%B3%BB%E7%BB%9Fshell%E5%B7%A5%E5%85%B7/</id>
+    <published>2021-09-14T16:00:00.000Z</published>
+    <updated>2021-09-14T16:00:00.000Z</updated>
+    
+    
+      
+      
+        
+        
+    <summary type="html">&lt;h4 id=&quot;查看端口占用情况&quot;&gt;&lt;a href=&quot;#查看端口占用情况&quot; class=&quot;headerlink&quot; title=&quot;查看端口占用情况&quot;&gt;&lt;/a&gt;查看端口占用情况&lt;/h4&gt;&lt;ul&gt;
+&lt;li&gt;lsof -i:端口号&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre</summary>
+        
+      
+    
+    
+    
+    <category term="tool" scheme="https://larrystd.github.io/categories/tool/"/>
+    
+    
+    <category term="linux" scheme="https://larrystd.github.io/tags/linux/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>汇编和对象, 虚函数</title>
+    <link href="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-14-%E5%AF%B9%E8%B1%A1%E5%92%8C%E6%B1%87%E7%BC%96%E4%B8%BE%E4%BE%8B/"/>
+    <id>https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-14-%E5%AF%B9%E8%B1%A1%E5%92%8C%E6%B1%87%E7%BC%96%E4%B8%BE%E4%BE%8B/</id>
+    <published>2021-09-13T16:00:00.000Z</published>
+    <updated>2021-09-13T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;h3 id=&quot;简单对象&quot;&gt;&lt;a href=&quot;#简单对象&quot; class=&quot;headerlink&quot; title=&quot;简单对象&quot;&gt;&lt;/a&gt;简单对象&lt;/h3&gt;&lt;p&gt;&lt;img src=&quot;../../assets/images/os/26.PNG&quot; alt=&quot;avatar&quot;&gt;&lt;/p&gt;
+&lt;h4 id=&quot;C语言栈结构体&quot;&gt;&lt;a href=&quot;#C语言栈结构体&quot; class=&quot;headerlink&quot; title=&quot;C语言栈结构体&quot;&gt;&lt;/a&gt;C语言栈结构体&lt;/h4&gt;&lt;p&gt;源代码&lt;/p&gt;
+&lt;pre class=&quot;language-cpp&quot; data-language=&quot;cpp&quot;&gt;&lt;code class=&quot;language-cpp&quot;&gt;&lt;span class=&quot;token macro property&quot;&gt;&lt;span class=&quot;token directive-hash&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;token directive keyword&quot;&gt;include&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&amp;lt;stdio.h&gt;&lt;/span&gt;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;Test&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&amp;#123;&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt; a&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;char&lt;/span&gt; b&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;&amp;#125;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;token keyword&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;token function&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token punctuation&quot;&gt;&amp;#123;&lt;/span&gt;
+    &lt;span class=&quot;token keyword&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;token class-name&quot;&gt;Test&lt;/span&gt; test&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+    test&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;a &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+    test&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;b &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&#39;a&#39;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;token function&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;%d\n&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; test&lt;span class=&quot;token punctuation&quot;&gt;.&lt;/span&gt;a&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;token keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;token number&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;token punctuation&quot;&gt;&amp;#125;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;编译成汇编以及用gdb调试, 编译时注意设置&lt;code&gt;-O0&lt;/code&gt;关闭编译优化&lt;/p&gt;</summary>
+    
+    
+    
+    <category term="cpp base" scheme="https://larrystd.github.io/categories/cpp-base/"/>
+    
+    
+    <category term="cpp" scheme="https://larrystd.github.io/tags/cpp/"/>
+    
+    <category term="汇编" scheme="https://larrystd.github.io/tags/%E6%B1%87%E7%BC%96/"/>
+    
+    <category term="虚函数" scheme="https://larrystd.github.io/tags/%E8%99%9A%E5%87%BD%E6%95%B0/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>cmake gdb详解</title>
+    <link href="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-13-cmake%E8%AF%A6%E8%A7%A3/"/>
+    <id>https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-09-13-cmake%E8%AF%A6%E8%A7%A3/</id>
+    <published>2021-09-12T16:00:00.000Z</published>
+    <updated>2021-09-12T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;blockquote&gt;
+&lt;p&gt;cmake是一个脚本语言, 控制C/C++的编译&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;cmake基础功能&quot;&gt;&lt;a href=&quot;#cmake基础功能&quot; class=&quot;headerlink&quot; title=&quot;cmake基础功能&quot;&gt;&lt;/a&gt;cmake基础功能&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;project项目信息&lt;/li&gt;
+&lt;li&gt;add_subdirectory 添加子目录&lt;/li&gt;
+&lt;li&gt;指定生成目标(相当于-o)add_executable&lt;/li&gt;
+&lt;li&gt;添加链接库target_link_libraries&lt;/li&gt;
+&lt;li&gt;生成链接库add_library&lt;/li&gt;
+&lt;/ul&gt;</summary>
+    
+    
+    
+    <category term="cpp base" scheme="https://larrystd.github.io/categories/cpp-base/"/>
+    
+    
+    <category term="cpp" scheme="https://larrystd.github.io/tags/cpp/"/>
+    
+    <category term="compile" scheme="https://larrystd.github.io/tags/compile/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>http和muduo</title>
+    <link href="https://larrystd.github.io/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-09-13-http%E5%92%8CMuduo/"/>
+    <id>https://larrystd.github.io/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/2021-09-13-http%E5%92%8CMuduo/</id>
+    <published>2021-09-12T16:00:00.000Z</published>
+    <updated>2021-09-12T16:00:00.000Z</updated>
+    
+    
+    <summary type="html">&lt;p&gt;之前在&lt;code&gt;muduo&lt;/code&gt;系列中剖析了&lt;code&gt;muduo&lt;/code&gt;网络库的实现过程。网络的层次介于socket和应用层之间。而常用的框架直接封装到了业务逻辑, 例如java servelet, 在处理请求时可以直接写业务逻辑。&lt;/p&gt;
+&lt;p&gt; &lt;img src=&quot;../../assets/images/muduo/6.png&quot; alt=&quot;avatar&quot;&gt;&lt;/p&gt;
+&lt;p&gt; muduo网络库封装socket层到tcpserver层, 其实增加了多线程eventloop和IO多路复用, 以及定时器, 日志, 缓冲区读写功能。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;wsl2内部ubuntu和windows的端口映射设置&lt;/li&gt;
+&lt;/ul&gt;
+ &lt;pre class=&quot;language-none&quot;&gt;&lt;code class=&quot;language-none&quot;&gt; 1. 获取虚拟机ip
+ wsl -- ifconfig eth0
+ 2. 端口映射
+# netsh interface portproxy add v4tov4 listenport&amp;#x3D;[win10端口] listenaddress&amp;#x3D;0.0.0.0 connectport&amp;#x3D;[虚拟机的端口] connectaddress&amp;#x3D;[虚拟机的ip]
+netsh interface portproxy add v4tov4 listenport&amp;#x3D;80 listenaddress&amp;#x3D;0.0.0.0 connectport&amp;#x3D;80 connectaddress&amp;#x3D;172.29.41.233
+
+3. 检查是否成功
+netsh interface portproxy show all&lt;/code&gt;&lt;/pre&gt;</summary>
+    
+    
+    
+    <category term="source code" scheme="https://larrystd.github.io/categories/source-code/"/>
+    
+    
+    <category term="cpp" scheme="https://larrystd.github.io/tags/cpp/"/>
+    
+    <category term="muduo" scheme="https://larrystd.github.io/tags/muduo/"/>
     
   </entry>
   

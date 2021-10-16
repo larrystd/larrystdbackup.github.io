@@ -1,0 +1,315 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>Cpp11原子类和内存模型 | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="C++ 原子类型C++11 的 template &lt;class T&gt; struct atomic;是一个模板结构体，用来将普通类型转换成原子类型。 原子对象的主要特征是，从不同的线程访问此包含的值不会引起数据竞争（即，这样做是定义良好的行为，并且访问已正确排序）。  一般认为一条汇编指令是原子的，执行时不会发生竞态，理想的原子类等无锁结构一般是把多条汇编指令经过某些手段用一条表示，从而">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cpp11原子类和内存模型">
+<meta property="og:url" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-04-21-%E5%8E%9F%E5%AD%90%E7%B1%BB%E5%92%8C%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="C++ 原子类型C++11 的 template &lt;class T&gt; struct atomic;是一个模板结构体，用来将普通类型转换成原子类型。 原子对象的主要特征是，从不同的线程访问此包含的值不会引起数据竞争（即，这样做是定义良好的行为，并且访问已正确排序）。  一般认为一条汇编指令是原子的，执行时不会发生竞态，理想的原子类等无锁结构一般是把多条汇编指令经过某些手段用一条表示，从而">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-04-20T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-04-20T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#C-%E5%8E%9F%E5%AD%90%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.</span> <span class="toc-text">C++ 原子类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#C-11-%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B"><span class="toc-number">2.</span> <span class="toc-text">C++11 多线程内存模型</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#relaxed-order"><span class="toc-number">2.1.</span> <span class="toc-text">relaxed order</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#acquire-release-order"><span class="toc-number">2.2.</span> <span class="toc-text">acquire-release order</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#sequence-consistent-order"><span class="toc-number">2.3.</span> <span class="toc-text">sequence-consistent order</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E5%BA%8F%E4%B8%8E%E5%8E%9F%E5%AD%90%E7%B1%BB%E5%9E%8B"><span class="toc-number">2.4.</span> <span class="toc-text">内存序与原子类型</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#volatile"><span class="toc-number">2.5.</span> <span class="toc-text">volatile</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-04-21-%E5%8E%9F%E5%AD%90%E7%B1%BB%E5%92%8C%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">Cpp11原子类和内存模型<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/cpp基础/2021-04-21-原子类和内存模型.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-04-21 00:00:00" itemprop="dateCreated datePublished" datetime="2021-04-21T00:00:00+08:00">2021-04-21</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">3.5k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">13m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/cpp-base/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">cpp base</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">cpp</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h3 id="C-原子类型"><a href="#C-原子类型" class="headerlink" title="C++ 原子类型"></a>C++ 原子类型</h3><p>C++11 的 <code>template &lt;class T&gt;</code> struct atomic;是一个模板结构体，用来将普通类型转换成原子类型。</p>
+<p>原子对象的主要特征是，从不同的线程访问此包含的值不会引起数据竞争（即，这样做是定义良好的行为，并且访问已正确排序）。 </p>
+<p><strong>一般认为一条汇编指令是原子的</strong>，执行时不会发生竞态，理想的原子类等无锁结构一般是把多条汇编指令经过某些手段用一条表示，从而杜绝了多线程的竞态条件。 </p>
+<p>原子类型内部可能用锁实现（也就是<code>mutex</code>)，也可能不用，一般的，我们用<code>is_lock_free()</code>来判断是否锁实现。倘若内部锁实现，则该原子类相比与单纯的互斥锁效率不会提升太多。<br>比较特殊的原子类型是 atomic_flag，因为 atomic_flag 与其他原子类型不同，它是无锁<code>（lock_free）</code>。</p>
+<p>C++11 标准将原子操作定义为 atomic 模板类的成员函数，包括读（load）、写（store）、交换（exchange）等。</p>
+<ul>
+<li>operator +=, // 等同于 fetch_add</li>
+<li>atomic::fetch_add,</li>
+<li>atomic::exchange, // 读取并修改被封装的值，exchange 会将 val 指定的值替换掉之前该原子对象封装的值，并返回之前该原子对象封装的值</li>
+<li>tomic::compare_exchage_strong, // CAS语义</li>
+</ul>
+<span id="more"></span>
+
+<p>比较并交换被封装的值(strong)与参数 expected 所指定的值是否相等，如果：<br>相等，则用 val 替换原子对象的旧值。<br>不相等，则用原子对象的旧值替换 expected ，因此调用该函数之后，如果被该原子对象封装的值与参数 expected 所指定的值不相等，expected 中的内容就是原子对象的旧值。</p>
+<ul>
+<li> atomic::compare_exchage_weak, // 带ABA检测的CAS，往往用LL_SC指令实现</li>
+<li>atomic::load, // 读，不能用简单的 =</li>
+<li>atomic::store, // 写，无返回；不能用简单的 = ；不能用于初始化</li>
+</ul>
+<p>例子</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// atomic::exchange example</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;iostream></span>       <span class="token comment">// std::cout</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;atomic></span>         <span class="token comment">// std::atomic</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;thread></span>         <span class="token comment">// std::thread</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;vector></span>         <span class="token comment">// std::vector</span></span>
+
+std<span class="token double-colon punctuation">::</span>atomic<span class="token operator">&lt;</span><span class="token keyword">bool</span><span class="token operator">></span> <span class="token function">ready</span> <span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span>atomic<span class="token operator">&lt;</span><span class="token keyword">bool</span><span class="token operator">></span> <span class="token function">winner</span> <span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">void</span> <span class="token function">count1m</span> <span class="token punctuation">(</span><span class="token keyword">int</span> id<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">!</span>ready<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>                  <span class="token comment">// wait for the ready signal</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span> i<span class="token operator">&lt;</span><span class="token number">1000000</span><span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>   <span class="token comment">// go!, count to 1 million</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>winner<span class="token punctuation">.</span><span class="token function">exchange</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// 赋值为true,返回赋值前的值false</span>
+   <span class="token punctuation">&#123;</span> std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"thread #"</span> <span class="token operator">&lt;&lt;</span> id <span class="token operator">&lt;&lt;</span> <span class="token string">" won!\n"</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span> <span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+  std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>thread<span class="token operator">></span> threads<span class="token punctuation">;</span>
+  std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"spawning 10 threads that count to 1 million...\n"</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">;</span> i<span class="token operator">&lt;=</span><span class="token number">10</span><span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span> threads<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span><span class="token function">thread</span><span class="token punctuation">(</span>count1m<span class="token punctuation">,</span>i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  ready <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">auto</span><span class="token operator">&amp;</span> th <span class="token operator">:</span> threads<span class="token punctuation">)</span> th<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<h3 id="C-11-多线程内存模型"><a href="#C-11-多线程内存模型" class="headerlink" title="C++11 多线程内存模型"></a>C++11 多线程内存模型</h3><p>C++11标准引入了一套新的内存模型，这套模型中共有三种模型，分别为<code>sequentially-consistent</code>模型、<code>acquire-release</code>模型和<code>relaxed</code>模型。三种模型对内存序的约束力是不一样的，<code>sequentially-consistent</code>的约束力最强，但是执行效率也最低。<code>relaxed</code>模型约束力最差，执行效率最高。<code>acquire-release</code>模型约束力居中，属于半约束，执行效率也居中。</p>
+<p>尽管解决了原子执行问题，但由于编译器优化，指令重排<br>， CPU乱序指令执行等原因，多线程的顺序性还没有得到妥善解决。(虽然操作是原子的，但指令重排也可导致结果的错误）。使用内存屏障，就是使用具有同步语义的指令来标记真正需要同步的变量和操作，告诉CPU和编译器不要对这些标记好的同步操作和变量做违反顺序一致性的优化，而其它未被标记的地方可以做原有的优化，这样就可以解决指令重排导致的问题。</p>
+<p>内存屏障是CPU级别的指令，编译器和CPU能够重排序指令，保证最终相同的结果，尝试优化性能。插入一条Memory Barrier会告诉编译器和CPU：不管什么指令都不能和这条Memory Barrier指令重排序。CPU提供了三个汇编指令串行化运行读写指令达到实现保证读写有序性的目的：</p>
+<p>SFENCE：在该指令前的写操作必须在该指令后的写操作前完成<br>LFENCE：在该指令前的读操作必须在该指令后的读操作前完成<br>MFENCE：在该指令前的读写操作必须在该指令后的读写操作前完成</p>
+<ul>
+<li><p>同步点 对于一个原子类型变量a，如果a在线程1中进行store(写)操作，在线程2中进行load(读)操作，则线程1的store和线程2的load构成原子变量a的一对同步点，其中的store操作和load操作就分别是一个同步点。</p>
+</li>
+<li><p>synchronized-with(同步) 对于一对同步点来说，当写操作写入一个值x后，另一个同步点的读操作在某一时刻读到了这个变量的值x，则此时就认为这两个同步点之间发生了同步关系。</p>
+</li>
+<li><p>happens-before 当线程1中的操作A先执行，而线程2中的操作B后执行时，A就happens-beforeB。happens-before是用来表示两个线程中两个操作被执行的先后顺序的一种描述。</p>
+</li>
+<li><p>sequenced-before 如果在单个线程内操作A发生在操作B之前，则表示为Asequenced-beforeB。这个关系是描述单个线程内两个操作之前的先后执行顺序的，与happens-before是相对的。</p>
+</li>
+</ul>
+<h4 id="relaxed-order"><a href="#relaxed-order" class="headerlink" title="relaxed order"></a>relaxed order</h4><p>relaxed模型不保证代码执行顺序，只保证原子变量上操作的原子性(即排他性)。事实上，原子变量上操作的原子性对于其他两个模型也都是保证的。</p>
+<p>例如</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">int</span> a <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token keyword">int</span> b <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+<span class="token keyword">void</span> <span class="token function">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">int</span> t <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+	a <span class="token operator">=</span> t<span class="token punctuation">;</span>
+	b <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token function">func2</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">while</span> <span class="token punctuation">(</span>b <span class="token operator">!=</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> a <span class="token operator">&lt;&lt;</span> std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<p>func()可能被重排序为</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token function">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+	b <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+	a <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>造成func2()实际输出0而不是1。</p>
+<h4 id="acquire-release-order"><a href="#acquire-release-order" class="headerlink" title="acquire-release order"></a>acquire-release order</h4><p>原子变量同步点的<code>store</code>操作是<code>memory_order_release</code>或<code>memory_order_acq_rel</code>时，而对应的另一个同步点的load操作是<code>memory_order_acquire</code>或<code>memory_order_acq_rel</code>或<code>memory_order_consume</code>时，此时就是<code>acquire-release</code>内存序模型。</p>
+<ul>
+<li><p>release之前的所有store操作绝不会重排到(不管是编译器对代码的重排还是CPU指令重排)此release对应的操作之后，也就是说如果release对应的store操作完成了，则C++标准能够保证此release之前的所有store操作肯定已经先完成了</p>
+</li>
+<li><p>acquire之后的所有load操作或者store操作绝对不会重排到此acquire对应的操作之前，也就是说只有当执行完此acquire对应的load操作之后，才会执行后续的读操作或者写操作。</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// 这里的变量既有普通全局变量，又有原子类型的全局变量</span>
+<span class="token keyword">int</span> a <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token keyword">float</span> b <span class="token operator">=</span> <span class="token number">0.0</span><span class="token punctuation">;</span>
+<span class="token keyword">short</span> c <span class="token operator">=</span> <span class="token number">0.0</span><span class="token punctuation">;</span>
+<span class="token keyword">double</span> d <span class="token operator">=</span> <span class="token number">0.0</span><span class="token punctuation">;</span>
+<span class="token keyword">char</span> e <span class="token operator">=</span> <span class="token string">'s'</span><span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span>atomic<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> ai<span class="token punctuation">&#123;</span><span class="token number">0</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span>atomic<span class="token operator">&lt;</span><span class="token keyword">bool</span><span class="token operator">></span> go<span class="token punctuation">&#123;</span><span class="token boolean">false</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">void</span> <span class="token function">write</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">int</span> t <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> <span class="token comment">//1</span>
+	a <span class="token operator">=</span> t <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span> <span class="token comment">// 2</span>
+	b <span class="token operator">=</span> <span class="token number">45.9</span><span class="token punctuation">;</span> <span class="token comment">// 3</span>
+	c <span class="token operator">=</span> <span class="token number">25</span><span class="token punctuation">;</span> <span class="token comment">// 4</span>
+	ai<span class="token punctuation">.</span><span class="token function">store</span><span class="token punctuation">(</span><span class="token number">45</span><span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>memory_order_relaxed<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 5</span>
+	go<span class="token punctuation">.</span><span class="token function">store</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>memory_order_release<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">//6</span>
+	d <span class="token operator">=</span> <span class="token number">10.0</span><span class="token punctuation">;</span> <span class="token comment">// 7</span>
+	e <span class="token operator">=</span> <span class="token string">'g'</span><span class="token punctuation">;</span> <span class="token comment">// 8</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token function">read</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+	std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> a <span class="token operator">&lt;&lt;</span> std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span> <span class="token comment">// 9</span>
+	<span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">!</span>g<span class="token punctuation">.</span><span class="token function">load</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>memory_order_acquire<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 10</span>
+	std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> b <span class="token operator">&lt;&lt;</span> c <span class="token operator">&lt;&lt;</span> ai <span class="token operator">&lt;&lt;</span> std<span class="token double-colon punctuation">::</span>endl<span class="token punctuation">;</span> <span class="token comment">// 11</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>表达式6处的<code>std::memory_order_release</code>能够保证上面的1,2,3,4,5表达式的执行一定是在表达式6之前完成。一旦go的值变成true了，那么可以肯定1,2,3,4,5表达式所对应的值也已经存储完成了</p>
+<p>对于1,2,3,4,5这几个表达式，它们5个之间的执行顺序可以任由编译器重排或者处理器乱序执行，它们5个相互之间是无约束的。此外，对于表达式7和8来说，它俩就没有限制，它俩可以任由编译器重排，且可以重排到表达式6之上。release内存序只对其前面的写操作有作用。<br>对于10之后的所有读或者写操作，都会等到10这个表达式完成后才执行，但是表达式9与表达式10之间就没有顺序要求，编译器或者CPU可以将9重排到10之后执行。acquire内存序只对其后面的读或者写操作才有作用。</p>
+<h4 id="sequence-consistent-order"><a href="#sequence-consistent-order" class="headerlink" title="sequence-consistent order"></a>sequence-consistent order</h4><p>这种内存模型具有最强约束力，它不允许编译器对相关变量进行重排序，并且，它会在CPU的各个Cache之间产生大量的同步，以产生一致性的顺序，因此其效率也是最低的。其核心思想是：任何线程中使用了acq_rel标记的原子变量的内存操作对于其他任何线程都是可感知的。也就是说，如果使用了acq_rel的内存操作A在线程1中被执行了，则其他任何线程都能感知到操作A对原子变量的值的修改，而不会因为值缓存在store-buffer中而无法感知。</p>
+<h4 id="内存序与原子类型"><a href="#内存序与原子类型" class="headerlink" title="内存序与原子类型"></a>内存序与原子类型</h4><p>原子类型的大多数 API 还需要程序员提供一个 std::memory_order（可译为内存序，访存顺序） 的枚举类型值作为参数，比如：atomic_store，atomic_load，atomic_exchange，atomic_compare_exchange 等 API 的最后一个形参为 std::memory_order order，默认值是 std::memory_order_seq_cst（顺序一致性）。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">enum</span> <span class="token class-name">memory_order</span> <span class="token punctuation">&#123;</span>
+    memory_order_relaxed<span class="token punctuation">,</span>
+    memory_order_consume<span class="token punctuation">,</span>
+    memory_order_acquire<span class="token punctuation">,</span>
+    memory_order_release<span class="token punctuation">,</span>
+    memory_order_acq_rel<span class="token punctuation">,</span>
+    memory_order_seq_cst
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>可以把上述 6 中访存次序(内存序)分为 3 类，sequential_consistency模型(<code>std::memory_order_seq_cst</code>)，Acquire-Release 模型(<code>std::memory_order_consume</code>,<code>std::memory_order_acquire</code>, <code>std::memory_order_release</code>, <code>std::memory_order_acq_rel</code>,) 和 Relax 模型(<code>std::memory_order_relaxed</code>)。三种不同的内存模型在不同类型的 CPU上(如 X86，ARM，PowerPC等)所带来的代价也不一样。例如，在 X86 或者 X86-64平台下，Acquire-Release 类型的访存序不需要额外的指令来保证原子性，即使顺序一致性类型操作也只需要在写操作(Store)时施加少量的限制，而在读操作(Load)则不需要花费额外的代价来保证原子性。</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">std<span class="token double-colon punctuation">::</span>atomic<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> <span class="token function">foo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 全局的原子对象 foo</span>
+ 
+<span class="token keyword">void</span> <span class="token function">set_foo</span><span class="token punctuation">(</span><span class="token keyword">int</span> x<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    foo<span class="token punctuation">.</span><span class="token function">store</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>memory_order_relaxed<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 设置(store) 原子对象 foo 的值</span>
+<span class="token punctuation">&#125;</span>
+ 
+<span class="token keyword">void</span> <span class="token function">print_foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> x<span class="token punctuation">;</span>
+    <span class="token keyword">do</span> <span class="token punctuation">&#123;</span>
+        x <span class="token operator">=</span> foo<span class="token punctuation">.</span><span class="token function">load</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>memory_order_relaxed<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 读取(load) 原子对象 foo 的值</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>x <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    std<span class="token double-colon punctuation">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"foo: "</span> <span class="token operator">&lt;&lt;</span> x <span class="token operator">&lt;&lt;</span> <span class="token string">'\n'</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+ 
+<span class="token keyword">int</span> <span class="token function">main</span> <span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    std<span class="token double-colon punctuation">::</span>thread <span class="token function">first</span><span class="token punctuation">(</span>print_foo<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 线程 first 打印 foo 的值</span>
+    std<span class="token double-colon punctuation">::</span>thread <span class="token function">second</span><span class="token punctuation">(</span>set_foo<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 线程 second 设置 foo 的值</span>
+    first<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    second<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;atomic></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;thread></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;assert.h></span></span>
+
+std<span class="token double-colon punctuation">::</span>atomic<span class="token operator">&lt;</span><span class="token keyword">bool</span><span class="token operator">></span> x<span class="token punctuation">,</span>y<span class="token punctuation">;</span>
+std<span class="token double-colon punctuation">::</span>atomic<span class="token operator">&lt;</span><span class="token keyword">int</span><span class="token operator">></span> z<span class="token punctuation">;</span>
+
+<span class="token keyword">void</span> <span class="token function">write_x</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+	x<span class="token punctuation">.</span><span class="token function">store</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>memory_order_release<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 1</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token function">write_y</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+	y<span class="token punctuation">.</span><span class="token function">store</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>memory_order_release<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 2</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token function">read_x_then_y</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">while</span><span class="token punctuation">(</span><span class="token operator">!</span>x<span class="token punctuation">.</span><span class="token function">load</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>memory_order_acquire<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 3</span>
+	<span class="token keyword">if</span><span class="token punctuation">(</span>y<span class="token punctuation">.</span><span class="token function">load</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>memory_order_acquire<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// 4</span>
+		<span class="token operator">++</span>z<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">void</span> <span class="token function">read_y_then_x</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+	<span class="token keyword">while</span><span class="token punctuation">(</span><span class="token operator">!</span>y<span class="token punctuation">.</span><span class="token function">load</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>memory_order_acquire<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 5</span>
+	<span class="token keyword">if</span><span class="token punctuation">(</span>x<span class="token punctuation">.</span><span class="token function">load</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>memory_order_acquire<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">// 6</span>
+		<span class="token operator">++</span>z<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+	x <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+	y <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+	z <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+	
+	std<span class="token double-colon punctuation">::</span>thread <span class="token function">a</span><span class="token punctuation">(</span>write_x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	std<span class="token double-colon punctuation">::</span>thread <span class="token function">b</span><span class="token punctuation">(</span>write_y<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	std<span class="token double-colon punctuation">::</span>thread <span class="token function">c</span><span class="token punctuation">(</span>read_x_then_y<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	std<span class="token double-colon punctuation">::</span>thread <span class="token function">d</span><span class="token punctuation">(</span>read_y_then_x<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	
+	a<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	b<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	c<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	d<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	
+	<span class="token function">assert</span><span class="token punctuation">(</span>z<span class="token punctuation">.</span><span class="token function">load</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// 7</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>表达式1和3构成一对同步点，2和5构成另一对同步点。当某个时刻表达式3读出x的值为true时,此时1和3就发生了同步，那么此时表达式1happens-before表达式3，所以表达式1上面的所有store操作就会先于表达式4发生。</p>
+<p>然而，对当前1和3发生的同步来说，表达式2并不是在表达式3的上面执行，所以表达式2并没有happens-before表达式4。所以表达式4读取的y值仍然可能是false，导致z值为0。</p>
+<p><strong>acquire-release模型只对当前发生了同步的两个同步点及其同步点处前后的其他共享变量的内存操作有执行顺序的约束，对其他额外的线程，额外的位置没有这种顺序约束，并且对曾经在其他地方发生过同步的原子变量也没有约束</strong>。</p>
+<p>虽然表达式1与表达式6也构成了一对同步点，表达式2与表达式4也构成了一对同步点。但是，1和6不一定会发生同步(1和3一定会发生同步)，2和4也不一定会发生同步(2和5一定会发生同步)。</p>
+<p>表达式2一定会在某个时刻与表达式5发生同步，从而使表达式2happens-before表达式5，但是表达式2不一定会与表达式4发生同步。</p>
+<h4 id="volatile"><a href="#volatile" class="headerlink" title="volatile"></a>volatile</h4><p><code>volatile</code>作用： 作为指令关键字，确保本条指令或者涉及变量的指令不会受到编译器的优化而省略，而且要求每次直接读值。volatile对应的是special memory，告诉编译器不要把volatile修饰的数据优化到寄存器里，每次读取和写入都操作原始的数据地址。</p>
+<ol>
+<li>易变性。所谓的易变性，在汇编层面反映出来，就是两条语句，下一条语句不会直接使用上一条语句对应的volatile变量的寄存器内容，而是重新从内存中读取。</li>
+<li>不可优化特性。volatile告诉编译器，不要对变量进行激进的优化，保证程序员写在代码中的指令，一定会被执行。</li>
+</ol>
+<p>相比与C++，Java的<code>volatile</code>支持<code>Acquire-Release</code>语义，因此Java Volatile，能够用来构建happens-before语义。C++的<code>volatile</code>仅仅是编译器层面的消除编译优化,在内存中读取数据，不能保证cpu层面的重排序问题。 Java的<code>volatile</code>上升到了cpu层面(或者线程层面)的happen before：</p>
+<ol>
+<li><p>Java Volatile变量的写操作，带有Release语义，所有<code>Volatile</code>变量写操作之前的针对其他任何变量的读写操作，都不会被编译器、CPU优化后，乱序到<code>Volatile</code>变量的写操作之后执行。</p>
+</li>
+<li><p>Java Volatile变量的读操作，带有Acquire语义，所有<code>Volatile</code>变量读操作之后的针对其他任何变量的读写操作，都不会被编译器、CPU优化后，乱序到<code>Volatile</code>变量的读操作之前进行。</p>
+</li>
+<li><p>C++和Java的<code>Volatile</code>不能保证原子性, C++在<code>volatile</code>基础上加内存屏障可以起到Java的效果。但在多线程程序一般直接使用C++原子类，因为原子类同时保证了原子性和happen before语义。</p>
+</li>
+</ol>
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/cpp%E8%BF%9B%E9%98%B6/2021-04-25-STL%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%901/" rel="prev" title="stl源码:01 空间配置"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">stl源码:01 空间配置</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/cpp%E5%9F%BA%E7%A1%80/2021-04-19-%E6%A8%A1%E6%9D%BF/" rel="next" title="template"><span class="post-nav-text">template</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/cpp%E5%9F%BA%E7%A1%80/2021-04-21-%E5%8E%9F%E5%AD%90%E7%B1%BB%E5%92%8C%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>汇编 | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="汇编指令常见指令 mov 和 movl将源操作数的内容复制到目标操作数, 两者必须有一个是寄存器  mov M&#x2F;R, L&#x2F;M&#x2F;R  mov %rax（%rbx）(%rbx)表示把%rbx的值作为地址，取值。 D(R) 表示根据地址R+D取值  注意寄存器的值是值或者地址，   xchg交换两个操作数的内容, 两者必须有一个是寄存器  xchg M&#x2F;R, M&amp;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="汇编">
+<meta property="og:url" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-5-24-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="汇编指令常见指令 mov 和 movl将源操作数的内容复制到目标操作数, 两者必须有一个是寄存器  mov M&#x2F;R, L&#x2F;M&#x2F;R  mov %rax（%rbx）(%rbx)表示把%rbx的值作为地址，取值。 D(R) 表示根据地址R+D取值  注意寄存器的值是值或者地址，   xchg交换两个操作数的内容, 两者必须有一个是寄存器  xchg M&#x2F;R, M&amp;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/assets/images/stack.png">
+<meta property="og:image" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/assets/images/os/26.PNG">
+<meta property="og:image" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/assets/images/register.png">
+<meta property="og:image" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/assets/images/return_stack.png">
+<meta property="og:image" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/assets/images/os/27.PNG">
+<meta property="article:published_time" content="2021-05-15T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-05-15T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/assets/images/stack.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B1%87%E7%BC%96%E6%8C%87%E4%BB%A4"><span class="toc-number">1.</span> <span class="toc-text">汇编指令</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E6%8C%87%E4%BB%A4"><span class="toc-number">1.1.</span> <span class="toc-text">常见指令</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B6%E4%BB%96"><span class="toc-number">1.2.</span> <span class="toc-text">其他</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AF%84%E5%AD%98%E5%99%A8%E7%BA%A6%E5%AE%9A"><span class="toc-number">1.3.</span> <span class="toc-text">寄存器约定</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E8%BF%87%E7%A8%8B"><span class="toc-number">1.4.</span> <span class="toc-text">函数调用过程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%BD%E6%95%B0%E8%BF%94%E5%9B%9E%E8%BF%87%E7%A8%8B"><span class="toc-number">1.5.</span> <span class="toc-text">函数返回过程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ESP%EF%BC%8CEBP"><span class="toc-number">1.6.</span> <span class="toc-text">ESP，EBP</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#glibc"><span class="toc-number">2.</span> <span class="toc-text">glibc</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gdb-%E8%B0%83%E8%AF%95%E5%91%BD%E4%BB%A4"><span class="toc-number">3.</span> <span class="toc-text">gdb 调试命令</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-number">3.1.</span> <span class="toc-text">常用命令</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E5%91%BD%E4%BB%A4"><span class="toc-number">3.2.</span> <span class="toc-text">查看命令</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E5%A4%84%E7%90%86"><span class="toc-number">3.3.</span> <span class="toc-text">其他处理</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-5-24-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">汇编<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/cpp基础/2021-5-24-汇编语言.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-05-16 00:00:00" itemprop="dateCreated datePublished" datetime="2021-05-16T00:00:00+08:00">2021-05-16</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">3.7k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">13m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/cpp-base/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">cpp base</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">cpp</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h3 id="汇编指令"><a href="#汇编指令" class="headerlink" title="汇编指令"></a>汇编指令</h3><h4 id="常见指令"><a href="#常见指令" class="headerlink" title="常见指令"></a>常见指令</h4><ol>
+<li>mov 和 movl<br>将源操作数的内容复制到目标操作数, 两者必须有一个是寄存器</li>
+</ol>
+<pre class="language-none"><code class="language-none">mov M&#x2F;R, L&#x2F;M&#x2F;R
+
+mov %rax（%rbx）(%rbx)表示把%rbx的值作为地址，取值。
+D(R) 表示根据地址R+D取值
+
+注意寄存器的值是值或者地址，</code></pre>
+
+<ol start="2">
+<li>xchg<br>交换两个操作数的内容, 两者必须有一个是寄存器</li>
+</ol>
+<pre class="language-none"><code class="language-none">xchg M&#x2F;R, M&#x2F;R</code></pre>
+
+<ol start="3">
+<li>add 和 sub<br>add 为加法指令, sub 为减法指令. 两个操作数必须有一个是寄存器。减法可用作栈内存分配，加法用作回收。</li>
+</ol>
+<pre class="language-none"><code class="language-none">add M&#x2F;R, L&#x2F;M&#x2F;R
+sub M&#x2F;R, L&#x2F;M&#x2F;R</code></pre>
+
+<span id="more"></span>
+
+<ol start="4">
+<li>neg<br>切换操作数的正负号, 即求补码</li>
+</ol>
+<pre class="language-none"><code class="language-none">neg M&#x2F;R</code></pre>
+<ol start="5">
+<li>mul 和 div<br>mul 为无符号乘法, div 为无符号除法<br>mul/div 的积存储在 edx : eax 中, 其中eax作被乘数, 只支持单个操作数</li>
+</ol>
+<pre class="language-none"><code class="language-none">mul M&#x2F;R</code></pre>
+
+<ol start="6">
+<li>SHL 和 SHR<br>SHL 和 SHR 为逻辑左移 / 逻辑右移. 每移动 n 位二进制数,如果值为负数, 进行逻辑右移后其可能会出错.</li>
+</ol>
+<pre class="language-none"><code class="language-none">shl M&#x2F;R, L
+shr M&#x2F;R, L</code></pre>
+
+<ol start="7">
+<li>SAL 和 SAR<br>SAL 和 SLR 为算数左移 / 算术右移. 每移动 n 位二进制数,负数进行算术右移不会像逻辑右移一样出现错误.</li>
+</ol>
+<pre class="language-none"><code class="language-none">sal M&#x2F;R, L
+sar M&#x2F;R, L</code></pre>
+
+<ol start="8">
+<li>lea  </li>
+</ol>
+<p>加载有效地址, 将源操作数的地址加载到目标操作数中. 由于实际地址要在程序运行时才能知道, 因此涉及这些地址的操作应该用 lea 来完成. 该指令的目标操作数必须是寄存器</p>
+<p>lea指令可以用来将一个内存地址直接赋给目的操作数</p>
+<pre class="language-none"><code class="language-none">lea R, M</code></pre>
+
+<ol start="9">
+<li>push和pop<br>PUSH 指令首先减少 ESP 的值(栈顶下降），再将源操作数复制到堆栈。操作数是 16 位的，则 ESP 减 2，操作数是 32 位的，则 ESP 减 4。<br>POP 指令首先把 ESP 指向的堆栈元素内容复制到一个 16 位或 32 位目的操作数中，再增加 ESP 的值。</li>
+</ol>
+<pre class="language-none"><code class="language-none">PUSH reg&#x2F;mem
+pop reg&#x2F;mem</code></pre>
+
+<ol start="10">
+<li><p>cmp和test<br>cmp的功能相当于减法指令，只是对操作数之间运算比较，不保存结果。cmp指令执行后，将对标志寄存器产生影响。其他相关指令通过这些标志寄存器位来得知结果。<br>test将两个操作数进行逻辑与运算，并根据运算结果设置相关的标志位。</p>
+</li>
+<li><p> CS和IP  </p>
+</li>
+</ol>
+<p>CS是代码段寄存器(也就是储存指令)、IP是指令指针寄存器。</p>
+<p>8086机器中，任意时刻，CPU将CS:IP指向的内容当作指令执行。<br>意思是，任意时刻，设CS中的内容是M，IP中的内容为N，8086CPU将从内存M*16+N单元开始，读取一条指令并执行</p>
+<ol start="12">
+<li>jmp和loop</li>
+</ol>
+<p>JMP 指令无条件跳转到目标地址</p>
+<pre class="language-none"><code class="language-none">JMP destination</code></pre>
+
+<p>LOOP 指令，正式称为按照 ECX 计数器循环，将程序块重复特定次数。ECX 自动成为计数器，每循环一次计数值减 1。<br>LOOP 指令的执行有两个步骤：<br>第一步，ECX 减 1。<br>第二步，将 ECX 与 0 比较。</p>
+<pre class="language-none"><code class="language-none">mov ax,0
+mov ecx,5
+L1:
+inc ax
+loop L1</code></pre>
+
+<ol start="13">
+<li>call和ret<br>call 常用来跳转到子函数 , ret用来返回到原函数<br>本质上，ret指令用栈中的数据，修改IP的内容，返回代码段的第一条指令。call指令将IP或者CS和IP压入栈中，实现跳转。</li>
+</ol>
+<pre class="language-none"><code class="language-none">pushq %eip  # 当前下一条指令入栈，也就是返回地址。
+jmpq addr</code></pre>
+
+<p>如上，call先把下一条指令地址入栈，然后跳到子程序执行下一条指令。</p>
+<p>函数的标准开头为enter指令，相当于</p>
+<pre class="language-none"><code class="language-none">pushq %rbp  # 保存旧的帧指针，相当于创建新的栈帧
+movq  %rsp, %rbp  # 让 %rbp 指向新栈帧的起始位置
+subq  $N, %rsp  # 在新栈帧中预留一些空位，供子程序使用，用 (%rsp+K) 或 (%rbp-K) 的形式引用空位</code></pre>
+
+<p>函数返回前，调用leaveq指令，相当于：</p>
+<pre class="language-none"><code class="language-none">movq %rbp, %rsp
+popq %rbp</code></pre>
+
+<p>ret指令，用栈中的数据，修改CS和IP的内容。该指令往往是返回到调用函数调用处的地址。<br>ret自动用栈中的返回地址修改CS和IP内容。<br>retq相当于：</p>
+<pre class="language-none"><code class="language-none">pop IP
+pop CS</code></pre>
+
+<p>因此，调用ret之前，需要保证栈中下一个元素是返回地址。</p>
+<p>计算机内部永远是顺序执行的，通知语句通过改变下一条指令，来改变程序执行的顺序。</p>
+<pre class="language-none"><code class="language-none">assume cs:code
+code segment
+    main:   :
+            :
+            call sub1&#x2F;&#x2F;调用子程序sub1
+            :
+            mov ax,4c00h
+            int 21h
+    sub1:   :
+            :
+            call sub2&#x2F;&#x2F;调用子程序sub2
+            :
+            ret&#x2F;&#x2F;子程序返回
+    sub2:   :&#x2F;&#x2F;子程序sub2开始
+            :
+            ret&#x2F;&#x2F;子程序返回
+code ends
+end main</code></pre>
+
+<h4 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h4><ul>
+<li><p>lea是“load effective address”的缩写，简单的说，lea指令可以用来将一个内存地址直接赋给目的操作数，<br>例如：<code>lea eax,[ebx+8]</code>就是将ebx+8这个值直接赋给<code>eax</code>，而不是把<code>ebx+8</code>处的内存地址里的数据赋给<code>eax</code>。<br>而mov指令则相反，例如：<code>mov eax,[ebx+8]</code>则是把内存地址为<code>ebx+8</code>处的数据赋给<code>eax</code>。</p>
+</li>
+<li><p>栈的地址比堆高，栈是向下增长的，堆是向上增长的。而对栈来说，增长方向就是栈顶。</p>
+</li>
+<li><p>入栈顺序</p>
+</li>
+</ul>
+<p>C语言函数参数采用自右向左的入栈顺序。<br>所谓定义，就是在栈或者堆上开辟空间，所谓赋值或者初始化，就是在空间上进行赋值。</p>
+<p>栈向低地址方向延申, 因此<code>sub</code>减法常常用于分配内存, 而<code>add</code>则用于回收内存。</p>
+<p><img src="../assets/images/stack.png" alt="avatar" loading="lazy"></p>
+<h4 id="寄存器约定"><a href="#寄存器约定" class="headerlink" title="寄存器约定"></a>寄存器约定</h4><p>函数调用需要传递参数时，第一个参数存到%edi里，第二个参数会存到%esi里，如果有返回值会存到%eax里</p>
+<p><img src="../assets/images/os/26.PNG" alt="avatar" loading="lazy"></p>
+<p>x86-64系统中，用户级别的函数参数通过寄存器传递，%rdi，%rsi，%rdx，%rcx，%r8，%r9依次对应第1参数，第2参数…..</p>
+<p><img src="../assets/images/register.png" alt="avatar" loading="lazy"></p>
+<ol>
+<li>每个寄存器的用途并不是单一的。</li>
+<li>%rax 通常用于存储函数调用的返回结果，同时也用于乘法和除法指令中。在imul 指令中，两个64位的乘法最多会产生128位的结果，需要 %rax 与 %rdx 共同存储乘法结果，在div 指令中被除数是128 位的，同样需要%rax 与 %rdx 共同存储被除数。</li>
+<li>%rsp 是堆栈指针寄存器，通常会指向栈顶位置，堆栈的 pop 和push 操作就是通过改变 %rsp 的值即移动堆栈指针的位置来实现的。</li>
+<li>%rbp 是栈帧指针，用于标识当前栈帧的起始位置</li>
+<li>%rdi, %rsi, %rdx, %rcx,%r8, %r9 六个寄存器用于存储函数调用时的6个参数（如果有6个或6个以上参数的话）。</li>
+<li>被标识为 “miscellaneous registers” 的寄存器，属于通用性更为广泛的寄存器，编译器或汇编程序可以根据需要存储任何数据。</li>
+</ol>
+<h4 id="函数调用过程"><a href="#函数调用过程" class="headerlink" title="函数调用过程"></a>函数调用过程</h4><p>子函数调用时，执行的操作有：父函数将调用参数从后向前压栈 -&gt; 将返回地址压栈保存 -&gt; 跳转到子函数起始地址执行 -&gt; 子函数将父函数栈帧起始地址（%rbp） 压栈 -&gt; 将 %rbp 的值设置为当前 %rsp 的值，即将 %rbp 指向子函数栈帧的起始地址。<br>保存返回地址和跳转到子函数处执行由 call 一条指令完成，在call 指令执行完成时，已经进入了子程序中，<strong>因而将上一栈帧%rbp 压栈的操作，需要由子程序来完成</strong>。<br>注意，<strong>子栈帧指针指向的位置，包含的内容是父栈帧的地址</strong>。理解这句话。</p>
+<h4 id="函数返回过程"><a href="#函数返回过程" class="headerlink" title="函数返回过程"></a>函数返回过程</h4><p>函数返回时，我们只需要得到函数的返回值（保存在 %rax 中），之后就需要将栈的结构恢复到函数调用之差的状态，跳转到父函数的返回地址处继续执行。</p>
+<pre class="language-none"><code class="language-none">movq %rbp, %rsp    # 使 %rsp 和 %rbp 指向同一位置，即子栈帧的起始处
+popq %rbp # 将栈中保存的父栈帧的 %rbp 的值赋值给 %rbp，并且 %rsp 上移一个位置指向父栈帧的结尾处</code></pre>
+
+<p>注意在pop %rbp时，%rsp会向上移动一个位置，这个位置内容恰好是返回地址。也就是说，执行完成 ret 后，%rsp 指向的是父栈帧的结尾处，父栈帧尾部存储的调用参数由编译器自动释放。</p>
+<p><img src="../assets/images/return_stack.png" alt="avatar" loading="lazy"></p>
+<h4 id="ESP，EBP"><a href="#ESP，EBP" class="headerlink" title="ESP，EBP"></a>ESP，EBP</h4><p>每个任务（进程）有一个栈（可以这样理解一个程序中只有一个栈，每个函数对应一个栈中一段区域即帧），在这个进程中每个函数被调用时分别从这个栈占用一段区域，称为帧（frame）。ESP为栈指针，用于指向栈的栈顶，而EBP为帧指针，指向当前活动记录的顶部。栈指针与帧指针标识出了当前活动记录的位置。  </p>
+<p>函数执行中<code>%ebp</code>一直保持不变，可以由此寻址获得函数参数。<br>保存一个int型数据，只要把%esp指针向下移动4个字节(因为栈增长方向是由高地址到低地址)，再根据%esp把该数据移入.   </p>
+<p>当前函数被调用开始，执作：</p>
+<ol>
+<li>将帧指针压入栈中：push ebp</li>
+<li>用ebp保存当前栈指针：mov ebp,esp。保证ebp的固定</li>
+<li>使得栈指针自减，自减得到的内存应当能够被用来存储被调用函数的本地状态：sub 0CCh,esp</li>
+</ol>
+<p>保存返回地址和保存上一栈帧的%rbp 都是为了函数返回时，恢复父函数的栈帧结构。返回值的作用是父函数执行位置，栈帧作用是传入参数。</p>
+<p><code>%esp</code>寄存器<strong>指向当前整个栈的栈顶</strong>，<code>%ebp</code>指向<strong>当前帧的帧底</strong>,可以认为<code>%ebp</code>只是存取某时刻的栈顶指针<br>当前帧的帧底位置保存了上一级调用者的<code>%ebp</code>指针值（调用者函数帧底），而每个<code>%ebp</code>的前一个单元存放的就是当前函数的返回地址</p>
+<h3 id="glibc"><a href="#glibc" class="headerlink" title="glibc"></a>glibc</h3><p>glibc是GNU发布的libc库，即c运行库。glibc是linux系统中最底层的api，几乎其它任何运行库都会依赖于glibc。glibc除了封装linux操作系统所提供的系统服务外，它本身也提供了许多其它一些必要功能服务的实现。</p>
+<ul>
+<li><p>glibc不属于linux内核的一部分, 也不是一起维护, 因此有可能存在兼容性问题。</p>
+</li>
+<li><p>glibc可以理解为c语言的库函数, 而boost为c++的库函数。</p>
+</li>
+</ul>
+<p><img src="../assets/images/os/27.PNG" alt="avatar" loading="lazy"></p>
+<ol>
+<li>应用程序代码调用 xyz()，该函数是一个包装系统调用的库函数；</li>
+<li>库函数 xyz() 负责准备向内核传递的参数，并触发软中断以切换到内核；</li>
+<li>CPU 被软中断打断后，执行中断处理函数，即系统调用处理函数（system_call）；</li>
+<li>系统调用处理函数调用系统调用服务例程（sys_xyz ），真正开始处理该系统调用。</li>
+</ol>
+<ul>
+<li><p>在进行系统调用之前, 内核会将寄存器的所有数据入栈保存下来, 等到系统调用结束返回, 内核再将之前保存的数据出栈，恢复现场。</p>
+</li>
+<li><p>用户态程序通过软中断指令int 0x80 来陷入内核态执行系统调用, 软中断和硬中断都是一种信号, 硬中断由磁盘, 键盘, 网卡等引起, 软中断由内核引起。</p>
+</li>
+<li><p>系统调用封装在 syscall table 中的服务程序, 基本为汇编语言。</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">invoke_syscall tbl<span class="token punctuation">,</span> scno<span class="token punctuation">,</span> r10<span class="token punctuation">,</span> __ret_fast_syscall
+
+<span class="token comment">// tbl 表示 sys_call_table 的地址：</span>
+
+adr tbl<span class="token punctuation">,</span> sys_call_table @ load syscall table pointer</code></pre>
+
+<h3 id="gdb-调试命令"><a href="#gdb-调试命令" class="headerlink" title="gdb 调试命令"></a>gdb 调试命令</h3><p>注意，只有<code>g++</code> 设置<code>-g</code>，或者设置debug模式才能进行调试，release模式不可以。    </p>
+<h4 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h4><ol>
+<li>r, Run的简写，运行被调试的程序。<br>如果此前没有下过断点，则执行完整个程序；如果有断点，则程序暂停在第一个可用断点处。</li>
+<li>c, Continue的简写，继续执行被调试程序，直至下一个断点或程序结束。</li>
+<li>b, Breakpoint的简写，设置断点。两可以使用“行号”“函数名称”“执行地址”等方式指定断点位置。</li>
+</ol>
+<pre class="language-none"><code class="language-none">b &lt;行号&gt;
+b &lt;函数名称&gt;
+b *&lt;函数名称&gt;
+b *&lt;代码地址&gt; d [编号]
+
+info br 显示断点
+
+delete 5 删除第&lt;&gt;个断点</code></pre>
+
+<ol start="4">
+<li>s, n<br>s: 执行一行源程序代码，如果此行代码中有函数调用，则进入该函数；<br>n: 执行一行源程序代码，此行代码中的函数调用也一并执行。</li>
+<li>si, ni</li>
+</ol>
+<p>si命令类似于s命令，ni命令类似于n命令。所不同的是，这两个命令（si/ni）所针对的是汇编指令，而s/n针对的是源代码。<br>6. i<br>info的简写，用于显示各类信息</p>
+<h4 id="查看命令"><a href="#查看命令" class="headerlink" title="查看命令"></a>查看命令</h4><ol>
+<li>print（可简写为p）打印变量内容。</li>
+<li><pre class="language-none"><code class="language-none">(gdb) p a
+$1 &#x3D; 10
+(gdb) p b
+$2 &#x3D; &#123;1, 2, 3, 5&#125;
+(gdb) p c
+$3 &#x3D; &quot;hello,shouwang&quot;</code></pre></li>
+</ol>
+<p>特定格式打印变量<br>x 按十六进制格式显示变量。<br>d 按十进制格式显示变量。<br>u 按十六进制格式显示无符号整型。<br>o 按八进制格式显示变量。<br>t 按二进制格式显示变量。<br>a 按十六进制格式显示变量。<br>c 按字符格式显示变量。<br>f 按浮点数格式显示变量</p>
+<pre class="language-none"><code class="language-none">(gdb) p c
+$18 &#x3D; &quot;hello,shouwang&quot;
+(gdb) p&#x2F;x c
+$19 &#x3D; &#123;0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x73, 0x68, 0x6f, 0x75, 0x77, 0x61, 
+  0x6e, 0x67, 0x0&#125;&#39;</code></pre>
+
+<ol start="2">
+<li>查看内存内容,examine(简写为x)可以用来查看内存地址中的值</li>
+</ol>
+<pre class="language-none"><code class="language-none">x&#x2F;[n][f][u] addr
+
+x&#x2F;8x $esp</code></pre>
+<p>n 表示要显示的内存单元数，默认值为1<br>f 表示要打印的格式，前面已经提到了格式控制字符<br>u 要打印的单元长度<br>addr 内存地址<br>常用 x/8x，按照16进制显示，一个字节两个16进制表示。</p>
+<h4 id="其他处理"><a href="#其他处理" class="headerlink" title="其他处理"></a>其他处理</h4><ol>
+<li>假设我们希望程序断住时，就显示某个变量的值，可以使用display命令。</li>
+</ol>
+<pre class="language-none"><code class="language-none">(gdb) display e
+1: e &#x3D; 8.5</code></pre>
+
+<ol start="2">
+<li>图形化调试界面</li>
+</ol>
+<p><code>layout src</code>：显示源代码窗口<br><code>layout asm</code>命令显示汇编代码窗口。<br>如果既想显示源代码，又想显示汇编代码，可以使用<code>layout split</code>命令</p>
+<ol start="3">
+<li>反汇编</li>
+</ol>
+<p><code>disas [funtion]</code> 使用gdb反汇编函数function<br><code>objdump -d ctarget &gt; ctarget-disassemble</code> 反汇编全部代码并重定向输出</p>
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/cpp%E5%9F%BA%E7%A1%80/2021-5-16-g++%E5%92%8Ccmake/" rel="prev" title="编译:g++和cmake"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">编译:g++和cmake</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-5-10-%E6%B5%81%E5%88%A9%E7%9A%84python/" rel="next" title="流畅的python"><span class="post-nav-text">流畅的python</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/cpp%E5%9F%BA%E7%A1%80/2021-5-24-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

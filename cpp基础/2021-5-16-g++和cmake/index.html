@@ -1,0 +1,653 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>编译:g++和cmake | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="G++&#x2F;GCCgcc and g++分别是gnu的c &amp; c++编译器  gcc&#x2F;g++在执行编译工作的时候，总共需要4步    1.预处理,生成.i的文件  预处理器cpp 2.将预处理后的文件不转换成汇编语言,生成文件.s 编译器egcs 3.有汇编变为目标代码(机器代码)生成.o的文件 汇编器as 4.连接目标代码,生成可执行程序 连接器ld   总体选项   -E ：只激活预处理,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="编译:g++和cmake">
+<meta property="og:url" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-5-16-g++%E5%92%8Ccmake/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="G++&#x2F;GCCgcc and g++分别是gnu的c &amp; c++编译器  gcc&#x2F;g++在执行编译工作的时候，总共需要4步    1.预处理,生成.i的文件  预处理器cpp 2.将预处理后的文件不转换成汇编语言,生成文件.s 编译器egcs 3.有汇编变为目标代码(机器代码)生成.o的文件 汇编器as 4.连接目标代码,生成可执行程序 连接器ld   总体选项   -E ：只激活预处理,">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/assets/images/os/22.png">
+<meta property="article:published_time" content="2021-05-15T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-05-15T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/assets/images/os/22.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#G-GCC"><span class="toc-number">1.</span> <span class="toc-text">G++&#x2F;GCC</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#c-%E5%BA%93%E6%96%87%E4%BB%B6%E6%90%9C%E7%B4%A2%E8%B7%AF%E5%BE%84"><span class="toc-number">1.1.</span> <span class="toc-text">c++ 库文件搜索路径</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%96%E8%AF%91%E4%B8%89%E7%AE%A1%E5%85%B6%E4%B8%8B%EF%BC%8C%E5%90%8C%E6%97%B6%E8%AE%BE%E7%BD%AE%E5%A5%BD-L-I-I"><span class="toc-number">2.</span> <span class="toc-text">编译三管其下，同时设置好-L, -I, -I</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CMake%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8"><span class="toc-number">3.</span> <span class="toc-text">CMake基本使用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#cmake-%E5%A4%84%E7%90%86%E5%A4%9A%E4%B8%AA%E6%96%87%E4%BB%B6"><span class="toc-number">3.1.</span> <span class="toc-text">cmake 处理多个文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#cmake-%E4%B8%80%E4%BA%9B%E5%8F%82%E6%95%B0"><span class="toc-number">3.2.</span> <span class="toc-text">cmake 一些参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6%E5%92%8C%E9%9D%99%E6%80%81%E9%93%BE%E6%8E%A5%E5%BA%93"><span class="toc-number">3.3.</span> <span class="toc-text">可执行文件和静态链接库</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#makefile"><span class="toc-number">4.</span> <span class="toc-text">makefile</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GDB%E8%B0%83%E8%AF%95%E5%91%BD%E4%BB%A4"><span class="toc-number">5.</span> <span class="toc-text">GDB调试命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#vscode-%E7%9A%84cpp%E8%B0%83%E8%AF%95%E9%85%8D%E7%BD%AE"><span class="toc-number">6.</span> <span class="toc-text">vscode 的cpp调试配置</span></a></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/cpp%E5%9F%BA%E7%A1%80/2021-5-16-g++%E5%92%8Ccmake/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">编译:g++和cmake<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/cpp基础/2021-5-16-g++和cmake.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-05-16 00:00:00" itemprop="dateCreated datePublished" datetime="2021-05-16T00:00:00+08:00">2021-05-16</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">4.8k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">20m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/cpp-base/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">cpp base</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">cpp</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h3 id="G-GCC"><a href="#G-GCC" class="headerlink" title="G++/GCC"></a>G++/GCC</h3><p>gcc and g++分别是<code>gnu</code>的c &amp; c++编译器 </p>
+<p>gcc/g++在执行编译工作的时候，总共需要4步  </p>
+<ul>
+<li>1.预处理,生成.i的文件  预处理器cpp</li>
+<li>2.将预处理后的文件不转换成汇编语言,生成文件.s 编译器egcs</li>
+<li>3.有汇编变为目标代码(机器代码)生成.o的文件 汇编器as</li>
+<li>4.连接目标代码,生成可执行程序 连接器ld</li>
+</ul>
+<ol>
+<li>总体选项</li>
+</ol>
+<ul>
+<li><p>-E ：只激活预处理,这个不生成文件,你需要把它重定向到一个输出文件里<br>面.<br>例子用法: </p>
+<pre class="language-sh" data-language="sh"><code class="language-sh">gcc -E hello.c &gt; pianoapan.txt  
+gcc -E hello.c | more  </code></pre>
+<p>其实,一个hello word 也要与处理成800行的代码  </p>
+</li>
+<li><p>-C  ：在预处理的时候,不删除注释信息,一般和-E使用,有时候分析程序，用这个很方便的 </p>
+</li>
+<li><p>-S  ：<strong>只激活预处理和编译，就是指把文件编译成为汇编代码</strong>。</p>
+</li>
+</ul>
+<p>例子用法  </p>
+<pre class="language-sh" data-language="sh"><code class="language-sh">gcc -S hello.c  </code></pre>
+<ul>
+<li>-c   只激活预处理,编译,和汇编,也就是他只把程序做成.o文件 </li>
+</ul>
+<p>例子用法:  </p>
+<pre class="language-sh" data-language="sh"><code class="language-sh">gcc -c hello.c 
+
+将生成.o的obj文件  
+g++ -c MemoryDetect.cpp
+g++ -o test test.cpp MemoryDetect.o</code></pre>
+
+<span id="more"></span>
+
+<ol start="2">
+<li>目录选项 -I -L -l</li>
+</ol>
+<ul>
+<li><p>-I dir  gcc/g++会先在当前目录查找所制定的头文件,如果没有找到,他回到缺省的头文件目录找,如果使用**-I制定了目录**,优先从-I的目录查找，然后再按常规的顺序去找. </p>
+</li>
+<li><p>-include file -i</p>
+</li>
+</ul>
+<p>相当于<code>“#include”</code><br>包含某个代码,简单来说,就是便以某个文件,需要另一个文件的时候,就可以<br>用它设定,功能就相当于在代码中使用#include </p>
+<p>例子用法: </p>
+<pre class="language-sh" data-language="sh"><code class="language-sh">gcc hello.c -include &#x2F;root&#x2F;pianopan.h  </code></pre>
+<ul>
+<li><p>-L dir  制定编译链接的时候，搜索库的路径。不然  编译器将只在标准库的目录找。 </p>
+</li>
+<li><p>-l library   制定编译的时候具体使用的库  。-L和-l一个指定目录，一个指定库，常常同时用。</p>
+</li>
+</ul>
+<ol start="3">
+<li>调试选项</li>
+</ol>
+<ul>
+<li><p>-g：只是编译器，在编译的时候，产生调试信息。  之后可以使用gdb对输出文件进行调试</p>
+</li>
+<li><p>-ggdb：此选项将尽可能的生成gdb的可以使用的调试信息.</p>
+</li>
+</ul>
+<ol start="4">
+<li>链接方式选项</li>
+</ol>
+<p>-static 此选项将禁止使用动态库(共享库)。<br>-shared (-G) 此选项将尽量使用动态库，为默认选项</p>
+<ol start="5">
+<li>设置宏</li>
+</ol>
+<p>使用-D参数</p>
+<pre class="language-none"><code class="language-none">gcc debugtest.c -o debugtest.exe -D DEBUG</code></pre>
+
+
+<ul>
+<li>编译leveldb</li>
+</ul>
+<pre class="language-none"><code class="language-none">g++ -o leveldbTest test.cpp libleveldb.a -lpthread
+其中-lpthread 连接pthread库, 
+libleveldb.a为链接leveldb源码编译成的静态库，test.cpp是自己写的数据库操作代码。
+
+-Wall 一般使用该选项，允许发出GCC能够提供的所有有用的警告。也可以用-W&#123;warning&#125;来标记指定的警告。
+-w 关闭所有警告,建议不要使用此项
+-Dmacro  预处理选项
+相当于C语言中的#define macro  
+-Dmacro&#x3D;defn  
+相当于C语言中的#define macro&#x3D;defn </code></pre>
+
+<ol start="5">
+<li>其他方式</li>
+</ol>
+<ul>
+<li><p>-o 制定目标名称，编译链接，生成可执行文件。,缺省的时候,gcc 编译出来的文件默认名称是a.out,<br>例子用法  </p>
+<pre class="language-sh" data-language="sh"><code class="language-sh">gcc -o hello.exe hello.c
+gcc -o hello.asm -S hello.c </code></pre></li>
+<li><p>-O0  -O1  -O2  -O3  编译器的优化选项的4个级别，-O0表示没有优化,-O1为缺省值，-O3优化级别最高</p>
+</li>
+</ul>
+<p>-fpic 编译器就生成位置无关目标码.适用于共享库(shared library).<br>-fPIC 编译器就输出位置无关目标码.适用于动态连接(dynamic linking),即使分支需要大范围转移.<br>-v 显示详细的编译、汇编、连接命令</p>
+<p>可能用到，linux设置软链接<br>以gcc为例子</p>
+<pre class="language-sh" data-language="sh"><code class="language-sh">先删除和gcc4.4关联的gcc:
+sudo rm gcc
+sudo rm g++
+再建个软连接
+sudo ln -s gcc-4.3 gcc
+sudo ln -s g++-4.3 g++</code></pre>
+<h4 id="c-库文件搜索路径"><a href="#c-库文件搜索路径" class="headerlink" title="c++ 库文件搜索路径"></a>c++ 库文件搜索路径</h4><pre class="language-none"><code class="language-none">1. #include “headfile.h”
+搜索顺序为：
+(1)先搜索当前目录
+(2)然后搜索-I指定的目录
+(3)再搜索gcc的环境变量CPLUS_INCLUDE_PATH（C程序使用的是C_INCLUDE_PATH）
+(4)最后搜索gcc的内定目录
+&#x2F;usr&#x2F;include
+&#x2F;usr&#x2F;local&#x2F;include
+&#x2F;usr&#x2F;lib&#x2F;gcc&#x2F;x86_64-redhat-Linux&#x2F;4.1.1&#x2F;include
+各目录存在相同文件时，先找到哪个使用哪个。
+2. #include &lt;headfile.h&gt;
+(1)先搜索-I指定的目录
+(2)然后搜索gcc的环境变量CPLUS_INCLUDE_PATH
+(3)最后搜索gcc的内定目录
+&#x2F;usr&#x2F;include
+&#x2F;usr&#x2F;local&#x2F;include
+&#x2F;usr&#x2F;lib&#x2F;gcc&#x2F;x86_64-redhat-linux&#x2F;4.1.1&#x2F;include
+与上面的相同，各目录存在相同文件时，先找到哪个使用哪个。这里要注意，#include&lt;&gt;方式不会搜索当前目录。</code></pre>
+
+
+<h3 id="编译三管其下，同时设置好-L-I-I"><a href="#编译三管其下，同时设置好-L-I-I" class="headerlink" title="编译三管其下，同时设置好-L, -I, -I"></a>编译三管其下，同时设置好<code>-L</code>, <code>-I</code>, <code>-I</code></h3><pre class="language-sh" data-language="sh"><code class="language-sh">gcc demo.c -o demo  -I &#x2F;tools&#x2F;libevent&#x2F;include -L &#x2F;tools&#x2F;libevent&#x2F;lib -l event
+
+-I：头文件目录
+-L:静态库目录
+-l:静态库名字
+
+g++ opendbsqlite.cpp -o db.out -lsqlite3 -L&#x2F;usr&#x2F;local&#x2F;sqlite3&#x2F;lib -I&#x2F;usr&#x2F;local&#x2F;sqlite3&#x2F;include 
+
+# 等价于
+g++ opendbsqlite.cpp -o db.out &#x2F;usr&#x2F;local&#x2F;sqlite3&#x2F;lib&#x2F;libsqlite3.so -L&#x2F;usr&#x2F;local&#x2F;sqlite3&#x2F;lib -I&#x2F;usr&#x2F;local&#x2F;sqlite3&#x2F;include 
+
+# 静态编译还需要连接别的库
+# -lpthread -ldl -lm
+g++ opendbsqlite.cpp -o db.out -lsqlite3 -L&#x2F;usr&#x2F;local&#x2F;sqlite3&#x2F;lib -I&#x2F;usr&#x2F;local&#x2F;sqlite3&#x2F;include -static -lpthread -ldl -lm
+
+# 等价于
+g++ opendbsqlite.cpp -o db.out &#x2F;usr&#x2F;local&#x2F;sqlite3&#x2F;lib&#x2F;libsqlite3.a -L&#x2F;usr&#x2F;local&#x2F;sqlite3&#x2F;lib -I&#x2F;usr&#x2F;local&#x2F;sqlite3&#x2F;include -lpthread -ldl -lm</code></pre>
+
+<ul>
+<li>注意使用<code>-l</code>后面本应跟着静态库名字, 但在三管齐下方式下只需要跟简称(<code>libsqlite3.a变为splite3</code>)即可。<code>-I</code>, <code>-L</code>分别对应着<code>include</code>和<code>lib</code>目录。</li>
+</ul>
+<ul>
+<li><p>默认是动态编译，静态编译只需要后面加<code>-static</code>即可, 这样自动提取静态库。但静态编译可能还需要连接别的库。</p>
+</li>
+<li><p>连接后的静态库大小 往往远大于 动态库大小</p>
+</li>
+</ul>
+<p><img src="../assets/images/os/22.png" alt="avatar" loading="lazy"></p>
+<h3 id="CMake基本使用"><a href="#CMake基本使用" class="headerlink" title="CMake基本使用"></a>CMake基本使用</h3><ul>
+<li>使用g++，编译多个文件</li>
+</ul>
+<pre class="language-sh" data-language="sh"><code class="language-sh">g++ -Wall -Wextra -g -pthread .&#x2F;src&#x2F;AES.cpp .&#x2F;tests&#x2F;tests.cpp &#x2F;usr&#x2F;local&#x2F;lib&#x2F;libgtest.a -o bin&#x2F;test
+g++ -Wall -Wextra -g .&#x2F;src&#x2F;AES.cpp .&#x2F;dev&#x2F;main.cpp -o bin&#x2F;debug
+g++ -Wall -Wextra -O2 .&#x2F;src&#x2F;AES.cpp .&#x2F;dev&#x2F;main.cpp -o bin&#x2F;release</code></pre>
+
+<h4 id="cmake-处理多个文件"><a href="#cmake-处理多个文件" class="headerlink" title="cmake 处理多个文件"></a>cmake 处理多个文件</h4><p>根目录中的 CMakeLists.txt ：<br>根目录包含子目录的CMakeLists.txt。一般的，把子目录当成静态链接库即可。</p>
+<pre class="language-cmake" data-language="cmake"><code class="language-cmake"><span class="token comment"># CMake 最低版本号要求</span>
+<span class="token keyword">cmake_minimum_required</span> <span class="token punctuation">(</span><span class="token property">VERSION</span> <span class="token number">2.8</span><span class="token punctuation">)</span>
+<span class="token comment"># 项目信息</span>
+<span class="token keyword">project</span> <span class="token punctuation">(</span>Demo3<span class="token punctuation">)</span>
+<span class="token comment"># 查找当前目录下的所有源文件</span>
+<span class="token comment"># 并将名称保存到 DIR_SRCS 变量</span>
+<span class="token keyword">aux_source_directory</span><span class="token punctuation">(</span>. DIR_SRCS<span class="token punctuation">)</span>
+<span class="token comment"># 添加 math 子目录</span>
+<span class="token keyword">add_subdirectory</span><span class="token punctuation">(</span>math<span class="token punctuation">)</span>
+<span class="token comment"># 指定生成目标 ,main函数所在</span>
+<span class="token keyword">add_executable</span><span class="token punctuation">(</span>Demo main.cc<span class="token punctuation">)</span>
+<span class="token comment"># 添加链接库</span>
+<span class="token keyword">target_link_libraries</span><span class="token punctuation">(</span>Demo MathFunctions<span class="token punctuation">)</span></code></pre>
+
+
+<p>子目录中的 CMakeLists.txt</p>
+<pre class="language-cmake" data-language="cmake"><code class="language-cmake"><span class="token comment"># 将名称保存到 DIR_LIB_SRCS 变量</span>
+<span class="token keyword">aux_source_directory</span><span class="token punctuation">(</span>. DIR_LIB_SRCS<span class="token punctuation">)</span>
+
+<span class="token comment"># 生成链接库</span>
+<span class="token keyword">add_library</span> <span class="token punctuation">(</span>MathFunctions <span class="token punctuation">$&#123;</span>DIR_LIB_SRCS<span class="token punctuation">&#125;</span><span class="token punctuation">)</span></code></pre>
+
+<p>该文件中使用命令 <code>add_library</code>将 src 目录中的源文件编译为静态链接库。</p>
+<p>cmake 一些设置</p>
+<ol>
+<li>添加头文件目录INCLUDE_DIRECTORIES<br>语法：</li>
+</ol>
+<pre class="language-sh" data-language="sh"><code class="language-sh">include_directories([AFTER|BEFORE] [SYSTEM] dir1 [dir2 ...])
+
+include_directories(..&#x2F;..&#x2F;..&#x2F;thirdparty&#x2F;comm&#x2F;include)</code></pre>
+
+<p>它相当于g++选项中的-I参数的作用，也相当于环境变量中增加路径到CPLUS_INCLUDE_PATH变量的作用。</p>
+<ol start="2">
+<li>添加需要链接的库文件目录 LINK_DIRECTORIES<br>语法：</li>
+</ol>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token function">link_directories</span><span class="token punctuation">(</span>directory1 directory2 <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span>
+<span class="token function">link_directories</span><span class="token punctuation">(</span><span class="token string">"/home/server/third/lib"</span><span class="token punctuation">)</span>
+它相当于g<span class="token operator">++</span>命令的<span class="token operator">-</span>L选项的作用，也相当于环境变量中增加LD_LIBRARY_PATH的路径的作用。</code></pre>
+
+<ol start="3">
+<li>添加需要链接的库文件LINK_LIBRARIES,可以是静态库或者动态库<br>link_libraries常用于链接子目录<br>语法：</li>
+</ol>
+<pre class="language-sh" data-language="sh"><code class="language-sh">link_libraries(library1 &lt;debug | optimized&gt; library2 ...)
+# 直接是全路径
+link_libraries(“&#x2F;home&#x2F;server&#x2F;third&#x2F;lib&#x2F;libcommon.a”)
+# 下面的例子，只有库名，cmake会自动去所包含的目录搜索
+link_libraries(iconv)
+
+# 传入变量
+link_libraries($&#123;RUNTIME_LIB&#125;)
+# 也可以链接多个
+link_libraries(&quot;&#x2F;opt&#x2F;MATLAB&#x2F;R2012a&#x2F;bin&#x2F;glnxa64&#x2F;libeng.so&quot;　&quot;&#x2F;opt&#x2F;MATLAB&#x2F;R2012a&#x2F;bin&#x2F;glnxa64&#x2F;libmx.so&quot;)</code></pre>
+
+<ol start="4">
+<li>设置要链接的库文件的名称TARGET_LINK_LIBRARIES<br>语法： </li>
+</ol>
+<pre class="language-sh" data-language="sh"><code class="language-sh">target_link_libraries(&lt;target&gt; [item1 [item2 [...]]]
+                      [[debug|optimized|general] &lt;item&gt;] ...)
+# 以下写法都可以： 
+target_link_libraries(myProject comm)       # 连接libhello.so库，默认优先链接动态库
+target_link_libraries(myProject libcomm.a)  # 显示指定链接静态库
+target_link_libraries(myProject libcomm.so) # 显示指定链接动态库
+
+# 再如：
+target_link_libraries(myProject libcomm.so)　　#这些库名写法都可以。
+target_link_libraries(myProject comm)
+target_link_libraries(myProject -lcomm)</code></pre>
+
+<ol start="5">
+<li>为工程生成目标文件，即各种.cpp文件<br>语法：</li>
+</ol>
+<pre class="language-none"><code class="language-none">add_executable(&lt;name&gt; [WIN32] [MACOSX_BUNDLE]
+               [EXCLUDE_FROM_ALL]
+               source1 [source2 ...])
+
+add_executable(demo
+        main.cpp
+)</code></pre>
+
+<ol start="6">
+<li> 查找库所在目录FIND_LIBRARY<br>例子如下：</li>
+</ol>
+<pre class="language-sh" data-language="sh"><code class="language-sh">FIND_LIBRARY(RUNTIME_LIB rt &#x2F;usr&#x2F;lib  &#x2F;usr&#x2F;local&#x2F;lib NO_DEFAULT_PATH)
+cmake会在目录中查找，如果所有目录中都没有，值RUNTIME_LIB就会被赋为NO_DEFAULT_PATH</code></pre>
+
+<ol start="7">
+<li>add_library 可以生成链接库，由link_libraries负责链接。<br>如果是链接子目录的文件，需要add_subdirectory(math)将子目录添加进去。 </li>
+</ol>
+<p><strong>完整例子</strong></p>
+<pre class="language-cmake" data-language="cmake"><code class="language-cmake"><span class="token keyword">cmake_minimum_required</span> <span class="token punctuation">(</span><span class="token property">VERSION</span> <span class="token number">2.6</span><span class="token punctuation">)</span>
+
+<span class="token property">INCLUDE_DIRECTORIES</span><span class="token punctuation">(</span>../../thirdparty/comm<span class="token punctuation">)</span>
+
+<span class="token function">FIND_LIBRARY</span><span class="token punctuation">(</span>COMM_LIB comm ../../thirdparty/comm/lib NO_DEFAULT_PATH<span class="token punctuation">)</span>
+<span class="token function">FIND_LIBRARY</span><span class="token punctuation">(</span>RUNTIME_LIB rt /usr/lib  /usr/local/lib NO_DEFAULT_PATH<span class="token punctuation">)</span>
+
+<span class="token keyword">link_libraries</span><span class="token punctuation">(</span><span class="token punctuation">$&#123;</span>COMM_LIB<span class="token punctuation">&#125;</span> <span class="token punctuation">$&#123;</span>RUNTIME_LIB<span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+
+<span class="token function">ADD_DEFINITIONS</span><span class="token punctuation">(</span>
+-O3 -g -W -Wall
+ -Wunused-variable -Wunused-parameter -Wunused-function -Wunused
+ -Wno-deprecated -Woverloaded-virtual -Wwrite-strings
+ -D__WUR= -D_REENTRANT -D_FILE_OFFSET_BITS=<span class="token number">64</span> -DTIXML_USE_STL
+<span class="token punctuation">)</span>
+
+<span class="token comment"># 生成链接子目录</span>
+<span class="token keyword">add_library</span><span class="token punctuation">(</span>lib_demo
+        cmd.cpp
+        global.cpp
+        md5.cpp
+<span class="token punctuation">)</span>
+<span class="token comment"># 链接</span>
+<span class="token keyword">link_libraries</span><span class="token punctuation">(</span>lib_demo<span class="token punctuation">)</span>
+<span class="token keyword">add_executable</span><span class="token punctuation">(</span>demo
+        main.cpp
+<span class="token punctuation">)</span>
+
+<span class="token comment"># link library in static mode</span>
+<span class="token keyword">target_link_libraries</span><span class="token punctuation">(</span>demo libuuid.a<span class="token punctuation">)</span></code></pre>
+
+<h4 id="cmake-一些参数"><a href="#cmake-一些参数" class="headerlink" title="cmake 一些参数"></a>cmake 一些参数</h4><pre class="language-cmake" data-language="cmake"><code class="language-cmake"><span class="token variable">CMAKE_BUILD_TYPE</span> 设置模式是Debug还是Release模式
+<span class="token function">SET</span><span class="token punctuation">(</span><span class="token variable">CMAKE_BUILD_TYPE</span> <span class="token string">"Debug”)
+
+or
+
+SET(CMAKE_BUILD_TYPE "</span>Release"<span class="token punctuation">)</span></code></pre>
+
+<p>也可以<code>cmake -DCMAKE_BUILD_TYPE=Release ..</code></p>
+<p>CMAKE_C_FLAGS 设置C编译选项<br>CMAKE_CXX_FLAGS 设置C++编译选项<br>例如</p>
+<pre class="language-cmake" data-language="cmake"><code class="language-cmake"><span class="token comment">#SET(CMAKE_CXX_FLAGS_DEBUG "$&#123;CMAKE_CXX_FLAGS&#125; -O0 -Wall -g -ggdb")</span>
+
+<span class="token function">SET</span><span class="token punctuation">(</span><span class="token variable">CMAKE_CXX_FLAGS</span> <span class="token string">"<span class="token interpolation"><span class="token punctuation">$&#123;</span><span class="token variable">CMAKE_CXX_FLAGS</span><span class="token punctuation">&#125;</span></span> -std=c++11 -O3 -Wall"</span><span class="token punctuation">)</span></code></pre>
+
+<pre class="language-none"><code class="language-none">make all：编译程序、库、文档等（等同于make）
+make install：安装已经编译好的程序。复制文件树中到文件到指定的位置
+make unistall：卸载已经安装的程序。
+make clean：删除由make命令产生的文件
+make distclean：删除由.&#x2F;configure产生的文件
+make check：测试刚刚编译的软件（某些程序可能不支持）
+make installcheck：检查安装的库和程序（某些程序可能不支持）
+make dist：重新打包成packname-version.tar.gz</code></pre>
+
+<h4 id="可执行文件和静态链接库"><a href="#可执行文件和静态链接库" class="headerlink" title="可执行文件和静态链接库"></a>可执行文件和静态链接库</h4><p>链接器可以操作的最小单元为目标文件，我们见到的静态库，动态库，可执行文件都是由目标文件构建的。<br>静态库只是将多个目标文件进行打包，静态库链接时只取里面的目标文件。<br>编译器会将翻译后的机器语言指令，也就是所谓的目标代码，存储在目标文件中。<br>在翻译过程的最后阶段，另一个名为链接器的程序会将目标文件与必需的运行时库例程相结合。一旦链接器完成此步骤，则会创建一个可执行文件。</p>
+<ul>
+<li>cmake 编辑googletest<br>CMakeLists.txt如下</li>
+</ul>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token function">cmake_minimum_required</span><span class="token punctuation">(</span>VERSION <span class="token number">3.10</span><span class="token punctuation">)</span>
+
+<span class="token function">link_directories</span><span class="token punctuation">(</span>lib<span class="token punctuation">)</span>  # 库文件目录
+
+<span class="token function">include_directories</span><span class="token punctuation">(</span>include<span class="token punctuation">)</span>  #头文件路径
+# 添加可执行文件
+<span class="token function">add_executable</span><span class="token punctuation">(</span>demo demo<span class="token punctuation">.</span>cpp<span class="token punctuation">)</span>
+<span class="token function">target_link_libraries</span><span class="token punctuation">(</span>demo libgtest<span class="token punctuation">.</span>a <span class="token operator">-</span>pthread<span class="token punctuation">)</span></code></pre>
+
+<p>其中lib目录下有静态库，libgtest.a。<br>include目录下有头文件所在。</p>
+<pre class="language-none"><code class="language-none">Build a Project
+ cmake --build &lt;dir&gt; [&lt;options&gt;] [-- &lt;build-tool-options&gt;]
+
+Install a Project
+ cmake --install &lt;dir&gt; [&lt;options&gt;]
+
+Open a Project
+ cmake --open &lt;dir&gt;
+
+Run a Script
+ cmake [&#123;-D &lt;var&gt;&#x3D;&lt;value&gt;&#125;...] -P &lt;cmake-script-file&gt;
+
+Run a Command-Line Tool
+ cmake -E &lt;command&gt; [&lt;options&gt;]
+
+Run the Find-Package Tool
+ cmake --find-package [&lt;options&gt;]
+
+View Help
+ cmake --help[-&lt;topic&gt;]</code></pre>
+
+<h3 id="makefile"><a href="#makefile" class="headerlink" title="makefile"></a>makefile</h3><p>以c语言为例子，我们的程序源文件需要经过编译，生成object文件，这个过程主要是语法检查，类型检查等，在Linux下就是生成以.o后缀的文件；再将.o文件链接成为可执行文件，这个过程主要是函数的链接，调用等。在Linux系统下，这个过程需要我们手动实现<br>在windows下的IDE完成了makefile的工作。但是在linux，unix下编译就离不开makefile。<br>makefile关系到整个工程的编译规则，一个工程中源文件，按类型，功能，模块分别放在若干个录中，<br>makefile定义了一系列规则来指定：哪些文件需要先编译，哪些文件需要后编译，哪些文件需要重新编译，甚至更复杂的操作。</p>
+<p>makefile的书写规则</p>
+<ol>
+<li>如果这个工程没有编译过，那么我们的所有c文件都要编译并被链接；</li>
+<li>如果这个工程的某几个c文件被修改，那么我们只编译被修改的c文件，并链接目标程序；</li>
+<li>如果这个工程的头文件被修改了，那么我们需要编译引用了这几个头文件的c文件，并链接目标程序；</li>
+</ol>
+<pre class="language-none"><code class="language-none">target... : prerequisites...
+command</code></pre>
+
+<p>target也就是一个目标文件，可以是中间文件object，也可以是可执行文件，还可以是一个标签；<br>prerequisites就是，要生成target所需要的源文件.c,.h或者目标文件object。<br>command就是make需要执行的命令。<br>这个关系其实是声明了一个文件的依赖关系。</p>
+<p>我们有main.c, get.c, set.c, show.c, get.h, set.h, show.h几个程序文件,makefile如下：</p>
+<pre class="language-none"><code class="language-none">main : main.o get.o set.o show.o
+cc -o main main.o get.o set.o show.o
+
+main.o : main.c
+cc -c main.c
+
+get.o : get.c get.h
+cc -c get.c
+
+set.o : set.c set.h
+cc -c set.c
+
+show.o : show.c show.h
+cc -c show.c
+
+clean :
+rm main main.o get.o set.o show.o</code></pre>
+
+<p><code>CC</code>是一个全局变量，它指定你的Makefile所用的编译器<br>在Makefile文件中找第一个target，并将其作为最终目标文件也就是示例的main，所有的后续都是为了生成这个目标文件而执行；make一层一层根据定义的依赖关系，最终编译出第一个目标文件</p>
+<pre class="language-none"><code class="language-none">obj &#x3D; main.o set.o get.o show.o update.o
+
+main : $(obj)
+cc -o main $(obj)
+
+update.o : update.c update.h
+cc -c update.c
+
+clean :
+rm main $(obj)</code></pre>
+<p><a target="_blank" rel="noopener" href="https://seisman.github.io/how-to-write-makefile/">https://seisman.github.io/how-to-write-makefile/</a></p>
+<h3 id="GDB调试命令"><a href="#GDB调试命令" class="headerlink" title="GDB调试命令"></a>GDB调试命令</h3><ul>
+<li><p>run（简写r）： 运行程序，当遇到断点后，程序会在断点处停止运行，等待用户输入下一步的命令。</p>
+</li>
+<li><p>continue（简写c）：继续执行，到下一个断点处（或运行结束）</p>
+</li>
+<li><p>next（简写n）： 单步跟踪程序，当遇到函数调用时，直接调用，不进入此函数体；<code>n 2</code>执行两次</p>
+</li>
+<li><p>step（简写s）：单步调试如果有函数调用，则进入函数；与命令n不同，n是不进入调用的函数的</p>
+</li>
+<li><p>until：运行程序直到退出循环体; / until+行号： 运行至某行</p>
+</li>
+<li><p>finish： 运行程序，直到当前函数完成返回，并打印函数返回时的堆栈地址和返回值及参数值等信息。</p>
+</li>
+<li><p>call 函数(参数)：调用“函数”，并传递“参数”，如：call gdb_test(55)</p>
+</li>
+<li><p>quit：简记为 q ，退出gdb</p>
+</li>
+<li><p>break n（简写b n）:在第n行处设置断点 ;可以带上代码路径和代码名称： b OAGUPDATE.cpp:578）</p>
+</li>
+</ul>
+<pre class="language-none"><code class="language-none">break func：在函数func()的入口处设置断点，如：break cb_button
+delete 断点号n：删除第n个断点
+disable 断点号n：暂停第n个断点
+enable 断点号n：开启第n个断点
+clear 行号n：清除第n行的断点
+info breakpoints（简写info b） ：显示当前程序的断点设置情况
+
+# 断点
+(gdb) break add.cpp:9
+
+# 显示源码内容
+list main.cpp:9
+
+# display输出a和b的值,以后再断点处会显示变量的值。undisplay取消显示
+(gdb) display a
+
+(gdb) layout asm (显示汇编)
+(gdb) layout split (同时显示源码和汇编)</code></pre>
+
+<ul>
+<li><p>print 表达式：简记为 p ，其中“表达式”可以是任何当前正在被测试程序的有效表达式，比如当前正在调试C语言的程序，那么“表达式”可以是任何C语言的有效表达式，包括数字，变量甚至是函数调用。</p>
+<pre class="language-none"><code class="language-none">print a：将显示整数 a 的值
+print ++a：将把 a 中的值加1,并显示出来
+print name：将显示字符串 name 的值
+print gdb_test(22)：将以整数22作为参数调用 gdb_test() 函数
+print gdb_test(a)：将以变量 a 作为参数调用 gdb_test() 函数</code></pre></li>
+<li><p>display 表达式：在单步运行时将非常有用，使用display命令设置一个表达式后，它将在每次单步进行指令后，紧接着输出被设置的表达式及值。如： <code>display a</code></p>
+</li>
+<li><p>watch 表达式：设置一个监视点，一旦被监视的“表达式”的值改变，gdb将强行终止正在被调试的程序。如： watch a</p>
+</li>
+<li><p>layout：用于分割窗口，可以一边查看代码，一边测试：</p>
+<pre class="language-none"><code class="language-none">layout src：显示源代码窗口
+layout asm：显示反汇编窗口
+layout regs：显示源代码&#x2F;反汇编和CPU寄存器窗口
+layout split：显示源代码和反汇编窗口</code></pre></li>
+<li><p>info registers 查看寄存器内容</p>
+</li>
+</ul>
+<p>cmake 的调试配置</p>
+<pre class="language-none"><code class="language-none"># 开启调试信息
+set(CMAKE_BUILD_TYPE &quot;Debug&quot;)
+set(CMAKE_CXX_FLAGS_DEBUG &quot;$ENV&#123;CXXFLAGS&#125; -O0 -Wall -g2 -ggdb&quot;)
+set(CMAKE_CXX_FLAGS_RELEASE &quot;$ENV&#123;CXXFLAGS&#125; -O3 -Wall&quot;)
+ 
+ 
+# 开启所有警告
+set(CMAKE_CXX_FLAGS &quot;-Wall&quot;)
+
+编译时使用cmake  -DCMAKE_BUILD_TYPE&#x3D;Debug   [Path]     </code></pre>
+
+<h3 id="vscode-的cpp调试配置"><a href="#vscode-的cpp调试配置" class="headerlink" title="vscode 的cpp调试配置"></a>vscode 的cpp调试配置</h3><p>调试debug其实是两个任务，一般的，先使用g++或者cmake将源代码编译成可执行文件，再使用gdb调试生成的可执行文件。<br>例如，launch.json<br>关键的几个变量是， “program”，  “args”， “preLaunchTask”，”miDebuggerPath”。需要先执行preLaunchTask，也就是编译源文件。</p>
+<pre class="language-json" data-language="json"><code class="language-json"><span class="token punctuation">&#123;</span>
+    <span class="token comment">// Use IntelliSense to learn about possible attributes.</span>
+    <span class="token comment">// Hover to view descriptions of existing attributes.</span>
+    <span class="token comment">// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387</span>
+    <span class="token property">"version"</span><span class="token operator">:</span> <span class="token string">"0.2.0"</span><span class="token punctuation">,</span>
+    <span class="token property">"configurations"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">&#123;</span>
+            <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"g++ - Build and debug active file"</span><span class="token punctuation">,</span>
+            <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"cppdbg"</span><span class="token punctuation">,</span>
+            <span class="token property">"request"</span><span class="token operator">:</span> <span class="token string">"launch"</span><span class="token punctuation">,</span>
+            <span class="token property">"program"</span><span class="token operator">:</span> <span class="token string">"$&#123;fileDirname&#125;/$&#123;fileBasenameNoExtension&#125;"</span><span class="token punctuation">,</span>
+            <span class="token comment">//表示可执行文件路径为$&#123;fileDirname&#125;/$&#123;fileBasenameNoExtension&#125;， 后者表示去掉后缀名的文件</span>
+            <span class="token property">"args"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token property">"stopAtEntry"</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+            <span class="token property">"cwd"</span><span class="token operator">:</span> <span class="token string">"$&#123;workspaceFolder&#125;"</span><span class="token punctuation">,</span>
+            <span class="token property">"environment"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token property">"console"</span><span class="token operator">:</span> <span class="token string">"externalTerminal"</span><span class="token punctuation">,</span>
+            <span class="token property">"MIMode"</span><span class="token operator">:</span> <span class="token string">"gdb"</span><span class="token punctuation">,</span>
+            <span class="token property">"setupCommands"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+                <span class="token punctuation">&#123;</span>
+                    <span class="token property">"description"</span><span class="token operator">:</span> <span class="token string">"Enable pretty-printing for gdb"</span><span class="token punctuation">,</span>
+                    <span class="token property">"text"</span><span class="token operator">:</span> <span class="token string">"-enable-pretty-printing"</span><span class="token punctuation">,</span>
+                    <span class="token property">"ignoreFailures"</span><span class="token operator">:</span> <span class="token boolean">true</span>
+                <span class="token punctuation">&#125;</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token property">"preLaunchTask"</span><span class="token operator">:</span> <span class="token string">"C/C++: g++ build active file"</span><span class="token punctuation">,</span>
+            <span class="token comment">// 编译源文件</span>
+            <span class="token property">"miDebuggerPath"</span><span class="token operator">:</span> <span class="token string">"/usr/bin/gdb"</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">]</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>task.json<br>关键参数有label（与preLaunchTask一致）， command, args。</p>
+<pre class="language-json" data-language="json"><code class="language-json"><span class="token punctuation">&#123;</span>
+    <span class="token property">"tasks"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">&#123;</span>
+            <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"cppbuild"</span><span class="token punctuation">,</span>
+            <span class="token property">"label"</span><span class="token operator">:</span> <span class="token string">"C/C++: g++ build active file"</span><span class="token punctuation">,</span>
+            <span class="token property">"command"</span><span class="token operator">:</span> <span class="token string">"/usr/bin/g++"</span><span class="token punctuation">,</span>
+            <span class="token property">"args"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+                <span class="token string">"-g"</span><span class="token punctuation">,</span>
+                <span class="token string">"$&#123;file&#125;"</span><span class="token punctuation">,</span>
+                <span class="token string">"-o"</span><span class="token punctuation">,</span>
+                <span class="token string">"$&#123;fileDirname&#125;/$&#123;fileBasenameNoExtension&#125;"</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token property">"options"</span><span class="token operator">:</span> <span class="token punctuation">&#123;</span>
+                <span class="token property">"cwd"</span><span class="token operator">:</span> <span class="token string">"$&#123;workspaceFolder&#125;"</span>
+            <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+            <span class="token property">"problemMatcher"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+                <span class="token string">"$gcc"</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token property">"group"</span><span class="token operator">:</span> <span class="token punctuation">&#123;</span>
+                <span class="token property">"kind"</span><span class="token operator">:</span> <span class="token string">"build"</span><span class="token punctuation">,</span>
+                <span class="token property">"isDefault"</span><span class="token operator">:</span> <span class="token boolean">true</span>
+            <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+            <span class="token property">"detail"</span><span class="token operator">:</span> <span class="token string">"Task generated by Debugger."</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token property">"version"</span><span class="token operator">:</span> <span class="token string">"2.0.0"</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p>如果配置cmake,</p>
+<pre class="language-json" data-language="json"><code class="language-json"><span class="token punctuation">&#123;</span>
+    <span class="token property">"tasks"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">&#123;</span>
+            <span class="token property">"label"</span><span class="token operator">:</span> <span class="token string">"cmake"</span><span class="token punctuation">,</span>
+            <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"shell"</span><span class="token punctuation">,</span>
+            <span class="token property">"command"</span><span class="token operator">:</span> <span class="token string">"/usr/bin/cmake"</span><span class="token punctuation">,</span>
+            <span class="token property">"args"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">"../"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token property">"options"</span><span class="token operator">:</span> <span class="token punctuation">&#123;</span>
+                <span class="token property">"cwd"</span><span class="token operator">:</span> <span class="token string">"$&#123;workspaceFolder&#125;/build"</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+        <span class="token punctuation">&#123;</span>
+            <span class="token property">"label"</span><span class="token operator">:</span> <span class="token string">"make"</span><span class="token punctuation">,</span>
+            <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"shell"</span><span class="token punctuation">,</span>
+            <span class="token property">"command"</span><span class="token operator">:</span> <span class="token string">"/usr/bin/make"</span><span class="token punctuation">,</span>
+            <span class="token property">"options"</span><span class="token operator">:</span> <span class="token punctuation">&#123;</span>
+                <span class="token property">"cwd"</span><span class="token operator">:</span> <span class="token string">"$&#123;workspaceFolder&#125;/build"</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+        <span class="token punctuation">&#123;</span>
+            <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"cppbuild"</span><span class="token punctuation">,</span>
+            <span class="token property">"label"</span><span class="token operator">:</span> <span class="token string">"C/C++: g++ build active file"</span><span class="token punctuation">,</span>
+            <span class="token property">"dependsOn"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">"cmake"</span><span class="token punctuation">,</span> <span class="token string">"make"</span><span class="token punctuation">]</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token property">"version"</span><span class="token operator">:</span> <span class="token string">"2.0.0"</span>
+<span class="token punctuation">&#125;</span></code></pre>
+
+<p>vscode 的文件名</p>
+<pre class="language-none"><code class="language-none">Supposing that you have the following requirements:
+A file located at &#x2F;home&#x2F;your-username&#x2F;your-project&#x2F;folder&#x2F;file.ext opened in your editor;
+The directory &#x2F;home&#x2F;your-username&#x2F;your-project opened as your root workspace.
+So you will have the following values for each variable:
+$&#123;workspaceFolder&#125; - &#x2F;home&#x2F;your-username&#x2F;your-project
+$&#123;workspaceFolderBasename&#125; - your-project
+$&#123;file&#125; - &#x2F;home&#x2F;your-username&#x2F;your-project&#x2F;folder&#x2F;file.ext
+$&#123;fileWorkspaceFolder&#125; - &#x2F;home&#x2F;your-username&#x2F;your-project
+$&#123;relativeFile&#125; - folder&#x2F;file.ext
+$&#123;relativeFileDirname&#125; - folder
+$&#123;fileBasename&#125; - file.ext
+$&#123;fileBasenameNoExtension&#125; - file
+$&#123;fileDirname&#125; - &#x2F;home&#x2F;your-username&#x2F;your-project&#x2F;folder
+$&#123;fileExtname&#125; - .ext
+$&#123;lineNumber&#125; - line number of the cursor
+$&#123;selectedText&#125; - text selected in your code editor
+$&#123;execPath&#125; - location of Code.exe
+$&#123;pathSeparator&#125; - &#x2F; on macOS or linux, \\ on Windows
+Tip: Use IntelliSense inside string values for tasks.json and launch.json to get a full list of predefined variables.</code></pre>
+
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-5-25-mysql%E5%85%B3%E7%B3%BB%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="prev" title="mysql命令"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">mysql命令</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/cpp%E5%9F%BA%E7%A1%80/2021-5-24-%E6%B1%87%E7%BC%96%E8%AF%AD%E8%A8%80/" rel="next" title="汇编"><span class="post-nav-text">汇编</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/cpp%E5%9F%BA%E7%A1%80/2021-5-16-g++%E5%92%8Ccmake/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

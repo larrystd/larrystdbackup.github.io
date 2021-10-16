@@ -1,0 +1,214 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>git | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="分区本地 Git 的三个分区分别是：working directory, stage&#x2F;index area, commit history  working directory是工作目录，也就是我们肉眼能够看到的文件  在work dir中执行git add相关命令后，就会把work dir中的修改添加到暂存区stage area（也叫index area）  当stage中存在修改时，我们使用g">
+<meta property="og:type" content="article">
+<meta property="og:title" content="git">
+<meta property="og:url" content="https://larrystd.github.io/%E7%BC%96%E7%A8%8Btools/2021-08-20-git/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="分区本地 Git 的三个分区分别是：working directory, stage&#x2F;index area, commit history  working directory是工作目录，也就是我们肉眼能够看到的文件  在work dir中执行git add相关命令后，就会把work dir中的修改添加到暂存区stage area（也叫index area）  当stage中存在修改时，我们使用g">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/os/17.png">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/os/18.png">
+<meta property="article:published_time" content="2021-08-19T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-08-19T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="git">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/assets/images/os/17.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E5%8C%BA"><span class="toc-number">1.</span> <span class="toc-text">分区</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A7%BB%E5%8A%A8"><span class="toc-number">2.</span> <span class="toc-text">移动</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8A%8Awork-dir%E4%B8%AD%E7%9A%84%E4%BF%AE%E6%94%B9%E5%8A%A0%E5%85%A5stage%E3%80%82"><span class="toc-number">2.1.</span> <span class="toc-text">把work dir中的修改加入stage。</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8A%8Astage%E4%B8%AD%E7%9A%84%E4%BF%AE%E6%94%B9%E8%BF%98%E5%8E%9F%E5%88%B0work-dir%E4%B8%AD"><span class="toc-number">2.2.</span> <span class="toc-text">把stage中的修改还原到work dir中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B0%86stage%E5%8C%BA%E7%9A%84%E6%96%87%E4%BB%B6%E6%B7%BB%E5%8A%A0%E5%88%B0history%E5%8C%BA"><span class="toc-number">2.3.</span> <span class="toc-text">将stage区的文件添加到history区</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B0%86history%E5%8C%BA%E7%9A%84%E6%96%87%E4%BB%B6%E8%BF%98%E5%8E%9F%E5%88%B0stage%E5%8C%BA%E3%80%82"><span class="toc-number">2.4.</span> <span class="toc-text">将history区的文件还原到stage区。</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B0%86work-dir%E7%9A%84%E4%BF%AE%E6%94%B9%E6%8F%90%E4%BA%A4%E5%88%B0history%E5%8C%BA%E3%80%82"><span class="toc-number">2.5.</span> <span class="toc-text">将work dir的修改提交到history区。</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B0%86history%E5%8C%BA%E7%9A%84%E5%8E%86%E5%8F%B2%E6%8F%90%E4%BA%A4%E8%BF%98%E5%8E%9F%E5%88%B0work-dir%E4%B8%AD%E3%80%82"><span class="toc-number">2.6.</span> <span class="toc-text">将history区的历史提交还原到work dir中。</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8E%86%E5%8F%B2"><span class="toc-number">2.7.</span> <span class="toc-text">历史</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E6%94%AF%E5%92%8C%E5%86%B2%E7%AA%81"><span class="toc-number">3.</span> <span class="toc-text">分支和冲突</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%86%E6%94%AF"><span class="toc-number">3.1.</span> <span class="toc-text">分支</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%86%B2%E7%AA%81"><span class="toc-number">3.2.</span> <span class="toc-text">冲突</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#commit%E6%8C%87%E9%92%88"><span class="toc-number">4.</span> <span class="toc-text">commit指针</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%90%E6%A8%A1%E5%9D%97"><span class="toc-number">4.1.</span> <span class="toc-text">子模块</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E7%BC%96%E7%A8%8Btools/2021-08-20-git/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">git<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/编程tools/2021-08-20-git.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-08-20 00:00:00" itemprop="dateCreated datePublished" datetime="2021-08-20T00:00:00+08:00">2021-08-20</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">1.1k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">4m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/tool/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">tool</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/git/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">git</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h3 id="分区"><a href="#分区" class="headerlink" title="分区"></a>分区</h3><p>本地 Git 的三个分区分别是：<code>working directory</code>, <code>stage/index area</code>, <code>commit history</code></p>
+<ul>
+<li><p><code>working directory</code>是工作目录，也就是我们肉眼能够看到的文件</p>
+</li>
+<li><p>在<code>work dir</code>中执行<code>git add</code>相关命令后，就会把<code>work dir</code>中的修改添加到暂存区<code>stage area</code>（也叫<code>index area</code>）</p>
+</li>
+<li><p>当<code>stage</code>中存在修改时，我们使用<code>git commit</code>相关命令之后，就会把<code>stage</code>中的修改保存到提交历史commit history中，也就是<code>HEAD</code>指针指向的位置。</p>
+</li>
+<li><p>任何修改只要进入<code>commit history</code>，基本可以认为永远不会丢失了。每个<code>commit</code>都有一个唯一的 <code>Hash</code> 值，我们经常说的<strong>HEAD或者master分支，都可以理解为一个指向某个commit的指针</strong> 。</p>
+</li>
+<li><p>work dir和stage区域的状态，可以通过命令<code>git status</code>来查看，history区域的提交历史可以通过<code>git log</code>命令来查看。</p>
+</li>
+</ul>
+<p><img src="../../assets/images/os/17.png" alt="avatar" loading="lazy"></p>
+<span id="more"></span>
+
+<h3 id="移动"><a href="#移动" class="headerlink" title="移动"></a>移动</h3><h4 id="把work-dir中的修改加入stage。"><a href="#把work-dir中的修改加入stage。" class="headerlink" title="把work dir中的修改加入stage。"></a>把work dir中的修改加入stage。</h4><p>使用 <code>git add</code></p>
+<h4 id="把stage中的修改还原到work-dir中"><a href="#把stage中的修改还原到work-dir中" class="headerlink" title="把stage中的修改还原到work dir中"></a>把stage中的修改还原到work dir中</h4><p>即用stage中的文件来还原当前work dir的文件, 使用<code>git checkout $file</code>命令</p>
+<pre class="language-none"><code class="language-none">$ touch a.txt
+$ git add .
+$ git status
+On branch master
+Changes to be committed:
+    new file:   a.txt
+
+$ git checkout a.txt
+Updated 1 path from the index
+</code></pre>
+
+<p><strong>注意</strong>, 在<strong>work dir做出的「修改」会被stage覆盖，无法恢复</strong>。所以使用该命令你应该确定work dir中的修改可以抛弃。</p>
+<h4 id="将stage区的文件添加到history区"><a href="#将stage区的文件添加到history区" class="headerlink" title="将stage区的文件添加到history区"></a>将stage区的文件添加到history区</h4><p>使用 <code>git commit</code></p>
+<p>会将stage区的修改加入history区并分配一个 Hash 值。只要不乱动本地的.git文件夹，进入history的修改就永远不会丢失。</p>
+<h4 id="将history区的文件还原到stage区。"><a href="#将history区的文件还原到stage区。" class="headerlink" title="将history区的文件还原到stage区。"></a>将history区的文件还原到stage区。</h4><p>使用 <code>git reset</code> 命令, 实际是恢复到commit过去某个hash值时候的样子</p>
+<pre class="language-none"><code class="language-none">git reset --mixed HEAD a.txt
+
+回退指针到某个版本
+git reset --hard 40a9a83  </code></pre>
+
+<p>这不改变work dir中的任何数据，将stage区域中的a.txt文件还原成<strong>HEAD指向的commit history中的样子</strong>。就相当于把<strong>对a.txt的修改从stage区撤销，但依然保存在work dir中，变为unstage的状态</strong>。</p>
+<ul>
+<li>不会改变work dir中的数据，会改变stage区的数据，所以应确保stage中被改动数据是可以抛弃的。</li>
+</ul>
+<h4 id="将work-dir的修改提交到history区。"><a href="#将work-dir的修改提交到history区。" class="headerlink" title="将work dir的修改提交到history区。"></a>将work dir的修改提交到history区。</h4><p>先git add然后git commit就行了，或者一个快捷方法是使用命令git commit -a。</p>
+<h4 id="将history区的历史提交还原到work-dir中。"><a href="#将history区的历史提交还原到work-dir中。" class="headerlink" title="将history区的历史提交还原到work dir中。"></a>将history区的历史提交还原到work dir中。</h4><pre class="language-none"><code class="language-none">$ git checkout HEAD .
+Updated 12 paths from d480c4f</code></pre>
+
+<p>work dir和stage中所有的「修改」都会被撤销，恢复成HEAD指向的那个history commit。</p>
+<ul>
+<li>这个操作会将指定文件在work dir的数据恢复成指定commit的样子，且会删除该文件在stage中的数据，都无法恢复，所以应该慎重使用。</li>
+</ul>
+<h4 id="历史"><a href="#历史" class="headerlink" title="历史"></a>历史</h4><p>git log可以显示所有提交过的版本信息</p>
+<p>git reflog是显示所有的操作记录,  git reflog常用于恢复本地的错误操作。</p>
+<h3 id="分支和冲突"><a href="#分支和冲突" class="headerlink" title="分支和冲突"></a>分支和冲突</h3><h4 id="分支"><a href="#分支" class="headerlink" title="分支"></a>分支</h4><ul>
+<li>创建分支</li>
+</ul>
+<pre class="language-none"><code class="language-none">git branch (branchname)
+git checkout -b</code></pre>
+
+<ul>
+<li>切换分支</li>
+</ul>
+<pre class="language-none"><code class="language-none">git checkout (branchname)</code></pre>
+
+<ul>
+<li>列出分支</li>
+</ul>
+<pre class="language-none"><code class="language-none">git branch
+
+git branch -a</code></pre>
+
+<ul>
+<li>删除分支</li>
+</ul>
+<p>```git branch -d (branchname)`</p>
+<ul>
+<li>合并分支<br>合并到当前分支</li>
+</ul>
+<pre class="language-none"><code class="language-none">git merge (branchname)</code></pre>
+
+<h4 id="冲突"><a href="#冲突" class="headerlink" title="冲突"></a>冲突</h4><ul>
+<li>远程更新到本地</li>
+</ul>
+<pre class="language-none"><code class="language-none">git fetch：这将更新git remote 中所有的远程仓库所包含分支的最新commit-id, 将其记录到.git&#x2F;FETCH_HEAD文件中
+
+git fetch origin master:temp
+&#x2F;&#x2F; 本地新建temp分支，并将远程origin master分支到temp分支中
+
+git merge temp
+&#x2F;&#x2F; 将temp分支合并到当前分支
+
+git pull是git fetch和git merge两个步骤的结合。
+
+git pull origin master : master</code></pre>
+
+<ul>
+<li>合并冲突<br><img src="../../assets/images/os/18.png" alt="avatar" loading="lazy"></li>
+</ul>
+<p>冲突的文件在工作区修改, commit到提交区就可以了。这样master的HEAD就移动</p>
+<pre class="language-none"><code class="language-none">$ git add myfile.txt
+$ git commit -m &quot;合并issue3分支&quot;
+# On branch master
+nothing to commit (working directory clean)</code></pre>
+
+<h3 id="commit指针"><a href="#commit指针" class="headerlink" title="commit指针"></a>commit指针</h3><p>git commit可以认为是一个有向无环图</p>
+<ul>
+<li><p>HEAD指针指向commit id，HEAD所在的commit就是目前本地仓库的状态。<br>我们提交commit则是增加节点，同时HEAD指针后移</p>
+</li>
+<li><p>每个节点代表一个commit, 有固定hash表示, 因此查看历史只需要找到对应节点commit的hash进行reset即可。</p>
+</li>
+<li><p>commit之后不可修改, 也就是只能增加commit节点, 不能删除commit节点。</p>
+</li>
+</ul>
+<p>参考 <a target="_blank" rel="noopener" href="https://git-scm.com/book/zh/v2">https://git-scm.com/book/zh/v2</a></p>
+<h4 id="子模块"><a href="#子模块" class="headerlink" title="子模块"></a>子模块</h4><ul>
+<li>clone子模块</li>
+</ul>
+<pre class="language-none"><code class="language-none">git clone --recursive [address]</code></pre>
+
+<ul>
+<li>子模块初始化</li>
+</ul>
+<pre class="language-none"><code class="language-none">git submodule update --init --recursive</code></pre></div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E7%AE%97%E6%B3%95/2021-08-21-%E4%BA%8C%E5%8F%89%E6%A0%91/" rel="prev" title="二叉树"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">二叉树</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/cpp%E8%BF%9B%E9%98%B6/2021-08-19-%E5%B9%B6%E5%8F%91%E6%A1%88%E4%BE%8B%E5%AE%9E%E8%B7%B5/" rel="next" title="并发案例"><span class="post-nav-text">并发案例</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E7%BC%96%E7%A8%8Btools/2021-08-20-git/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

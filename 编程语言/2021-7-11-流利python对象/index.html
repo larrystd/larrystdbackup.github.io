@@ -1,0 +1,633 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>流畅的python2:对象 | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="函数和对象函数map(function, iterable, …)根据提供的函数对指定序列做映射, 相当于cpp的std::bindfilter(function, iterable, …) 函数用于过滤序列,  def is_odd(n):     return n % 2 &#x3D;&#x3D; 1   newlist &#x3D; filter(is_odd, [1, 2, 3, 4, 5, 6, 7, 8, 9, 1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="流畅的python2:对象">
+<meta property="og:url" content="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-7-11-%E6%B5%81%E5%88%A9python%E5%AF%B9%E8%B1%A1/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="函数和对象函数map(function, iterable, …)根据提供的函数对指定序列做映射, 相当于cpp的std::bindfilter(function, iterable, …) 函数用于过滤序列,  def is_odd(n):     return n % 2 &#x3D;&#x3D; 1   newlist &#x3D; filter(is_odd, [1, 2, 3, 4, 5, 6, 7, 8, 9, 1">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/assets/images/python/3.png">
+<meta property="article:published_time" content="2021-07-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-10T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/assets/images/python/3.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%BD%E6%95%B0%E5%92%8C%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.</span> <span class="toc-text">函数和对象</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%BD%E6%95%B0"><span class="toc-number">1.1.</span> <span class="toc-text">函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%AF%E8%B0%83%E7%94%A8%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.2.</span> <span class="toc-text">可调用对象</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A3%85%E9%A5%B0%E5%99%A8"><span class="toc-number">2.</span> <span class="toc-text">装饰器</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%9B%E4%B8%80%E6%AD%A5%E8%A3%85%E9%A5%B0%E5%99%A8"><span class="toc-number">2.1.</span> <span class="toc-text">进一步装饰器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8A%BD%E8%B1%A1%E7%B1%BB"><span class="toc-number">2.2.</span> <span class="toc-text">抽象类</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%AF%E8%BF%AD%E4%BB%A3-%E5%92%8C%E7%94%9F%E6%88%90%E5%99%A8"><span class="toc-number">3.</span> <span class="toc-text">可迭代 和生成器</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%94%9F%E6%88%90%E5%99%A8%E5%88%B0%E5%8D%8F%E7%A8%8B"><span class="toc-number">3.1.</span> <span class="toc-text">生成器到协程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0-%E8%BF%9B%E7%A8%8B%E6%B1%A0"><span class="toc-number">3.2.</span> <span class="toc-text">线程池&#x2F;进程池</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-7-11-%E6%B5%81%E5%88%A9python%E5%AF%B9%E8%B1%A1/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">流畅的python2:对象<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/编程语言/2021-7-11-流利python对象.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-07-11 00:00:00" itemprop="dateCreated datePublished" datetime="2021-07-11T00:00:00+08:00">2021-07-11</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">3.6k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">16m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/language/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">language</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/python/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">python</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h3 id="函数和对象"><a href="#函数和对象" class="headerlink" title="函数和对象"></a>函数和对象</h3><h4 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h4><p>map(function, iterable, …)根据提供的函数对指定序列做映射, 相当于cpp的std::bind<br>filter(function, iterable, …) 函数用于过滤序列, </p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">def <span class="token function">is_odd</span><span class="token punctuation">(</span>n<span class="token punctuation">)</span><span class="token operator">:</span>
+    <span class="token keyword">return</span> n <span class="token operator">%</span> <span class="token number">2</span> <span class="token operator">==</span> <span class="token number">1</span>
+ 
+newlist <span class="token operator">=</span> <span class="token function">filter</span><span class="token punctuation">(</span>is_odd<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">,</span> <span class="token number">7</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">,</span> <span class="token number">9</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token function">print</span><span class="token punctuation">(</span>newlist<span class="token punctuation">)</span></code></pre>
+<p>python中，整数，字符串，字典，函数都可以视作一等对象</p>
+<ul>
+<li>运行时创建</li>
+<li>能赋值给变量</li>
+<li>能作为函数参数和返回值</li>
+</ul>
+<p>lambda表达式</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">lambda <span class="token punctuation">[</span>arg1 <span class="token punctuation">[</span><span class="token punctuation">,</span>arg2<span class="token punctuation">,</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>argn<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token operator">:</span>expression
+
+x <span class="token operator">=</span> lambda x <span class="token operator">:</span> x<span class="token operator">+</span><span class="token number">1</span>
+<span class="token function">x</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+
+# 输出<span class="token number">2</span>
+
+<span class="token operator">>></span><span class="token operator">></span> foo <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">18</span><span class="token punctuation">,</span> <span class="token number">9</span><span class="token punctuation">,</span> <span class="token number">22</span><span class="token punctuation">,</span> <span class="token number">17</span><span class="token punctuation">,</span> <span class="token number">24</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">,</span> <span class="token number">12</span><span class="token punctuation">,</span> <span class="token number">27</span><span class="token punctuation">]</span>
+<span class="token operator">>></span><span class="token operator">></span>
+<span class="token operator">>></span><span class="token operator">></span> print <span class="token function">filter</span><span class="token punctuation">(</span>lambda x<span class="token operator">:</span> x <span class="token operator">%</span> <span class="token number">3</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">,</span> foo<span class="token punctuation">)</span>
+<span class="token punctuation">[</span><span class="token number">18</span><span class="token punctuation">,</span> <span class="token number">9</span><span class="token punctuation">,</span> <span class="token number">24</span><span class="token punctuation">,</span> <span class="token number">12</span><span class="token punctuation">,</span> <span class="token number">27</span><span class="token punctuation">]</span></code></pre>
+<span id="more"></span>
+
+<p>用户定义函数的常用属性</p>
+<ul>
+<li><code>__annotations__</code>, dict, 参数和返回值的注解</li>
+<li><code>__call__</code>, 实现()运算符</li>
+<li><code>closure__</code>, 函数闭包，自由变量的绑定</li>
+<li><code>__code__</code>, 编译成字节码的函数元数据和定义体</li>
+<li><code>__default__</code>，形参的默认值</li>
+<li><code>__global__</code>，函数所在模块中的全局变量</li>
+<li><code>__name__</code>，函数名称</li>
+</ul>
+<h4 id="可调用对象"><a href="#可调用对象" class="headerlink" title="可调用对象"></a>可调用对象</h4><p>七种可调用对象</p>
+<ul>
+<li>用户定义的函数，使用def或lambda表达式创建</li>
+<li>内置函数，使用C语言实现的函数，如len</li>
+<li>内置方法，用C语言实现的方法</li>
+<li>方法，类中的方法</li>
+<li>类，调用类时会运行<code>__new__</code>产生一个实例，然后运行<code>__init__</code>方法初始化，最后把实例返回给调用方</li>
+<li>类的实例，如果类定义<code>__call__</code>方法，实例可以作为函数调用</li>
+<li>生成器函数，使用<code>yield</code>关键字的函数或者方法，生成器函数返回的是生成器对象</li>
+</ul>
+<p>可以调用内置的<code>callable()</code>函数判断对象能否被调用</p>
+<p>任何python对象都可以表现的像函数，只需要实现实例方法<code>__call__</code>, 作用相当于cpp的operator()</p>
+<pre class="language-py" data-language="py"><code class="language-py">import random
+
+class BingoCage:
+    def __init__(self, items):
+        self._items &#x3D; list(items)
+        random.shuffle(self._items)
+    def pick(self):
+        try:
+            return self._items.pop()
+        except IndexError:
+            raise LookupError(&#39;pick from empty BingoCage&#39;)
+    def __call__(self):
+        return self.pick()
+
+bingo &#x3D; BingoCage(range(3))
+# 作为函数使用
+bingo() 
+callable(bingo)</code></pre>
+
+<p>计算平均值的类</p>
+<pre class="language-py" data-language="py"><code class="language-py">class Average():
+    def __init__(self):
+        self.series &#x3D; []
+    
+    def __call__(self, new_value):
+        self.series.append(new_value)
+        total &#x3D; sum(self.series)
+        return total&#x2F;len(self.series)
+
+avg &#x3D; Average()
+avg(10)
+10.0
+avg(12)
+11
+</code></pre>
+
+<p>==和is, </p>
+<ul>
+<li>==比较两个对象的值，而is比较标识。每个变量有标识、类型和值，对象一旦创建标识不会变，id()返回对象标识的整数表示，也就是地址</li>
+<li>a==b等价于<code>a.__eq__(b)</code>。而继承自object的<code>__eq__</code>方法比较两个对象的id，结果其实与==一样。但对于list等容器，==与is结果可能不同</li>
+</ul>
+<pre class="language-py" data-language="py"><code class="language-py">l1 &#x3D; [3, [55, 44], (7, 8, 9)]
+l2 &#x3D; list(l1)
+
+l2 &#x3D;&#x3D; l1    # 值的话，l1与副本l2相同
+True
+
+l2 is l1&#96;# 二者指代不同的对象，因此id不同 
+False</code></pre>
+<p>如同cpp, 对象内部的对象执行的是浅复制，因此修改一个对象可能对另一个对象产生影响。</p>
+<pre class="language-py" data-language="py"><code class="language-py">l1 &#x3D; [3, [55, 44], (7, 8, 9)]
+l2 &#x3D; list(l1)
+l1.append(100)
+# 此时l1 &#x3D;  [3, [55, 44], (7, 8, 9), 100], 
+# l2 &#x3D; [3, [55, 44], (7, 8, 9)] 不被影响
+l1.remove(55)
+# 由于l2存储的引用，被l1影响，因此l2 &#x3D; [3, [ 44], (7, 8, 9)]</code></pre>
+
+<p><code>copy</code>模块的deepcopy和copy函数可以对任意对象执行深复制和浅复制。</p>
+<p>同理，函数的参数也默认传引用，函数内的操作可能影响到本身的值。</p>
+<pre class="language-py" data-language="py"><code class="language-py">def f(a, b):
+    a +&#x3D; b
+    return a
+
+a &#x3D; [1,2]
+b &#x3D; [3,4]
+f(a,b)
+# [1,2,3,4]
+a
+# [1,2,3,4] 被修改</code></pre>
+
+<p>Cpython垃圾回收主要算法是引用计数，每个对象都会统计多少引用指向自己，当引用计数归零对象会被立即销毁。Cpython调用对象的<code>__del__</code>方法，释放分配给对象的内存。Cpython2增加了分代垃圾回收算法。</p>
+<p>有时候需要引用对象而不让对象存在时间超过所需要时间，这时候用弱引用，类似于cpp的<code>weak_ptr</code>。可以解决<code>shared_ptr</code>循环引用的问题，如果需要调用将<code>weak_ptr</code>提升为<code>shared_ptr</code>，不用了就reset <code>shared_ptr</code>，也可以避免对象一只被<code>shared_ptr</code>而无法销毁的问题。</p>
+<h3 id="装饰器"><a href="#装饰器" class="headerlink" title="装饰器"></a>装饰器</h3><p>装饰器是可调用的对象，其参数是被装饰的函数。</p>
+<pre class="language-py" data-language="py"><code class="language-py">def deco(func):
+    print(&#39;running deco(%s)&#39; % func)
+    print (&#39;abc&#39;)
+    def inner():
+        print (&#39;running inner()&#39;)
+    return inner
+
+@deco
+def target():
+    print (&#39;running target()&#39;)
+
+# target()
+
+running register(&lt;function target at 0x7fd393c55d08&gt;)
+abc
+running inner()</code></pre>
+<p>装饰器一个关键特性是，它在被装饰的函数定义之后立即执行。<br>这时候执行不执行函数，因为函数还未定义好。这里有个<code>导入</code>和<code>运行</code>时的区别。</p>
+<p>变量作用域,python默认都是局部变量。全局变量必须用<code>global</code>声明。</p>
+<pre class="language-py" data-language="py"><code class="language-py">b &#x3D; 6
+
+def f(a):
+    print (a)
+    global b    # 没有这行，print(b)出错因为把b当成局部变量
+    print(b)
+f(3)</code></pre>
+
+<p>一个简单的装饰器，输出函数运行时间</p>
+<p>装饰器，用看作函数的函数，一旦调用某个函数，自动调用装饰器模块执行一些计算时间之类的工作</p>
+<pre class="language-py" data-language="py"><code class="language-py"># clockdeco.py
+import time
+
+def clock(func):
+    def clocked(*args):
+        t0 &#x3D; time.perf_counter()
+        result &#x3D; func(*args)
+        elapsed &#x3D; time.perf_counter() - t0
+        name &#x3D; func.__name__
+        arg_str &#x3D; &#39;. &#39;.join(repr(arg) for arg in args)
+        print(&#39;[%0.8fs] %s(%s) -&gt; %r&#39; % (elapsed, name, arg_str, result))
+        return result
+    return clocked
+
+# demo.py
+import time
+from clockdeco import clock
+
+@clock
+def snooze(seconds):
+    time.sleep(seconds)
+
+@clock
+def factorial(n):
+    return 1 if n &lt; 2 else n*factorial(n-1)
+
+if __name__ &#x3D;&#x3D; &#39;__main__&#39;:
+    print(&#39;*&#39;*40, &#39;Calling snooze(.123)&#39;)
+    snooze(.123)
+    print (&#39;*&#39;*40, &#39;Calling factorial(6)&#39;)
+    print(&#39;6!&#x3D; &#39;, factorial(6))
+
+# 输出
+**************************************** Calling snooze(.123)
+[0.12350380s] snooze(0.123) -&gt; None
+**************************************** Calling factorial(6)
+[0.00000060s] factorial(1) -&gt; 1
+[0.00001210s] factorial(2) -&gt; 2
+[0.00001790s] factorial(3) -&gt; 6
+[0.00002300s] factorial(4) -&gt; 24
+[0.00002790s] factorial(5) -&gt; 120
+[0.00005970s] factorial(6) -&gt; 720
+6!&#x3D;  720</code></pre>
+
+<p>vector类示例</p>
+<pre class="language-py" data-language="py"><code class="language-py">from array import array
+import reprlib
+import math
+
+class Vector:
+    typecode &#x3D; &#39;d&#39;
+
+    def __init__(self, components):
+        self._components &#x3D; array(self.typecode, components)
+    def __iter__(self):
+        return iter(self._components)
+    def _repr__(self):
+        components &#x3D; reprlib.repr(self._components)
+        components &#x3D; components[components.find(&#39;[&#39;) : -1]
+        return &#39;Vector(&#123;&#125;)&#39;.format(components)
+    def __str__(self):
+        return str(tuple(self))
+    def __bytes__(self):
+        return (bytes([ord(self.typecode)]) + bytes(self._components))
+    def __eq__(self):
+        return tuple(self) &#x3D;&#x3D; tuple(other)
+    def __abs__(self):
+        return math.sqrt(sum(x * x for x in self))
+    def __bool__(self):
+        return bool(abs(self))
+    
+    @classmethod
+    def frombytes(cls, octets):
+        typecode &#x3D; chr(octets[0])
+        memv &#x3D; memoryview(octets[1:]).cast(typecode)
+        return cls(memv)</code></pre>
+
+
+<p>构建python项目，一般会使用继承，不需要使用多态</p>
+<pre class="language-py" data-language="py"><code class="language-py">class Bird:
+    #鸟有翅膀
+    def isWing(self):
+        print(&quot;鸟有翅膀&quot;)
+    #鸟会飞
+    def fly(self):
+        print(&quot;鸟会飞&quot;)
+class Ostrich(Bird):
+    # 重写Bird类的fly()方法
+    def fly(self):
+        print(&quot;鸵鸟不会飞&quot;)
+# 创建Ostrich对象
+ostrich &#x3D; Ostrich()
+#调用 Ostrich 类中重写的 fly() 类方法
+ostrich.fly()
+ostrich.isWing()
+
+鸵鸟不会飞
+鸟有翅膀</code></pre>
+<h4 id="进一步装饰器"><a href="#进一步装饰器" class="headerlink" title="进一步装饰器"></a>进一步装饰器</h4><p>python的装饰器十分强大，<code>@classmethod</code>, <code>@staticmethod</code>, <code>@property</code>等内部实现均是装饰器。</p>
+<ul>
+<li><code>@classmethod</code>定义类方法,<code>@staticmethod</code>是静态方法。二者的使用基本一致，只不过<code>@classmethod</code>逻辑上属于该类，<code>@staticmethod</code>与类无依赖关系，只是通过类调用而已, 与普通方法无异。</li>
+</ul>
+<pre class="language-py" data-language="py"><code class="language-py">class A(object):
+    def m1(self, n):
+        print(&quot;self:&quot;, self)
+
+    @classmethod
+    def m2(cls, n):
+        print(&#39;classmethod&#39;)
+        print(&quot;cls:&quot;, cls)
+
+    @staticmethod
+    def m3(n):
+        print(&#39;staticmethod&#39;)
+
+a &#x3D; A()
+a.m1(1) # self: &lt;__main__.A object at 0x000001E596E41A90&gt;
+A.m2(1) # cls: &lt;class &#39;__main__.A&#39;&gt;
+A.m3(1)</code></pre>
+
+<ul>
+<li><code>@property</code>修饰方法，将方法用属性形式调用，但不能修改只能获取，起到对私有变量的<code>getter</code>的作用。</li>
+</ul>
+<pre class="language-py" data-language="py"><code class="language-py">class Vector2d:
+    typecode &#x3D; &#39;d&#39;
+
+    def __init__(self, x, y):
+        self._x &#x3D; float(x)
+        self._y &#x3D; float(y)
+    @property
+    def x(self):
+        return self._x
+    def __iter__(self):
+        return (i for i in (self.x, self.y))</code></pre>
+
+<p>Python中不存在只能从对象内部访问的“私有(private)”变量，但Python制定了以下公约：</p>
+<ul>
+<li>以单下划线开头的成员变量或方法，是设计者不想暴露给外部的API，使用者不应该进行访问。但类实例和子类实例能访问到这些变量</li>
+<li>以双下划线开头且以至多一个下划线结尾的成员变量或方法，会进行名称转写。可以通过名称改写访问到</li>
+</ul>
+<p>python中的私有变量和私有方法仍然是可以访问的；访问方法（名称改写）如下：</p>
+<ul>
+<li>私有变量:实例._类名__变量名</li>
+<li>私有方法:实例._类名__方法名()</li>
+</ul>
+<pre class="language-py" data-language="py"><code class="language-py">class Vector2d:
+    typecode &#x3D; &#39;d&#39;
+
+    def __init__(self, x, y):
+        self.__x &#x3D; float(x)
+        self._y &#x3D; float(y)
+    @property
+    def x(self):
+        return self.__x
+
+    @property
+    def y(self):
+        return self._y
+
+    def __iter__(self):
+        return (i for i in (self.x, self.y))
+
+v &#x3D; Vector2d(1,2)
+print (v.x)
+print (v.y)
+print (v._y)
+print (v._Vector2d__x)
+
+1.0
+2.0
+2.0
+1.0</code></pre>
+<p>因此python所有内部变量均可以通过实例访问到。</p>
+<h4 id="抽象类"><a href="#抽象类" class="headerlink" title="抽象类"></a>抽象类</h4><p>抽象类不能实例化，</p>
+<pre class="language-py" data-language="py"><code class="language-py">from abc import ABCMeta, abstractmethod
+
+class IStream(metaclass&#x3D;ABCMeta):
+    @abstractmethod
+    def read(self, maxbytes&#x3D;-1):
+        pass
+
+    @abstractmethod
+    def write(self, data):
+        pass
+
+class SocketStream(IStream):
+    def read(self, maxbytes&#x3D;-1):
+        pass
+
+    def write(self, data):
+        pass</code></pre>
+<p>抽象基类的一个主要用途是在代码中检查某些类是否为特定类型，实现了特定接口：</p>
+<pre class="language-py" data-language="py"><code class="language-py">def serialize(obj, stream):
+    if not isinstance(stream, IStream):
+        raise TypeError(&#39;Expected an IStream&#39;)
+    pass</code></pre>
+<p>由于python参数不特定类型，抽象类很难发挥出cpp, Java这种强类型不可或缺的抽象。<br>同样的，抽象类不宜多用，包括复杂的继承。</p>
+<h3 id="可迭代-和生成器"><a href="#可迭代-和生成器" class="headerlink" title="可迭代 和生成器"></a>可迭代 和生成器</h3><p>所有生成器都是迭代器，因为生成器完全实现了迭代器的接口。迭代器用来从集合中取元素，生成器则用于生成元素。</p>
+<pre class="language-py" data-language="py"><code class="language-py">import re
+import reprlib
+
+RE_WORD &#x3D; re.compile(&#39;\w+&#39;)
+
+class Sentence:
+    def __init__(self, text):
+        self.text &#x3D; text
+        self.words &#x3D; RE_WORD.findall(text)
+    def __getitem__(self, index)
+        return self.words[index]
+    def __len__(self):
+        return len(self.words)
+    def __repr__(self):
+        return &#39;Sentence(%s)&#39; % reprlib.repr(self.text)
+
+s &#x3D; Sentence(&#39;The time has come&#39;)
+for word in s:
+    print(word)
+
+list(s)</code></pre>
+<p><code>re.finall</code>函数返回正则表达式全部非重叠匹配后的字符串列表。self.words为字符串列表结果。</p>
+<p>解释器需要迭代对象x时，会自动调用<code>iter(x)</code>。如果对象实现了<code>__iter__</code>就调用之，若没有实现但实现了<code>__getitem__</code>方法，python会创建一个迭代器按顺序获取元素。</p>
+<p>标准的迭代器接口有两个办法</p>
+<ul>
+<li><code>__next__</code> 返回下一个可用的元素，如果没有元素，抛出StopIteration异常</li>
+<li><code>__iter__</code> 返回self，以便在该应用迭代器地方使用迭代器。</li>
+</ul>
+<p><img src="../assets/images/python/3.png" alt="avatar" loading="lazy"></p>
+<pre class="language-py" data-language="py"><code class="language-py">class SentenceIterator:
+    def __init__(self, words):
+        self.words &#x3D; words
+        self.index &#x3D; 0
+    def __next__(self):
+        try:
+            word &#x3D; self.words[self.index]
+        except IndexError:
+            raise StopIteration()
+        self.index +&#x3D; 1
+        return word
+    def __iter__(self):
+        return self</code></pre>
+
+<p>生成器函数</p>
+<pre class="language-py" data-language="py"><code class="language-py">import re
+import reprlib
+
+RE_WORD &#x3D; re.compile(&#39;\w+&#39;)
+
+class Sentence:
+    def __init__(self, text):
+        self.text &#x3D; text
+        self.words &#x3D; RE_WORD.findall(text)
+    def __repr__(self):
+        return &#39;Sentence(%s)&#39; % reprlib.repr(self.text)
+    def __iter__(self):
+        for word in self.words:
+            yield word
+        return</code></pre>
+<p>带有<code>yield</code>关键字的函数是生成器函数，调用之会返回一个生成器对象。</p>
+<pre class="language-py" data-language="py"><code class="language-py">def gen_123():
+    yield 1
+    yield 2
+    yield 3
+
+g &#x3D; gen_123()
+next(g)
+# 1
+next(g)
+# 2
+next(g)
+# 3</code></pre>
+
+<h4 id="生成器到协程"><a href="#生成器到协程" class="headerlink" title="生成器到协程"></a>生成器到协程</h4><p>Cpython解释器本身不是线程安全的，因此有GIL: 全局解释器锁（英语：Global Interpreter Lock，缩写GIL），它使得任何时刻仅有一个线程在执行。[1]即便在多核心处理器上，使用 GIL 的解释器也只允许同一时间执行一个线程。由于GIL的存在，导致Python多线程性能甚至比单线程更糟。<br>但python线程等待操作系统返回结果时会释放GIL，例如等待网络响应，这时其他线程可以执行，意味着python多线程能获得些许提升。</p>
+<p>于是出现了协程（Coroutine）。协程的作用，是在执行函数A时，可以随时中断，去执行函数B，然后中断继续执行函数A（可以自由切换）。但这一过程并不是函数调用（没有调用语句），这一整个过程看似像多线程，然而协程只有一个线程执行.</p>
+<p>如上，方法中包含yield表达式后，Python会将其视作generator对象，不再是普通的方法。生成器这种执行一次就阻塞等待<code>__next__</code>的特性可用作协程。</p>
+<pre class="language-py" data-language="py"><code class="language-py">def test():
+    print(&quot;generator start&quot;)
+    n &#x3D; 1
+    while True:
+        yield_expression_value &#x3D; yield n
+        print(&quot;yield_expression_value &#x3D; %d&quot; % yield_expression_value)
+        n +&#x3D; 1
+
+
+# ①创建generator对象
+generator &#x3D; test()
+print(type(generator))
+
+print(&quot;\n---------------\n&quot;)
+
+# ②启动generator
+next_result &#x3D; generator.__next__()
+print(&quot;next_result &#x3D; %d&quot; % next_result)
+
+print(&quot;\n---------------\n&quot;)
+
+# ③发送值给yield表达式
+send_result &#x3D; generator.send(666)
+print(&quot;send_result &#x3D; %d&quot; % send_result)
+
+&lt;class &#39;generator&#39;&gt;
+---------------
+generator start
+next_result &#x3D; 1
+---------------
+yield_expression_value &#x3D; 666
+send_result &#x3D; 2</code></pre>
+<p>启动generator后，代码将执行到yield出现的位置，也就是执行到yield n，然后将n传递到generator.<strong>next</strong>()这行的返回值。生成器执行到yield n后将暂停在这里，直到下一次生成器被启动。</p>
+<p>调用send方法可以发送值给yield表达式，同时恢复生成器的执行。生成器从上次中断的位置继续向下执行，然后遇到下一个yield，生成器再次暂停，切换到主函数打印出send_result。</p>
+<p>生产者，消费者模型。模式是生产一个，消费一个，这不会阻塞，而是线程自动执行一次producer，再执行一次comsumer,循环往复。</p>
+<pre class="language-py" data-language="py"><code class="language-py">def consumer():
+    print(&quot;[CONSUMER] start&quot;)
+    r &#x3D; &#39;start&#39;
+    while True:
+        n &#x3D; yield r
+        if not n:
+            print(&quot;n is empty&quot;)
+            continue
+        print(&quot;[CONSUMER] Consumer is consuming %s&quot; % n)
+        r &#x3D; &quot;200 ok&quot;
+
+
+def producer(c):
+    # 启动generator
+    start_value &#x3D; c.send(None)
+    print(start_value)
+    n &#x3D; 0
+    while n &lt; 3:
+        n +&#x3D; 1
+        print(&quot;[PRODUCER] Producer is producing %d&quot; % n)
+        # 唤醒yield
+        r &#x3D; c.send(n)
+        print(&#39;[PRODUCER] Consumer return: %s&#39; % r)
+    # 关闭generator
+    c.close()
+
+
+# 创建生成器
+c &#x3D; consumer()
+# 传入generator
+producer(c)</code></pre>
+
+<h4 id="线程池-进程池"><a href="#线程池-进程池" class="headerlink" title="线程池/进程池"></a>线程池/进程池</h4><p>下载</p>
+<pre class="language-py" data-language="py"><code class="language-py">import os
+import time
+import sys
+
+import requests
+
+POP20_CC &#x3D; (&#39;CN IN US ID BR PK NG BD RU JP&#39;).split()
+BASE_URL &#x3D; &#39;http:&#x2F;&#x2F;flupy.org&#x2F;data&#x2F;flags&#39;
+DEST_DIR &#x3D; &#39;downloads&#x2F;&#39;
+
+def save_flag(img, filename):
+    path &#x3D; os.path.join(DEST_DIR, filename)
+    with open(path, &#39;wb&#39;) as fp:
+        fp.write(img)
+
+def get_flag(cc):
+    url &#x3D; &#39;&#123;&#125;&#x2F;&#123;cc&#125;&#x2F;&#123;cc&#125;.gif&#39;.format(BASE_URL, cc &#x3D; cc.lower())
+    resp &#x3D; requests.get(url)
+    return resp.content
+
+def show(text):
+    print(text, end&#x3D;&#39; &#39;)
+    sys.stdout.flush()
+
+def download_many(cc_list):
+    for cc in sorted(cc_list):
+        image &#x3D; get_flag(cc)
+        show(cc)
+        save_flag(image, cc.lower()+&#39;.gif&#39;)
+    return len(cc_list)
+
+def main(download_many):
+    t0 &#x3D; time.time()
+    count &#x3D; download_many(POP20_CC)
+    elapsed &#x3D; time.time() - t0
+    msg &#x3D; &#39;\n&#123;&#125; flags downloaded in &#123;:.2f&#125;s&#39;
+    print (msg.format(count, elapsed))
+
+if __name__ &#x3D;&#x3D; &quot;__main__&quot;:
+    main(download_many)</code></pre>
+
+<p><code>concurrent.futures</code>模块，主要提供了<code>ThreadPoolExecutor</code>和<code>ProcessPoolExecutor</code>类，维护一个线程池和任务序列。</p>
+<pre class="language-py" data-language="py"><code class="language-py">MAX_WORKERS &#x3D; 20
+def download_many(cc_list):
+    workers &#x3D; min(MAXWORDERS, len(cc_list))
+    with futures.ThreadPoolExecutor(workers) as executor:
+        res &#x3D; executor.map(download_one, sorted(cc_list))
+</code></pre>
+
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-13-golang%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1/" rel="prev" title="golang入门"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">golang入门</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/cpp%E8%BF%9B%E9%98%B6/2021-07-09-string%E5%85%B3%E8%81%94%E6%80%A7%E5%AE%B9%E5%99%A8/" rel="next" title="C/C++ 字符串"><span class="post-nav-text">C/C++ 字符串</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-7-11-%E6%B5%81%E5%88%A9python%E5%AF%B9%E8%B1%A1/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

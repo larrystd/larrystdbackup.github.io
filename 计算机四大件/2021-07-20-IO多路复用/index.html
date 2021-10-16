@@ -1,0 +1,372 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>IO多路复用 | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="IO多路复用I&#x2F;O多路复用同时检查多个文件描述符, 看它们是否准备好了执行I&#x2F;O操作。  多路是指多个业务方（句柄）并发下来的 IO 。复用是指复用这一个后台处理程序。文件描述符就绪状态的转化通过一些I&#x2F;O事件来触发, 比如输入数据到达, 套接字连接建立完成等。 用少量线程处理大量的并发, 就算IO多路复用的目的。事实上, Go 里最核心的是 Goroutine ，也就是所谓的协程, 实现原理也类">
+<meta property="og:type" content="article">
+<meta property="og:title" content="IO多路复用">
+<meta property="og:url" content="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-20-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="IO多路复用I&#x2F;O多路复用同时检查多个文件描述符, 看它们是否准备好了执行I&#x2F;O操作。  多路是指多个业务方（句柄）并发下来的 IO 。复用是指复用这一个后台处理程序。文件描述符就绪状态的转化通过一些I&#x2F;O事件来触发, 比如输入数据到达, 套接字连接建立完成等。 用少量线程处理大量的并发, 就算IO多路复用的目的。事实上, Go 里最核心的是 Goroutine ，也就是所谓的协程, 实现原理也类">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/assets/images/os/24.png">
+<meta property="og:image" content="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/assets/images/os/25.PNG">
+<meta property="article:published_time" content="2021-07-19T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-19T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="cpp">
+<meta property="article:tag" content="网络编程">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/assets/images/os/24.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8"><span class="toc-number">1.</span> <span class="toc-text">IO多路复用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%A4%E7%A7%8D%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%87%86%E5%A4%87%E5%B0%B1%E7%BB%AA%E7%9A%84%E9%80%9A%E7%9F%A5%E6%A8%A1%E5%BC%8F"><span class="toc-number">1.1.</span> <span class="toc-text">两种文件描述符准备就绪的通知模式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#select-%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8"><span class="toc-number">1.2.</span> <span class="toc-text">select()系统调用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#poll-%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8"><span class="toc-number">1.3.</span> <span class="toc-text">poll()系统调用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%AF%94%E8%BE%83select%E5%92%8Cpoll"><span class="toc-number">1.4.</span> <span class="toc-text">比较select和poll</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BF%A1%E5%8F%B7%E9%A9%B1%E5%8A%A8io"><span class="toc-number">1.5.</span> <span class="toc-text">信号驱动io</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#epoll"><span class="toc-number">2.</span> <span class="toc-text">epoll</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#epoll-%E5%8E%9F%E7%90%86"><span class="toc-number">2.1.</span> <span class="toc-text">epoll 原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%93%AA%E4%BA%9Bfd-%E5%8F%AF%E4%BB%A5%E7%94%A8-epoll-%E6%9D%A5%E7%AE%A1%E7%90%86"><span class="toc-number">2.2.</span> <span class="toc-text">哪些fd 可以用 epoll 来管理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#epoll%E5%92%8Cpoll-select"><span class="toc-number">2.3.</span> <span class="toc-text">epoll和poll, select</span></a></li></ol></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-20-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">IO多路复用<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/计算机四大件/2021-07-20-IO多路复用.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-07-20 00:00:00" itemprop="dateCreated datePublished" datetime="2021-07-20T00:00:00+08:00">2021-07-20</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">3.4k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">12m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/network/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">network</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/cpp/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">cpp</span></a><a class="tag-item" href="/tags/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">网络编程</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><h3 id="IO多路复用"><a href="#IO多路复用" class="headerlink" title="IO多路复用"></a>IO多路复用</h3><p>I/O多路复用同时检查多个文件描述符, 看它们是否准备好了执行I/O操作。 </p>
+<p>多路是指多个业务方（句柄）并发下来的 IO 。复用是指复用这一个后台处理程序。文件描述符就绪状态的转化通过一些I/O事件来触发, 比如输入数据到达, 套接字连接建立完成等。</p>
+<p>用少量线程处理大量的并发, 就算IO多路复用的目的。事实上, Go 里最核心的是 Goroutine ，也就是所谓的协程, 实现原理也类似。</p>
+<h4 id="两种文件描述符准备就绪的通知模式"><a href="#两种文件描述符准备就绪的通知模式" class="headerlink" title="两种文件描述符准备就绪的通知模式"></a>两种文件描述符准备就绪的通知模式</h4><ul>
+<li>水平触发通知, 如果文件描述符上可以非阻塞地执行I/O系统调用，认为已经就绪</li>
+<li>边缘触发, 如果文件描述符自上次检查以来有新的IO活动(比如新的输入),则触发通知</li>
+</ul>
+<p>水平触发可以认为文件描述符非阻塞执行时可多次触发, 而边缘触发只会在可非阻塞执行的开始时刻触发一次(效率高)。换句话说, 对于水平触发,文件描述符处于就绪态时, 我们还可以重复检查文件描述符看看是否还处于就绪态, 一直到不处于就绪态说明文件读写完毕。而对于边缘触发, 我们只能一次尽可能多执行IO, 因为只会在开始触发一次, 直到产生另一个I/O事件为止,在此之前程序不会再收到通知了。</p>
+<p>注意文件描述符需要设置成非阻塞模式。</p>
+<h4 id="select-系统调用"><a href="#select-系统调用" class="headerlink" title="select()系统调用"></a>select()系统调用</h4><p>系统调用<code>select()</code>会一直阻塞, 直到一个或多个文件描述符集合成为就绪态。</p>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;sys/time.h></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;sys/select.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">select</span> <span class="token punctuation">(</span><span class="token keyword">int</span> nfds<span class="token punctuation">,</span> fd_set <span class="token operator">*</span>readfds<span class="token punctuation">,</span> fd_set <span class="token operator">*</span>writefds<span class="token punctuation">,</span> fd_set <span class="token operator">*</span>exceptfds<span class="token punctuation">,</span> <span class="token keyword">struct</span> <span class="token class-name">timeval</span> <span class="token operator">*</span>timeout<span class="token punctuation">)</span>
+
+<span class="token comment">// returns number of ready file descriptors, 0 on timeout, or -1 on error</span></code></pre>
+
+<p>参数readfds, writefds, exceptfds分别用来检查输入是否就绪的文件描述符集合, 输出是否就绪的文件描述符集合, 异常情况是否发生的文件描述符集合。</p>
+<span id="more"></span>
+
+<p>对fd_set的操作都是通过四个宏来完成的</p>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;sys/select.h></span></span>
+
+<span class="token comment">// fdset指向的集合初始化为空</span>
+<span class="token keyword">void</span> <span class="token function">FD_ZERO</span><span class="token punctuation">(</span>fd_set <span class="token operator">*</span>fdset<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 文件描述符fd添加到fdset指向的集合中</span>
+<span class="token keyword">void</span> <span class="token function">FD_SET</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> fd_set <span class="token operator">*</span>fdset<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// fd从fdset中移除</span>
+<span class="token keyword">void</span> <span class="token function">FD_CLR</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> fd_set<span class="token operator">*</span> fdset<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// fdset中是否存在fd</span>
+<span class="token keyword">int</span> <span class="token function">FD_ISSET</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> fd_set<span class="token operator">*</span> fdset<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>文件描述符集合有最大容量限制,由FD_SETSIZE指定,默认1024。</p>
+<p>每次使用select()对需要重新设置readfds, writefds, exceptfds</p>
+<p>timeout参数控制select()的阻塞行为, 该参数可以指定为NULL, 此时select()会一直阻塞,直到readfds, writefds, exceptfds至少一个为就绪态, 或被信号阻断。</p>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token keyword">struct</span> <span class="token class-name">timeval</span> <span class="token punctuation">&#123;</span>
+    <span class="token class-name">time_t</span> tv_sec<span class="token punctuation">;</span>
+    <span class="token class-name">suseconds_t</span> tv_usec<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+<p>如果结构体timeval的两个域都为0, 此时select()不会阻塞, 只是简单轮询文件描述符集合,有就绪的文件描述符旧立即返回。否则,timeout为select设置一个等待时间的上限值。</p>
+<h4 id="poll-系统调用"><a href="#poll-系统调用" class="headerlink" title="poll()系统调用"></a>poll()系统调用</h4><p>poll()和select()执行时很相似，区别主要在于如何指定待检查的文件描述符。select()中提供三个集合, 每个集合标明感兴趣的文件描述符; 在poll()中提供一列文件描述符结构体, 每个描述符结构体有感兴趣的事件成员。</p>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;poll.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">poll</span><span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">pollfd</span> fds<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token class-name">nfds_t</span> nfds<span class="token punctuation">,</span> <span class="token keyword">int</span> timeout<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">// returns number of ready file descriptors, 0 on timeout, or -1 on error</span></code></pre>
+<p>nfds为fds的元素个数, 参数fds列出需要检查的文件描述符</p>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token keyword">struct</span> <span class="token class-name">pollfd</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">int</span> fd<span class="token punctuation">;</span>
+    <span class="token keyword">short</span> events<span class="token punctuation">;</span>
+    <span class="token keyword">short</span> revents<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre>
+<p><code>events</code>和<code>revents</code>都是位掩码, 初始化event指定fd检查的事件(可读, 可写等), poll返回时, revents被设定表示文件描述符实际发生的事件。</p>
+<p>位掩码</p>
+<ul>
+<li>POLLIN 可读取非高优先级数据</li>
+<li>POLLRDNORM 等同于POLLIN</li>
+<li>POLLPRI 可读取高优先级数据</li>
+<li>POLLRDHUB 对端套接字关闭</li>
+<li>POLLOUT 普通数据可写</li>
+<li>POLLWANORM 等同于POLLOUT</li>
+<li>POLLWRBAND 优先级数据可写入</li>
+<li>POLLERR 有错误发生</li>
+<li>POLLNVAL 文件描述符未打开</li>
+</ul>
+<h4 id="比较select和poll"><a href="#比较select和poll" class="headerlink" title="比较select和poll"></a>比较select和poll</h4><p>select()和poll()在套接字的行为表现, poll设置events字段制定了<code>POLLIN|POLLOUT|POLLPRI</code>标志位, select需要检查文件描述符的输入,输出,异常情况是否发生。</p>
+<table>
+<thead>
+<tr>
+<th>socket事件</th>
+<th>selct()</th>
+<th>poll()</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>有输入</td>
+<td>r</td>
+<td>POLLIN</td>
+</tr>
+<tr>
+<td>可输出</td>
+<td>w</td>
+<td>POLLOUT</td>
+</tr>
+<tr>
+<td>监听套接字建立连接</td>
+<td>r</td>
+<td>POLLIN</td>
+</tr>
+<tr>
+<td>关闭连接</td>
+<td>rw</td>
+<td>POLLIN|POLLOUT|POLLRDHUB</td>
+</tr>
+</tbody></table>
+<p>可以使用宏将poll例程返回的信息转化为select()返回的与之对应的事件类型</p>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token comment">// Ready for reading</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">POLLIN_SET</span> <span class="token expression"><span class="token punctuation">(</span>POLLRDNORM <span class="token operator">|</span> POLLRDBAND <span class="token operator">|</span> POLLIN <span class="token operator">|</span> POLLHUB <span class="token operator">|</span> POLLERR<span class="token punctuation">)</span></span></span>
+
+<span class="token comment">// Ready for writing</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">POLLOUT_SET</span> <span class="token expression"><span class="token punctuation">(</span>POLLWRBAND <span class="token operator">|</span> POLLWRNORM <span class="token operator">|</span> POLLOUT <span class="token operator">|</span> POLLERR</span></span>
+
+<span class="token comment">// Exceptional condition</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name function">POLLEX_SET</span><span class="token expression"><span class="token punctuation">(</span>POLLPRI<span class="token punctuation">)</span></span></span></code></pre>
+
+<p>select对fd_set检查的文件描述符数量有上限,默认1024, poll无上限</p>
+<p>当大量文件描述符检查且分布密集时, poll和select有相似的性能表现, 但如果分布稀疏, poll性能优于select。因为select必须遍历fd_set集合, poll可以指定检查感兴趣的文件描述符。</p>
+<p>性能延展问题, 每次调用select或poll, 内核都必须传递一个表示所有需要被检查的fd的数据结构到内核,内核检查修改后传给程序。当文件描述符数量很大, 用户内核空间来回拷贝该数据结构占用大量cpu时间。</p>
+<h4 id="信号驱动io"><a href="#信号驱动io" class="headerlink" title="信号驱动io"></a>信号驱动io</h4><p>信号驱动IO中, 当文件描述符可执行I/O操作时, 进程请求内核为自己发送一个信号。之后进程执行其他任务直到I/O就绪，此时内核发送信号给进程。</p>
+<p>信号驱动IO提供的时边缘触发通知，意味着一旦进程被通知I/O就绪, 就应该尽可能多地执行I/O.</p>
+<h3 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h3><ul>
+<li>epoll API既支持水平触发也支持边沿触发, 而select()和poll()只支持水平触发, 信号驱动I/O只支持边沿触发。</li>
+<li>当有大量文件描述符时，延展性比select() 和poll() 高很多。</li>
+</ul>
+<p>epoll API由以下三个系统调用组成</p>
+<ul>
+<li><code>epoll_create()</code>创建一个epoll实例，也就是创建一个装fd的池子，返回代表该实例的文件描述符epfd,epfd唯一表示该epoll实例 </li>
+<li><code>epoll_ctl()</code>操作同epoll实例相关联的兴趣列表。通过<code>epoll_ctl</code>，可以增加新的描述符到列表中，将已有描述符移除，修改描述符上的位掩码等操作</li>
+<li><code>epoll_wait</code>返回就绪列表中的成员。</li>
+</ul>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;sys/epoll.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">epoll_create</span><span class="token punctuation">(</span><span class="token keyword">int</span> size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 初始兴趣列表位空, 成功返回fd, 失败返回-1</span>
+
+<span class="token keyword">int</span> <span class="token function">epoll_ctl</span><span class="token punctuation">(</span><span class="token keyword">int</span> epfd<span class="token punctuation">,</span> <span class="token keyword">int</span> op<span class="token punctuation">,</span> <span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">struct</span> <span class="token class-name">epoll_event</span><span class="token operator">*</span> ev<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 成功返回0， 不成功-1</span>
+<span class="token comment">// op 指定执行的操作</span>
+<span class="token comment">// EPOLL_CTL_ADD 将fd添加到epoll实例epfd的兴趣列表</span>
+<span class="token comment">// EPOLL_CTL_MOD 修改fd设定的世家</span>
+<span class="token comment">// EPOLL_CTL_DEL 将fd从epfd列表删除</span>
+
+<span class="token comment">// ev时指向结构体epoll_event的指针</span>
+<span class="token keyword">struct</span> <span class="token class-name">epoll_event</span> <span class="token punctuation">&#123;</span>
+    <span class="token class-name">uint32_t</span> events<span class="token punctuation">;</span>    <span class="token comment">// events (bit mask)</span>
+    <span class="token class-name">epoll_data_t</span> data<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">typedef</span> <span class="token keyword">union</span> epoll_data <span class="token punctuation">&#123;</span>
+    <span class="token keyword">void</span> <span class="token operator">*</span>ptr<span class="token punctuation">;</span>  <span class="token comment">// pointer to user-defined data</span>
+    <span class="token keyword">int</span> fd<span class="token punctuation">;</span> <span class="token comment">// fd</span>
+    <span class="token class-name">uint32_t</span> u32<span class="token punctuation">;</span>
+    <span class="token class-name">uint64_t</span> u64<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span> <span class="token class-name">epoll_data_t</span><span class="token punctuation">;</span>
+
+
+<span class="token keyword">int</span> <span class="token function">epoll_wait</span><span class="token punctuation">(</span><span class="token keyword">int</span> epfd<span class="token punctuation">,</span> <span class="token keyword">struct</span> <span class="token class-name">epoll_event</span><span class="token operator">*</span> evlist<span class="token punctuation">,</span> <span class="token keyword">int</span> maxevents<span class="token punctuation">,</span> <span class="token keyword">int</span> timeout<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// return numbers of ready file descriptors, 0 on timeout, or -1 on error</span>
+<span class="token comment">// timeout = -1会一直阻塞， 0不阻塞, >0 阻塞timeout ms</span></code></pre>
+
+<ul>
+<li>epoll 事件</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>位掩码</th>
+<th>作为epoll_ctl输入?</th>
+<th>作为epoll_wait返回?</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>EPOLLIN</td>
+<td>1</td>
+<td>1</td>
+<td>读取非高优先级数据</td>
+</tr>
+<tr>
+<td>EPOLLPRI</td>
+<td>1</td>
+<td>1</td>
+<td>读取高优先级数据</td>
+</tr>
+<tr>
+<td>EPOLLRDHUB</td>
+<td>1</td>
+<td>1</td>
+<td>套接字对端关闭</td>
+</tr>
+<tr>
+<td>EPOLLOUT</td>
+<td>1</td>
+<td>1</td>
+<td>普通数据可写</td>
+</tr>
+<tr>
+<td>EPOLLET</td>
+<td>1</td>
+<td>0</td>
+<td>采用边缘触发通知</td>
+</tr>
+<tr>
+<td>EPOLLERR</td>
+<td>0</td>
+<td>1</td>
+<td>有错误发送</td>
+</tr>
+</tbody></table>
+<p>fd的读写事件都需要特定的epoll事件，也就是位掩码。</p>
+<h4 id="epoll-原理"><a href="#epoll-原理" class="headerlink" title="epoll 原理"></a>epoll 原理</h4><p>当某一进程调用epoll_create方法时，Linux内核会创建一个eventpoll结构体。即在内核cache里建了个红黑树用于存储以后epoll_ctl传来的socket， 再建立一个rdllist双向链表，用于存储准备就绪的事件，当epoll_wait调用时，仅仅观察这个rdllist双向链表里有没有数据即可。有数据就返回，没有数据就sleep，等到timeout时间到后即使链表没数据也返回。</p>
+<ul>
+<li><p>epoll_ctl使用的红黑树数据结构十分高效。Linux 内核对于 epoll 池的内部实现就是用红黑树的结构体来管理这些注册进程来的句柄 fd。红黑树是一种平衡二叉树，时间复杂度为 O(log n)，就算这个池子就算不断的增删改，也能保持非常稳定的查找性能。</p>
+</li>
+<li><p>回调的设置使epoll中的数据准备好之后可以立马感知。在 epoll_ctl 的内部实现中，除了把句柄结构用红黑树管理，另一个核心步骤就是设置 poll 回调。事实上,poll回调和<code>open</code>, <code>read</code>一样, 是linux内核支持的文件基本操作。</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">struct</span> <span class="token class-name">file_operations</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">ssize_t</span> <span class="token punctuation">(</span><span class="token operator">*</span>read<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">file</span> <span class="token operator">*</span><span class="token punctuation">,</span> <span class="token keyword">char</span> __user <span class="token operator">*</span><span class="token punctuation">,</span> size_t<span class="token punctuation">,</span> loff_t <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">ssize_t</span> <span class="token punctuation">(</span><span class="token operator">*</span>write<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">file</span> <span class="token operator">*</span><span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> __user <span class="token operator">*</span><span class="token punctuation">,</span> size_t<span class="token punctuation">,</span> loff_t <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">__poll_t</span> <span class="token punctuation">(</span><span class="token operator">*</span>poll<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">file</span> <span class="token operator">*</span><span class="token punctuation">,</span> <span class="token keyword">struct</span> <span class="token class-name">poll_table_struct</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> <span class="token punctuation">(</span><span class="token operator">*</span>open<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">inode</span> <span class="token operator">*</span><span class="token punctuation">,</span> <span class="token keyword">struct</span> <span class="token class-name">file</span> <span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> <span class="token punctuation">(</span><span class="token operator">*</span>fsync<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> <span class="token class-name">file</span> <span class="token operator">*</span><span class="token punctuation">,</span> loff_t<span class="token punctuation">,</span> loff_t<span class="token punctuation">,</span> <span class="token keyword">int</span> datasync<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// ....</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<p>不同的文件系统会实现自己文件系统对文件的操作, 比如 ext2 如果有对 read/write 做定制化，那么就会是 ext2_read，ext2_write，ext4 就会是 ext4_read，ext4_write。在 open 具体“文件”的时候会赋值对应文件系统的 file_operations 给到 file 结构体。</p>
+<ul>
+<li><p>通过 poll 机制让上层能直接告诉底层，我这个 fd 一旦读写就绪了，请底层硬件（比如网卡）回调的时候自动把这个 fd 相关的结构体放到指定队列中，并且唤醒操作系统。实际上只是向底层函数加入了一个<code>函数类型</code>的回调函数指针, 一旦底层读写就绪, 将执行这个回调函数。</p>
+</li>
+<li><p>中断一般拆分成两部分：硬中断和软中断。poll 函数就是把软中断回来的路上走一条捷径，只要读写事件触发的时候，就会立马通知到上层。<strong>poll 事件回调机制则是 epoll 池高效最核心原理</strong>。epoll只是应用的Linux内核的<code>poll</code>调用, 但如果文件所在的文件系统没有实现 poll 接口，那么就用不了 epoll 机制。</p>
+</li>
+</ul>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token keyword">struct</span> <span class="token class-name">eventpoll</span> <span class="token punctuation">&#123;</span>
+　　<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+　　<span class="token comment">/*红黑树的根节点，这棵树中存储着所有添加到epoll中的事件，
+　　也就是这个epoll监控的事件*/</span>
+　　<span class="token keyword">struct</span> <span class="token class-name">rb_root</span> rbr<span class="token punctuation">;</span>
+　　<span class="token comment">/*双向链表rdllist保存着将要通过epoll_wait返回给用户的、满足条件的事件*/</span>
+　　<span class="token keyword">struct</span> <span class="token class-name">list_head</span> rdllist<span class="token punctuation">;</span>
+　　<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<ul>
+<li>添加到epoll中的事件都会与设备驱动程序建立回调关系，也就是说相应事件的发生时会调用这里的回调方法。这个回调方法在内核中叫做ep_poll_callback，回调方法会把发生的事件放到上面的rdllist双向链表中。</li>
+</ul>
+<p><img src="../assets/images/os/24.png" alt="avatar" loading="lazy"></p>
+<p>在epoll中对于每一个事件都会建立一个epitem结构体</p>
+<pre class="language-c" data-language="c"><code class="language-c"><span class="token keyword">struct</span> <span class="token class-name">epitem</span> <span class="token punctuation">&#123;</span>
+　　<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+　　<span class="token comment">//红黑树节点</span>
+　　<span class="token keyword">struct</span> <span class="token class-name">rb_node</span> rbn<span class="token punctuation">;</span>
+　　<span class="token comment">//双向链表节点</span>
+　　<span class="token keyword">struct</span> <span class="token class-name">list_head</span> rdllink<span class="token punctuation">;</span>
+　　<span class="token comment">//事件句柄等信息</span>
+　　<span class="token keyword">struct</span> <span class="token class-name">epoll_filefd</span> ffd<span class="token punctuation">;</span>
+　　<span class="token comment">//指向其所属的eventepoll对象</span>
+　　<span class="token keyword">struct</span> <span class="token class-name">eventpoll</span> <span class="token operator">*</span>ep<span class="token punctuation">;</span>
+　　<span class="token comment">//期待的事件类型</span>
+　　<span class="token keyword">struct</span> <span class="token class-name">epoll_event</span> event<span class="token punctuation">;</span>
+　　<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span> <span class="token comment">// 这里包含每一个事件对应着的信息。</span></code></pre>
+
+<p>调用epoll_wait检查是否有发生事件的连接时，只是检查eventpoll对象中的rdllist双向链表是否有epitem元素而已，如果rdllist链表不为空，则这里的事件复制到用户态内存。epoll_ctl在向epoll对象中添加、修改、删除事件时，从rbr红黑树中查找事件也非常快。</p>
+<h4 id="哪些fd-可以用-epoll-来管理"><a href="#哪些fd-可以用-epoll-来管理" class="headerlink" title="哪些fd 可以用 epoll 来管理"></a>哪些fd 可以用 epoll 来管理</h4><p>类似 ext2，ext4，xfs 这种常规的文件系统是没有实现的，换句话说，<strong>最常见的、真的是文件的文件系统</strong>反倒是用不了 epoll 机制的。</p>
+<ol>
+<li>最常见支持的的就是网络套接字：socket 。网络也是 epoll 池最常见的应用地点</li>
+</ol>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">const</span> <span class="token keyword">struct</span> <span class="token class-name">file_operations</span> socket_file_ops <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
+    <span class="token punctuation">.</span>read_iter <span class="token operator">=</span>    sock_read_iter<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>write_iter <span class="token operator">=</span>   sock_write_iter<span class="token punctuation">,</span>
+    <span class="token punctuation">.</span>poll <span class="token operator">=</span>     sock_poll<span class="token punctuation">,</span>
+    <span class="token comment">// ...</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<ol start="2">
+<li><p>eventfd：eventfd 实现非常简单，故名思义就是专门用来做事件通知用的。使用系统调用 eventfd 创建，这种文件 fd 无法传输数据，只用来传输事件，常常用于生产消费者模式的事件实现；</p>
+</li>
+<li><p>timerfd：这是一种定时器 fd，使用 timerfd_create 创建，到时间点触发可读事件</p>
+</li>
+</ol>
+<p><img src="../assets/images/os/25.PNG" alt="avatar" loading="lazy"></p>
+<h4 id="epoll和poll-select"><a href="#epoll和poll-select" class="headerlink" title="epoll和poll, select"></a>epoll和poll, select</h4><ul>
+<li>select和poll并不会明确指出是哪些文件描述符就绪，而epoll会。造成的区别就是，系统调用返回后，调用select和poll的程序需要遍历监听的整个文件描述符找到是谁处于就绪，而epoll则直接处理即可。</li>
+<li>select、poll都需要将有关文件描述符的数据结构拷贝进内核，最后再拷贝出来。而epoll创建的有关文件描述符的数据结构本身就存于内核态中，系统调用返回时利用mmap()文件映射内存加速与内核空间的消息传递：即epoll使用mmap减少复制开销。</li>
+<li>select、poll采用轮询的方式来检查文件描述符是否处于就绪态，而epoll采用回调机制。造成的结果就是，随着fd的增加，select和poll的效率会线性降低，而epoll不会受到太大影响，除非活跃的socket很多。</li>
+<li>epoll的边缘触发模式效率高，系统不会充斥大量不关心的就绪文件描述符</li>
+<li>虽然epoll的性能最好，但是在连接数少并且连接都十分活跃的情况下，select和poll的性能可能比epoll好，毕竟epoll的通知机制需要很多函数回调。</li>
+</ul>
+</div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-21-linux%E7%B3%BB%E7%BB%9F/" rel="prev" title="linux内核"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">linux内核</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/2021-07-18-tensorflow/" rel="next" title="tensorflow"><span class="post-nav-text">tensorflow</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9B%9B%E5%A4%A7%E4%BB%B6/2021-07-20-IO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>

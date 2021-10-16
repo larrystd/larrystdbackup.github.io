@@ -1,0 +1,628 @@
+<!DOCTYPE html><html lang="zh-CN"><head><!-- hexo injector head_begin start --><link href="/css/tag-common/index.css" rel="stylesheet"/><!-- hexo injector head_begin end --><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#6200ee"><meta name="author" content="larry"><meta name="copyright" content="larry"><meta name="generator" content="Hexo 5.4.0"><meta name="theme" content="hexo-theme-yun"><title>Hash和STL | 拉瑞君の小窝</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/star-markdown-css@0.1.25/dist/yun/yun-markdown.min.css"><script src="//at.alicdn.com/t/font_1140697_dxory92pb0h.js" async></script><script src="https://cdn.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".post-content img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link class="aplayer-style-marker" rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script class="aplayer-script-marker" src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" defer></script><script class="meting-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js" defer></script><script>document.addEventListener(
+  "pjax:success",
+  function() {
+    if (window.aplayers) {
+      loadMeting();
+    }
+  },
+  !1
+);
+</script><link id="light-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism.css" media="(prefers-color-scheme: light)"><link id="dark-prism-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@latest/themes/prism-tomorrow.css" media="(prefers-color-scheme: dark)"><link rel="icon" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#6200ee"><link rel="alternate icon" href="/yun.ico"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="preload" href="/js/utils.js" as="script"><link rel="preload" href="/js/hexo-theme-yun.js" as="script"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><script id="yun-config">
+    const Yun = window.Yun || {};
+    window.CONFIG = {"hostname":"larrystd.github.io","root":"/","title":"拉瑞君の小窝","version":"1.6.3","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"搜索...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）"},"anonymous_image":"https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/avatar/none.jpg","say":{"api":"https://v1.hitokoto.cn","hitokoto":true},"algolia":{"appID":"CJXXAGRCYN","apiKey":"ae1966d2aeab22bf9335679f45d2cd9a","indexName":"my-hexo-blog","hits":{"per_page":8}},"fireworks":{"colors":["102, 167, 221","62, 131, 225","33, 78, 194"]}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/utils.js"></script><script src="/js/hexo-theme-yun.js"></script><link rel="alternate" href="/atom.xml" title="拉瑞君の小窝" type="application/atom+xml"><link rel="preconnect" href="https://www.google-analytics.com" crossorigin><script async src="https://www.googletagmanager.com/gtag/js?id=G-1LL0D86CY9"></script><script>if (CONFIG.hostname === location.hostname) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1LL0D86CY9');
+}</script><script data-ad-client="ca-pub-2245427233262012" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(function(){
+  var bp = document.createElement('script');
+  var curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else {
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})();</script><!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-M9KWR9L');</script><!-- End Google Tag Manager --><meta name="description" content="hash是应用最广泛的数据结构之一结构, STL主要应用于unordered_map, ordered_set  HASH HASH的数据结构很简单, 可以由一段数组和链表构成。对象基于定义的hash函数映射到该数组某个位置(映射范围不超过数组长度, 定长), 如果多个对象映射到同一个位置(hash碰撞), 则添加到链表中(开链法)。  数组中的元素成为buckets. 下面从STL源码中看ha">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hash和STL">
+<meta property="og:url" content="https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-21-hash%E5%92%8CSTL/index.html">
+<meta property="og:site_name" content="拉瑞君の小窝">
+<meta property="og:description" content="hash是应用最广泛的数据结构之一结构, STL主要应用于unordered_map, ordered_set  HASH HASH的数据结构很简单, 可以由一段数组和链表构成。对象基于定义的hash函数映射到该数组某个位置(映射范围不超过数组长度, 定长), 如果多个对象映射到同一个位置(hash碰撞), 则添加到链表中(开链法)。  数组中的元素成为buckets. 下面从STL源码中看ha">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://larrystd.github.io/assets/images/algorithm/26.png">
+<meta property="article:published_time" content="2021-09-20T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-20T16:00:00.000Z">
+<meta property="article:author" content="larry">
+<meta property="article:tag" content="STL">
+<meta property="article:tag" content="HASH">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://larrystd.github.io/assets/images/algorithm/26.png"><script src="/js/ui/mode.js"></script></head><body><script defer src="https://cdn.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="文章目录"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-list-ordered"></use></svg></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="站点概览"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-passport-line"></use></svg></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="larry"><img width="96" loading="lazy" src="/images/avatar.jpg" alt="larry"><span class="site-author-status" title="Looking for you.">🌑</span></a><div class="site-author-name"><a href="/about/">larry</a></div><a class="site-name" href="/about/site.html">拉瑞君の小窝</a><sub class="site-subtitle"></sub><div class="site-desciption">每天都是新的一天呢</div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="首页"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-home-4-line"></use></svg></span></a><div class="site-state-item"><a href="/archives/" title="归档"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-archive-line"></use></svg></span><span class="site-state-item-count">86</span></a></div><div class="site-state-item"><a href="/categories/" title="分类"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-2-line"></use></svg></span><span class="site-state-item-count">13</span></a></div><div class="site-state-item"><a href="/tags/" title="标签"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="site-state-item-count">42</span></a></div><a class="site-state-item hty-icon-button" href="/about/#comment" title="留言板"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-clipboard-line"></use></svg></span></a></nav><hr style="margin-bottom:0.5rem"><div class="links-of-author"><a class="links-of-author-item hty-icon-button" rel="noopener" href="/atom.xml" title="RSS" target="_blank" style="color:orange"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-rss-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://github.com/larrystd" title="GitHub" target="_blank" style="color:#6e5494"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-github-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://www.zhihu.com/people/bu-qu-dou-yin-bu-gai-ming" title="知乎" target="_blank" style="color:#0084FF"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-zhihu-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="Venray.Kong@outlook.com" title="E-Mail" target="_blank" style="color:#8E71C1"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-mail-line"></use></svg></a><a class="links-of-author-item hty-icon-button" rel="noopener" href="https://travellings.link" title="Travelling" target="_blank" style="color:var(--hty-text-color)"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-train-line"></use></svg></a></div><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-genderless-line"></use></svg></a><a class="links-item hty-icon-button" href="/girls/" title="喜欢的女孩子" style="color:hotpink"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-women-line"></use></svg></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-contrast-2-line"></use></svg></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#HASH"><span class="toc-number">1.</span> <span class="toc-text">HASH</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#hash-buckets"><span class="toc-number">1.1.</span> <span class="toc-text">hash buckets</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#hash"><span class="toc-number">1.2.</span> <span class="toc-text">hash</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E5%85%83%E7%B4%A0"><span class="toc-number">1.3.</span> <span class="toc-text">插入元素</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%AD%E4%BB%A3%E5%99%A8%E8%90%83%E5%8F%96"><span class="toc-number">2.</span> <span class="toc-text">迭代器萃取</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#vector"><span class="toc-number">3.</span> <span class="toc-text">vector</span></a></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article"><link itemprop="mainEntityOfPage" href="https://larrystd.github.io/cpp%E8%BF%9B%E9%98%B6/2021-09-21-hash%E5%92%8CSTL/"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="larry"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="拉瑞君の小窝"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">Hash和STL<a class="post-edit-link" href="https://github.com/larrystd/larrystd.github.io/tree/hexo/source/_posts/cpp进阶/2021-09-21-hash和STL.md" target="_blank" title="编辑" rel="noopener"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-edit-line"></use></svg></a></h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-calendar-line"></use></svg></span> <time title="创建时间：2021-09-21 00:00:00" itemprop="dateCreated datePublished" datetime="2021-09-21T00:00:00+08:00">2021-09-21</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="本文字数"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-file-word-line"></use></svg></span> <span title="本文字数">2.9k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="阅读时长"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-timer-line"></use></svg></span> <span title="阅读时长">14m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-folder-line"></use></svg></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/cpp-advanced/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">cpp advanced</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/STL/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">STL</span></a><a class="tag-item" href="/tags/HASH/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-price-tag-3-line"></use></svg></span><span class="tag-name">HASH</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body" style="--smc-primary:#6200ee;"><blockquote>
+<p>hash是应用最广泛的数据结构之一结构, STL主要应用于unordered_map, ordered_set</p>
+</blockquote>
+<h3 id="HASH"><a href="#HASH" class="headerlink" title="HASH"></a>HASH</h3><ul>
+<li>HASH的数据结构很简单, 可以由一段数组和链表构成。对象基于定义的hash函数映射到该数组某个位置(映射范围不超过数组长度, 定长), 如果多个对象映射到同一个位置(hash碰撞), 则添加到链表中(开链法)。</li>
+</ul>
+<p><img src="../../assets/images/algorithm/26.png" alt="avatar" loading="lazy"><br>数组中的元素成为buckets.</p>
+<p>下面从STL源码中看hash表的结构</p>
+<h4 id="hash-buckets"><a href="#hash-buckets" class="headerlink" title="hash buckets"></a>hash buckets</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">//// 定义hashtable, 也就是vector</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">_Aliter</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">_Hash_vec</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// TRANSITION, ABI: "vector" for ABI compatibility that doesn't call allocator::construct</span>
+    <span class="token keyword">using</span> _Aliter_traits    <span class="token operator">=</span> allocator_traits<span class="token operator">&lt;</span>_Aliter<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> value_type        <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Aliter</span><span class="token double-colon punctuation">::</span>value_type<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> size_type         <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Aliter_traits</span><span class="token double-colon punctuation">::</span>size_type<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> difference_type   <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Aliter_traits</span><span class="token double-colon punctuation">::</span>difference_type<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> pointer           <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Aliter_traits</span><span class="token double-colon punctuation">::</span>pointer<span class="token punctuation">;</span></code></pre>
+
+<span id="more"></span>
+
+<h4 id="hash"><a href="#hash" class="headerlink" title="hash"></a>hash</h4><ul>
+<li><p>注意C++ hashtable的哈希函数是作为类型参数传入(类型参数传模板, 对象参数传形参), </p>
+</li>
+<li><p>hash类维护的是双向链表_List和哈希桶_Vec的集合</p>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// 定义hash函数, 传入_Traits class</span>
+<span class="token comment">/// _Traits class就是自定义的hash函数</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">_Traits</span><span class="token operator">></span>
+<span class="token keyword">class</span> <span class="token class-name">_Hash</span> <span class="token punctuation">&#123;</span> <span class="token comment">// hash table -- list with vector of iterators for quick access</span>
+<span class="token keyword">protected</span><span class="token operator">:</span>
+    <span class="token comment">/// list是双向链表</span>
+    <span class="token keyword">using</span> _Mylist             <span class="token operator">=</span> list<span class="token operator">&lt;</span><span class="token keyword">typename</span> <span class="token class-name">_Traits</span><span class="token double-colon punctuation">::</span>value_type<span class="token punctuation">,</span> <span class="token keyword">typename</span> <span class="token class-name">_Traits</span><span class="token double-colon punctuation">::</span>allocator_type<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> _Alnode             <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Mylist</span><span class="token double-colon punctuation">::</span>_Alnode<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> _Alnode_traits      <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Mylist</span><span class="token double-colon punctuation">::</span>_Alnode_traits<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> _Node               <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Mylist</span><span class="token double-colon punctuation">::</span>_Node<span class="token punctuation">;</span>
+    <span class="token comment">/// 指向链表的节点</span>
+    <span class="token keyword">using</span> _Nodeptr            <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Mylist</span><span class="token double-colon punctuation">::</span>_Nodeptr<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> _Mutable_value_type <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Traits</span><span class="token double-colon punctuation">::</span>_Mutable_value_type<span class="token punctuation">;</span>
+    <span class="token comment">/// 求hash函数值</span>
+    <span class="token keyword">using</span> _Key_compare   <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Traits</span><span class="token double-colon punctuation">::</span>key_compare<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> _Value_compare <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Traits</span><span class="token double-colon punctuation">::</span>value_compare<span class="token punctuation">;</span>
+
+<span class="token comment">/// 成员变量</span>
+    <span class="token comment">/// 传入Traits用来计算hash值</span>
+    _Traits _Traitsobj<span class="token punctuation">;</span> <span class="token comment">// traits to customize behavior</span>
+    <span class="token comment">/// 开链法的双向链表</span>
+    _Mylist _List<span class="token punctuation">;</span> <span class="token comment">// list of elements, must initialize before _Vec</span>
+    <span class="token comment">/// buckets是一个vector</span>
+    _Hash_vec<span class="token operator">&lt;</span>_Aliter<span class="token operator">></span> _Vec<span class="token punctuation">;</span> <span class="token comment">// "vector" of list iterators for buckets:</span>
+                             <span class="token comment">// each bucket is 2 iterators denoting the closed range of elements in the bucket,</span>
+                             <span class="token comment">// or both iterators set to _Unchecked_end() if the bucket is empty.</span>
+    size_type _Mask<span class="token punctuation">;</span> <span class="token comment">// the key mask</span>
+    size_type _Maxidx<span class="token punctuation">;</span> <span class="token comment">// current maximum key value, must be a power of 2</span></code></pre></li>
+</ul>
+<h4 id="插入元素"><a href="#插入元素" class="headerlink" title="插入元素"></a>插入元素</h4><pre class="language-cpp" data-language="cpp"><code class="language-cpp">    <span class="token comment">/// 插入节点</span>
+    <span class="token comment">///</span>
+    _Nodeptr <span class="token function">_Insert_new_node_before</span><span class="token punctuation">(</span>
+        <span class="token keyword">const</span> size_t _Hashval<span class="token punctuation">,</span> <span class="token keyword">const</span> _Nodeptr _Insert_before<span class="token punctuation">,</span> <span class="token keyword">const</span> _Nodeptr _Newnode<span class="token punctuation">)</span> <span class="token keyword">noexcept</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">/// _Insert_before位置上插入数据</span>
+        <span class="token keyword">const</span> _Nodeptr _Insert_after <span class="token operator">=</span> _Insert_before<span class="token operator">-></span>_Prev<span class="token punctuation">;</span>
+        <span class="token operator">++</span>_List<span class="token punctuation">.</span>_Mypair<span class="token punctuation">.</span>_Myval2<span class="token punctuation">.</span>_Mysize<span class="token punctuation">;</span>
+        <span class="token comment">/// 将_Newnode以链表形式插入到_Insert_before位置</span>
+        <span class="token function">_Construct_in_place</span><span class="token punctuation">(</span>_Newnode<span class="token operator">-></span>_Next<span class="token punctuation">,</span> _Insert_before<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">_Construct_in_place</span><span class="token punctuation">(</span>_Newnode<span class="token operator">-></span>_Prev<span class="token punctuation">,</span> _Insert_after<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        _Insert_after<span class="token operator">-></span>_Next  <span class="token operator">=</span> _Newnode<span class="token punctuation">;</span>
+        _Insert_before<span class="token operator">-></span>_Prev <span class="token operator">=</span> _Newnode<span class="token punctuation">;</span>
+
+        <span class="token keyword">const</span> <span class="token keyword">auto</span> _Head         <span class="token operator">=</span> _List<span class="token punctuation">.</span>_Mypair<span class="token punctuation">.</span>_Myval2<span class="token punctuation">.</span>_Myhead<span class="token punctuation">;</span>
+        <span class="token keyword">const</span> <span class="token keyword">auto</span> _Bucket_array <span class="token operator">=</span> _Vec<span class="token punctuation">.</span>_Mypair<span class="token punctuation">.</span>_Myval2<span class="token punctuation">.</span>_Myfirst<span class="token punctuation">;</span>
+        <span class="token comment">/// _Bucket</span>
+        <span class="token keyword">const</span> size_type _Bucket <span class="token operator">=</span> _Hashval <span class="token operator">&amp;</span> _Mask<span class="token punctuation">;</span>
+        <span class="token comment">/// _Bucket_array的位置, 找到_Bucket_lo, _Bucket_hi</span>
+        _Unchecked_iterator<span class="token operator">&amp;</span> _Bucket_lo <span class="token operator">=</span> _Bucket_array<span class="token punctuation">[</span>_Bucket <span class="token operator">&lt;&lt;</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        _Unchecked_iterator<span class="token operator">&amp;</span> _Bucket_hi <span class="token operator">=</span> _Bucket_array<span class="token punctuation">[</span><span class="token punctuation">(</span>_Bucket <span class="token operator">&lt;&lt;</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+        <span class="token comment">/// 找到了Bucket_array位置, 接下来插入链表中放入到_Bucket_hi中</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_Bucket_lo<span class="token punctuation">.</span>_Ptr <span class="token operator">==</span> _Head<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// bucket is empty, set both</span>
+            _Bucket_lo<span class="token punctuation">.</span>_Ptr <span class="token operator">=</span> _Newnode<span class="token punctuation">;</span>
+            _Bucket_hi<span class="token punctuation">.</span>_Ptr <span class="token operator">=</span> _Newnode<span class="token punctuation">;</span>
+            <span class="token comment">/// 前插</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>_Bucket_lo<span class="token punctuation">.</span>_Ptr <span class="token operator">==</span> _Insert_before<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// new node is the lowest element in the bucket</span>
+            _Bucket_lo<span class="token punctuation">.</span>_Ptr <span class="token operator">=</span> _Newnode<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>_Bucket_hi<span class="token punctuation">.</span>_Ptr <span class="token operator">==</span> _Insert_after<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// new node is the highest element in the bucket</span>
+            _Bucket_hi<span class="token punctuation">.</span>_Ptr <span class="token operator">=</span> _Newnode<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword">return</span> _Newnode<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 插入元素</span>
+    <span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> _Valtys<span class="token operator">></span>
+    conditional_t<span class="token operator">&lt;</span>_Multi<span class="token punctuation">,</span> iterator<span class="token punctuation">,</span> pair<span class="token operator">&lt;</span>iterator<span class="token punctuation">,</span> <span class="token keyword">bool</span><span class="token operator">>></span> <span class="token function">emplace</span><span class="token punctuation">(</span>_Valtys<span class="token operator">&amp;&amp;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> _Vals<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// try to insert value_type(_Vals...)</span>
+        <span class="token keyword">using</span> _In_place_key_extractor <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Traits</span><span class="token double-colon punctuation">::</span><span class="token keyword">template</span> _In_place_key_extractor<span class="token operator">&lt;</span>_Remove_cvref_t<span class="token operator">&lt;</span>_Valtys<span class="token operator">></span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">></span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token keyword">constexpr</span> <span class="token punctuation">(</span>_Multi<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">_Check_max_size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment">/// 创建newnode</span>
+            _List_node_emplace_op2<span class="token operator">&lt;</span>_Alnode<span class="token operator">></span> <span class="token function">_Newnode</span><span class="token punctuation">(</span>_List<span class="token punctuation">.</span><span class="token function">_Getal</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> _STD <span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span>_Valtys<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Vals<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment">/// keyval和hashval</span>
+            <span class="token comment">/// 得到_Keyval</span>
+            <span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> _Keyval <span class="token operator">=</span> _Traits<span class="token double-colon punctuation">::</span><span class="token function">_Kfn</span><span class="token punctuation">(</span>_Newnode<span class="token punctuation">.</span>_Ptr<span class="token operator">-></span>_Myval<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment">/// _Traitsobj set的特征，包括哈希计算，key_compare等等</span>
+            <span class="token comment">/// 用keyval对象生成trait hash对象</span>
+            <span class="token keyword">const</span> <span class="token keyword">auto</span> _Hashval <span class="token operator">=</span> <span class="token function">_Traitsobj</span><span class="token punctuation">(</span>_Keyval<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">_Check_rehash_required_1</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token function">_Rehash_for_1</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+
+            <span class="token comment">/// 尝试找到目标</span>
+            <span class="token keyword">const</span> <span class="token keyword">auto</span> _Target <span class="token operator">=</span> <span class="token function">_Find_last</span><span class="token punctuation">(</span>_Keyval<span class="token punctuation">,</span> _Hashval<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token comment">/// 链表的形式插入到blunk中</span>
+            <span class="token keyword">return</span> _List<span class="token punctuation">.</span><span class="token function">_Make_iter</span><span class="token punctuation">(</span><span class="token function">_Insert_new_node_before</span><span class="token punctuation">(</span>_Hashval<span class="token punctuation">,</span> _Target<span class="token punctuation">.</span>_Insert_before<span class="token punctuation">,</span> _Newnode<span class="token punctuation">.</span><span class="token function">_Release</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+
+<h3 id="迭代器萃取"><a href="#迭代器萃取" class="headerlink" title="迭代器萃取"></a>迭代器萃取</h3><ul>
+<li><p>使用: 如果输入的对象是迭代器, 就要求能够从输入对象<code>_Ptr</code>中借助<code>iterator_traits&lt;_Ptr&gt;</code>得到迭代器所属对象的信息(这里的迭代器也可以是原始指针)。</p>
+</li>
+<li><p>萃取针对的是迭代器, 容器里是指针还是存指针, 而容器中一般直接存对象本身。</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">_Ptr</span><span class="token operator">></span>
+<span class="token keyword">class</span> <span class="token class-name">checked_array_iterator</span> <span class="token punctuation">&#123;</span> <span class="token comment">// wrap a pointer with checking</span>
+    <span class="token keyword">static_assert</span><span class="token punctuation">(</span>_STD is_pointer_v<span class="token operator">&lt;</span>_Ptr<span class="token operator">></span><span class="token punctuation">,</span> <span class="token string">"checked_array_iterator requires pointers"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token comment">/// 输入迭代器类型_Ptr, 萃取处迭代器指向的具体类型</span>
+    <span class="token keyword">using</span> iterator_category <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">iterator_traits</span><span class="token operator">&lt;</span>_Ptr<span class="token operator">></span><span class="token double-colon punctuation">::</span>iterator_category<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> value_type        <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">iterator_traits</span><span class="token operator">&lt;</span>_Ptr<span class="token operator">></span><span class="token double-colon punctuation">::</span>value_type<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> difference_type   <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">iterator_traits</span><span class="token operator">&lt;</span>_Ptr<span class="token operator">></span><span class="token double-colon punctuation">::</span>difference_type<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> pointer           <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">iterator_traits</span><span class="token operator">&lt;</span>_Ptr<span class="token operator">></span><span class="token double-colon punctuation">::</span>pointer<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> reference         <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">iterator_traits</span><span class="token operator">&lt;</span>_Ptr<span class="token operator">></span><span class="token double-colon punctuation">::</span>reference<span class="token punctuation">;</span></code></pre>
+
+<ul>
+<li>萃取, <code>iterator_traits</code>, 注意迭代器可以是指针但不能是引用(虽然引用也可以被萃取)。基本思路, 模板传入迭代器类型(可以是原始指针), 获取迭代器所指的对象的信息, 例如value_type</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">_It</span><span class="token operator">></span>
+    <span class="token keyword">requires</span> <span class="token punctuation">(</span><span class="token operator">!</span>_Has_iter_types<span class="token operator">&lt;</span>_It<span class="token operator">></span> <span class="token operator">&amp;&amp;</span> _Cpp17_input_iterator<span class="token operator">&lt;</span>_It<span class="token operator">></span><span class="token punctuation">)</span>
+<span class="token keyword">struct</span> <span class="token class-name">_Iterator_traits_base</span><span class="token operator">&lt;</span>_It<span class="token operator">></span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">/// 使用using 代替typedef</span>
+    <span class="token comment">/// 传入迭代器It, 获得指向对象的信息value_type</span>
+    <span class="token keyword">using</span> iterator_category <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Iter_traits_category</span><span class="token operator">&lt;</span>_Has_member_iterator_category<span class="token operator">&lt;</span>_It<span class="token operator">>></span><span class="token double-colon punctuation">::</span><span class="token keyword">template</span> _Apply<span class="token operator">&lt;</span>_It<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> value_type        <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">indirectly_readable_traits</span><span class="token operator">&lt;</span>_It<span class="token operator">></span><span class="token double-colon punctuation">::</span>value_type<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> difference_type   <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">incrementable_traits</span><span class="token operator">&lt;</span>_It<span class="token operator">></span><span class="token double-colon punctuation">::</span>difference_type<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> pointer           <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Iter_traits_pointer</span><span class="token operator">&lt;</span><span class="token punctuation">(</span>
+        _Has_member_pointer<span class="token operator">&lt;</span>_It<span class="token operator">></span> <span class="token operator">?</span> _Itraits_pointer_strategy<span class="token double-colon punctuation">::</span>_Use_member
+                                 <span class="token operator">:</span> _Has_member_arrow<span class="token operator">&lt;</span>_It<span class="token operator">&amp;</span><span class="token operator">></span> <span class="token operator">?</span> _Itraits_pointer_strategy<span class="token double-colon punctuation">::</span>_Use_decltype
+                                                       <span class="token operator">:</span> _Itraits_pointer_strategy<span class="token double-colon punctuation">::</span>_Use_void<span class="token punctuation">)</span><span class="token operator">></span><span class="token double-colon punctuation">::</span><span class="token keyword">template</span> _Apply<span class="token operator">&lt;</span>_It<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> reference         <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Iter_traits_reference</span><span class="token operator">&lt;</span>_Has_member_reference<span class="token operator">&lt;</span>_It<span class="token operator">>></span><span class="token double-colon punctuation">::</span><span class="token keyword">template</span> _Apply<span class="token operator">&lt;</span>_It<span class="token operator">></span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+<span class="token comment">// clang-format on</span>
+
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">_Ty</span><span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">iterator_traits</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token class-name">_Iterator_traits_base</span><span class="token operator">&lt;</span><span class="token class-name">_Ty</span><span class="token operator">></span></span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">using</span> _From_primary <span class="token operator">=</span> iterator_traits<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">// 传入原始指针时的萃取</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">_Ty</span><span class="token operator">></span>
+    <span class="token keyword">requires</span> is_object_v<span class="token operator">&lt;</span>_Ty<span class="token operator">></span>
+<span class="token keyword">struct</span> <span class="token class-name">iterator_traits</span><span class="token operator">&lt;</span>_Ty<span class="token operator">*</span><span class="token operator">></span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// clang-format on</span>
+    <span class="token keyword">using</span> iterator_concept  <span class="token operator">=</span> contiguous_iterator_tag<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> iterator_category <span class="token operator">=</span> random_access_iterator_tag<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> value_type        <span class="token operator">=</span> remove_cv_t<span class="token operator">&lt;</span>_Ty<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> difference_type   <span class="token operator">=</span> ptrdiff_t<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> pointer           <span class="token operator">=</span> _Ty<span class="token operator">*</span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> reference         <span class="token operator">=</span> _Ty<span class="token operator">&amp;</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<h3 id="vector"><a href="#vector" class="headerlink" title="vector"></a>vector</h3><ul>
+<li>迭代器类</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// 迭代器类</span>
+<span class="token comment">/// 以class _Myvec 作为模板</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">_Myvec</span><span class="token operator">></span>
+<span class="token keyword">class</span> <span class="token class-name">_Vector_const_iterator</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">_Iterator_base</span></span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">ifdef</span> <span class="token expression">__cpp_lib_concepts</span></span>
+    <span class="token keyword">using</span> iterator_concept <span class="token operator">=</span> contiguous_iterator_tag<span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span> <span class="token comment">// __cpp_lib_concepts</span></span>
+    <span class="token comment">/// 得到迭代器指向对象(即class _Myvec)的信息 </span>
+    <span class="token keyword">using</span> iterator_category <span class="token operator">=</span> random_access_iterator_tag<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> value_type        <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Myvec</span><span class="token double-colon punctuation">::</span>value_type<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> difference_type   <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Myvec</span><span class="token double-colon punctuation">::</span>difference_type<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> pointer           <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Myvec</span><span class="token double-colon punctuation">::</span>const_pointer<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> reference         <span class="token operator">=</span> <span class="token keyword">const</span> value_type<span class="token operator">&amp;</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">using</span> _Tptr <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Myvec</span><span class="token double-colon punctuation">::</span>pointer<span class="token punctuation">;</span>
+
+    _CONSTEXPR20 _Vector_const_iterator <span class="token keyword">operator</span><span class="token operator">++</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span> <span class="token keyword">noexcept</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">/// 返回++的临时对象</span>
+        _Vector_const_iterator _Tmp <span class="token operator">=</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+        <span class="token operator">++</span><span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> _Tmp<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    _CONSTEXPR20 _Vector_const_iterator<span class="token operator">&amp;</span> <span class="token keyword">operator</span><span class="token operator">--</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">noexcept</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">/// 内部指针的变化</span>
+        <span class="token operator">--</span>_Ptr<span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    _Tptr _Ptr<span class="token punctuation">;</span> <span class="token comment">// pointer to element in vector</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span></code></pre>
+
+<ul>
+<li><p>vector类</p>
+</li>
+<li><p>迭代器begin, end()这些针对size, 不是capacity, 与之对应的是<code>resize</code>, <code>reserve</code></p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// </span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">_Alloc</span><span class="token operator">></span>
+<span class="token keyword">class</span> <span class="token class-name">_Vb_val</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">_Container_base</span></span> <span class="token punctuation">&#123;</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">using</span> _Alvbase         <span class="token operator">=</span> _Rebind_alloc_t<span class="token operator">&lt;</span>_Alloc<span class="token punctuation">,</span> _Vbase<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> _Alvbase_traits  <span class="token operator">=</span> allocator_traits<span class="token operator">&lt;</span>_Alvbase<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> _Vectype         <span class="token operator">=</span> vector<span class="token operator">&lt;</span>_Vbase<span class="token punctuation">,</span> _Alvbase<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> _Alvbase_wrapped <span class="token operator">=</span> _Wrap_alloc<span class="token operator">&lt;</span>_Alvbase<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> size_type        <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Alvbase_traits</span><span class="token double-colon punctuation">::</span>size_type<span class="token punctuation">;</span>
+
+    _Vectype _Myvec<span class="token punctuation">;</span> <span class="token comment">// base vector of words</span>
+    size_type _Mysize<span class="token punctuation">;</span> <span class="token comment">// current length of sequence</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">/// 传入vector内部元素的类型_Ty</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span> <span class="token class-name">_Ty</span><span class="token punctuation">,</span> <span class="token keyword">class</span> <span class="token class-name">_Alloc</span> <span class="token operator">=</span> allocator<span class="token operator">&lt;</span>_Ty<span class="token operator">>></span>
+<span class="token keyword">class</span> <span class="token class-name">vector</span> <span class="token punctuation">&#123;</span> <span class="token comment">// varying size array of values</span>
+<span class="token keyword">private</span><span class="token operator">:</span>
+    <span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span><span class="token operator">></span>
+    <span class="token comment">/// 元素类型相关</span>
+    <span class="token keyword">friend</span> <span class="token keyword">class</span> <span class="token class-name">_Vb_val</span><span class="token punctuation">;</span>
+    <span class="token keyword">friend</span> _Tidy_guard<span class="token operator">&lt;</span>vector<span class="token operator">></span><span class="token punctuation">;</span>
+
+<span class="token keyword">public</span><span class="token operator">:</span>
+
+    <span class="token comment">/// 获得vector对象内部元素类型</span>
+    <span class="token keyword">using</span> value_type      <span class="token operator">=</span> _Ty<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> allocator_type  <span class="token operator">=</span> _Alloc<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> pointer         <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Alty_traits</span><span class="token double-colon punctuation">::</span>pointer<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> const_pointer   <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Alty_traits</span><span class="token double-colon punctuation">::</span>const_pointer<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> reference       <span class="token operator">=</span> _Ty<span class="token operator">&amp;</span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> const_reference <span class="token operator">=</span> <span class="token keyword">const</span> _Ty<span class="token operator">&amp;</span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> size_type       <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Alty_traits</span><span class="token double-colon punctuation">::</span>size_type<span class="token punctuation">;</span>
+    <span class="token keyword">using</span> difference_type <span class="token operator">=</span> <span class="token keyword">typename</span> <span class="token class-name">_Alty_traits</span><span class="token double-colon punctuation">::</span>difference_type<span class="token punctuation">;</span>
+
+<span class="token keyword">private</span><span class="token operator">:</span>
+    <span class="token comment">/// _Scary_val本身是一种类型, 关于vector_val的</span>
+    <span class="token keyword">using</span> _Scary_val <span class="token operator">=</span> _Vector_val<span class="token operator">&lt;</span>conditional_t<span class="token operator">&lt;</span>_Is_simple_alloc_v<span class="token operator">&lt;</span>_Alty<span class="token operator">></span><span class="token punctuation">,</span> _Simple_types<span class="token operator">&lt;</span>_Ty<span class="token operator">></span><span class="token punctuation">,</span>
+        _Vec_iter_types<span class="token operator">&lt;</span>_Ty<span class="token punctuation">,</span> size_type<span class="token punctuation">,</span> difference_type<span class="token punctuation">,</span> pointer<span class="token punctuation">,</span> const_pointer<span class="token punctuation">,</span> _Ty<span class="token operator">&amp;</span><span class="token punctuation">,</span> <span class="token keyword">const</span> _Ty<span class="token operator">&amp;</span><span class="token operator">>></span><span class="token operator">></span><span class="token punctuation">;</span>
+
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token keyword">using</span> iterator               <span class="token operator">=</span> _Vector_iterator<span class="token operator">&lt;</span>_Scary_val<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> const_iterator         <span class="token operator">=</span> _Vector_const_iterator<span class="token operator">&lt;</span>_Scary_val<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> reverse_iterator       <span class="token operator">=</span> _STD reverse_iterator<span class="token operator">&lt;</span>iterator<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token keyword">using</span> const_reverse_iterator <span class="token operator">=</span> _STD reverse_iterator<span class="token operator">&lt;</span>const_iterator<span class="token operator">></span><span class="token punctuation">;</span>
+    <span class="token comment">/// 构造对象</span>
+    _CONSTEXPR20 <span class="token keyword">explicit</span> <span class="token function">vector</span><span class="token punctuation">(</span>_CRT_GUARDOVERFLOW <span class="token keyword">const</span> size_type _Count<span class="token punctuation">,</span> <span class="token keyword">const</span> _Alloc<span class="token operator">&amp;</span> _Al <span class="token operator">=</span> <span class="token function">_Alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token operator">:</span> <span class="token function">_Mypair</span><span class="token punctuation">(</span>_One_then_variadic_args_t<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> _Al<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">_Construct_n</span><span class="token punctuation">(</span>_Count<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    _CONSTEXPR20 <span class="token function">vector</span><span class="token punctuation">(</span>_CRT_GUARDOVERFLOW <span class="token keyword">const</span> size_type _Count<span class="token punctuation">,</span> <span class="token keyword">const</span> _Ty<span class="token operator">&amp;</span> _Val<span class="token punctuation">,</span> <span class="token keyword">const</span> _Alloc<span class="token operator">&amp;</span> _Al <span class="token operator">=</span> <span class="token function">_Alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token operator">:</span> <span class="token function">_Mypair</span><span class="token punctuation">(</span>_One_then_variadic_args_t<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> _Al<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">_Construct_n</span><span class="token punctuation">(</span>_Count<span class="token punctuation">,</span> _Val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">/// 迭代器</span>
+    _NODISCARD _CONSTEXPR20 iterator <span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">noexcept</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token function">iterator</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token operator">-></span>_Myvec<span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    _NODISCARD _CONSTEXPR20 reverse_iterator <span class="token function">rbegin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">noexcept</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token function">reverse_iterator</span><span class="token punctuation">(</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    _NODISCARD _CONSTEXPR20 size_type <span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token keyword">noexcept</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token operator">-></span>_Mysize<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    _NODISCARD _CONSTEXPR20 <span class="token keyword">bool</span> <span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token keyword">noexcept</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token operator">-></span>_Mysize <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">/// 返回应用</span>
+    _NODISCARD _CONSTEXPR20 reference <span class="token function">at</span><span class="token punctuation">(</span>size_type _Off<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;=</span> _Off<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">_Xran</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">[</span>_Off<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    _NODISCARD _CONSTEXPR20 const_reference <span class="token function">front</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token keyword">noexcept</span> <span class="token comment">/* strengthened */</span> <span class="token punctuation">&#123;</span>
+
+        <span class="token keyword">return</span> <span class="token operator">*</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">/// const修饰成员函数, 返回的是const_reference引用类型</span>
+    <span class="token comment">/// const&amp; 返回类型只能用const&amp;接受, 普通引用类型不能</span>
+    _NODISCARD _CONSTEXPR20 const_reference <span class="token function">at</span><span class="token punctuation">(</span>size_type _Off<span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;=</span> _Off<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">_Xran</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token operator">*</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">[</span>_Off<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li><p>插入操作</p>
+</li>
+<li><p> <code>insert</code>函数核心是<code>_Insert_n</code></p>
+</li>
+<li><p><code>_Insert_n</code>容量不够将直接报错, 没有扩容那一步, 因此以上函数不会出现扩容。扩容只针对<code>push_back, emplace_back</code>这些</p>
+</li>
+<li><p><code>resize</code>, <code>assign</code>会有<code>_Clear_and_reserve_geometric</code>, 也就是扩容操作</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/// 插入, 在where位置插入val, 可以在where位置插入_Count个连续_val</span>
+    _CONSTEXPR20 iterator <span class="token function">_Insert_n</span><span class="token punctuation">(</span>const_iterator _Where<span class="token punctuation">,</span> size_type _Count<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">bool</span><span class="token operator">&amp;</span> _Val<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">//// off, where到begin的距离</span>
+        size_type _Off <span class="token operator">=</span> <span class="token function">_Insert_x</span><span class="token punctuation">(</span>_Where<span class="token punctuation">,</span> _Count<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">/// 返回元素的迭代器</span>
+        <span class="token keyword">const</span> <span class="token keyword">auto</span> _Result <span class="token operator">=</span> <span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>difference_type<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Off<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">/// 在Result~count处进行赋值</span>
+        _STD <span class="token function">fill</span><span class="token punctuation">(</span>_Result<span class="token punctuation">,</span> _Result <span class="token operator">+</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>difference_type<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Count<span class="token punctuation">)</span><span class="token punctuation">,</span> _Val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> _Result<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    _CONSTEXPR20 size_type <span class="token function">_Insert_x</span><span class="token punctuation">(</span>const_iterator _Where<span class="token punctuation">,</span> size_type _Count<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        difference_type _Off <span class="token operator">=</span> _Where <span class="token operator">-</span> <span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">if</span> <span class="token expression">_ITERATOR_DEBUG_LEVEL <span class="token operator">==</span> <span class="token number">2</span></span></span>
+        <span class="token function">_STL_VERIFY</span><span class="token punctuation">(</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">>=</span> _Where<span class="token punctuation">,</span> <span class="token string">"vector&lt;bool> insert iterator outside range"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">bool</span> _Realloc <span class="token operator">=</span> <span class="token function">capacity</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> _Count<span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span> <span class="token comment">// _ITERATOR_DEBUG_LEVEL == 2</span></span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_Count <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">/// 超过最大size</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">max_size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> _Count<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token function">_Xlen</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// result too long, 这里将直接报错, 不扩容</span>
+            <span class="token punctuation">&#125;</span>
+
+            <span class="token comment">// worth doing</span>
+            <span class="token comment">/// resize大小</span>
+            <span class="token keyword">this</span><span class="token operator">-></span>_Myvec<span class="token punctuation">.</span><span class="token function">resize</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token operator">-></span><span class="token function">_Nw</span><span class="token punctuation">(</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> _Count<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment">/// 如果当前是空vector</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">this</span><span class="token operator">-></span>_Mysize <span class="token operator">+=</span> _Count<span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span> <span class="token comment">// make room and copy down suffix</span>
+                <span class="token comment">/// end迭代器</span>
+                iterator _Oldend <span class="token operator">=</span> <span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token comment">/// _Mysize增大</span>
+                <span class="token keyword">this</span><span class="token operator">-></span>_Mysize <span class="token operator">+=</span> _Count<span class="token punctuation">;</span>
+                <span class="token comment">/// 反向拷贝, 例如最后一个后移1, 接着倒数第二个后移1..</span>
+                <span class="token comment">/// 从最后一个开始是防止后面的被前面的覆盖(正向拷贝)</span>
+                _STD <span class="token function">copy_backward</span><span class="token punctuation">(</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> _Off<span class="token punctuation">,</span> _Oldend<span class="token punctuation">,</span> <span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">if</span> <span class="token expression">_ITERATOR_DEBUG_LEVEL <span class="token operator">==</span> <span class="token number">2</span></span></span>
+            <span class="token function">_Orphan_range</span><span class="token punctuation">(</span><span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>size_type<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Realloc <span class="token operator">?</span> <span class="token number">0</span> <span class="token operator">:</span> _Off<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token operator">-></span>_Mysize<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span> <span class="token comment">// _ITERATOR_DEBUG_LEVEL == 2</span></span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token keyword">return</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>size_type<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Off<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">/// resize, 这里的size是size, 不是capacity</span>
+    _CONSTEXPR20 <span class="token keyword">void</span> <span class="token function">resize</span><span class="token punctuation">(</span>_CRT_GUARDOVERFLOW size_type _Newsize<span class="token punctuation">,</span> <span class="token keyword">bool</span> _Val <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span> _Newsize<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">/// 默认相当于在end()部位插入_Newsize - size()个0</span>
+            <span class="token function">_Insert_n</span><span class="token punctuation">(</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> _Newsize <span class="token operator">-</span> <span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> _Val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>_Newsize <span class="token operator">&lt;</span> <span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">erase</span><span class="token punctuation">(</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>difference_type<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Newsize<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    _CONSTEXPR20 <span class="token keyword">void</span> <span class="token function">assign</span><span class="token punctuation">(</span>_CRT_GUARDOVERFLOW size_type _Count<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">bool</span><span class="token operator">&amp;</span> _Val<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">_Insert_n</span><span class="token punctuation">(</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> _Count<span class="token punctuation">,</span> _Val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    _CONSTEXPR20 iterator <span class="token function">insert</span><span class="token punctuation">(</span>const_iterator _Where<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">bool</span><span class="token operator">&amp;</span> _Val<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token function">_Insert_n</span><span class="token punctuation">(</span>_Where<span class="token punctuation">,</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>size_type<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> _Val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+</code></pre>
+
+<ul>
+<li><code>push_back</code>和<code>emplace_back</code>, 一般的认为push_back() 向容器尾部添加元素时，首先会创建这个元素，然后再将这个元素拷贝或者移动到容器中(又创建一次), 最后析构这个元素；而 emplace_back() 在实现时，则是直接在容器尾部创建这个元素，省去了临时对象拷贝或移动元素的过程。</li>
+<li>但实际上, <code>push_back</code>直接调用<code>emplace_back</code>, 两者效率基本一致(可能就多了call 函数的差别???)</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">    <span class="token comment">/// push_back实际调用的emplace_back...</span>
+    _CONSTEXPR20 <span class="token keyword">void</span> <span class="token function">push_back</span><span class="token punctuation">(</span><span class="token keyword">const</span> _Ty<span class="token operator">&amp;</span> _Val<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token comment">// insert element at end, provide strong guarantee</span>
+        <span class="token function">emplace_back</span><span class="token punctuation">(</span>_Val<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    _CONSTEXPR20 <span class="token keyword">void</span> <span class="token function">push_back</span><span class="token punctuation">(</span>_Ty<span class="token operator">&amp;&amp;</span> _Val<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// insert by moving into element at end, provide strong guarantee</span>
+        <span class="token function">emplace_back</span><span class="token punctuation">(</span>_STD <span class="token function">move</span><span class="token punctuation">(</span>_Val<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">/// emplace_back</span>
+    <span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> _Valty<span class="token operator">></span>
+    _CONSTEXPR20 <span class="token keyword">decltype</span><span class="token punctuation">(</span><span class="token keyword">auto</span><span class="token punctuation">)</span> <span class="token function">emplace_back</span><span class="token punctuation">(</span>_Valty<span class="token operator">&amp;&amp;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> _Val<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// insert by perfectly forwarding into element at end, provide strong guarantee</span>
+        <span class="token keyword">auto</span><span class="token operator">&amp;</span> _My_data   <span class="token operator">=</span> _Mypair<span class="token punctuation">.</span>_Myval2<span class="token punctuation">;</span>
+        pointer<span class="token operator">&amp;</span> _Mylast <span class="token operator">=</span> _My_data<span class="token punctuation">.</span>_Mylast<span class="token punctuation">;</span>
+        <span class="token comment">/// 有空间</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_Mylast <span class="token operator">!=</span> _My_data<span class="token punctuation">.</span>_Myend<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">/// 基于_STD forward</span>
+            <span class="token keyword">return</span> <span class="token function">_Emplace_back_with_unused_capacity</span><span class="token punctuation">(</span>_STD <span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span>_Valty<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Val<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token comment">/// 空间不够, 分配空间</span>
+        _Ty<span class="token operator">&amp;</span> _Result <span class="token operator">=</span> <span class="token operator">*</span><span class="token function">_Emplace_reallocate</span><span class="token punctuation">(</span>_Mylast<span class="token punctuation">,</span> _STD <span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span>_Valty<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Val<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">if</span> <span class="token expression">_HAS_CXX17</span></span>
+        <span class="token keyword">return</span> _Result<span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">else</span> <span class="token comment">// ^^^ _HAS_CXX17 ^^^ // vvv !_HAS_CXX17 vvv</span></span>
+        <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> _Result<span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span> <span class="token comment">// _HAS_CXX17</span></span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">/// 传入通用引用</span>
+    <span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> _Valty<span class="token operator">></span>
+    _CONSTEXPR20 <span class="token keyword">decltype</span><span class="token punctuation">(</span><span class="token keyword">auto</span><span class="token punctuation">)</span> <span class="token function">_Emplace_back_with_unused_capacity</span><span class="token punctuation">(</span>_Valty<span class="token operator">&amp;&amp;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> _Val<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// insert by perfectly forwarding into element at end, provide strong guarantee</span>
+        <span class="token keyword">auto</span><span class="token operator">&amp;</span> _My_data   <span class="token operator">=</span> _Mypair<span class="token punctuation">.</span>_Myval2<span class="token punctuation">;</span>
+        pointer<span class="token operator">&amp;</span> _Mylast <span class="token operator">=</span> _My_data<span class="token punctuation">.</span>_Mylast<span class="token punctuation">;</span>
+        <span class="token comment">/// 容量足够</span>
+        <span class="token function">_STL_INTERNAL_CHECK</span><span class="token punctuation">(</span>_Mylast <span class="token operator">!=</span> _My_data<span class="token punctuation">.</span>_Myend<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// check that we have unused capacity</span>
+        _Alty_traits<span class="token double-colon punctuation">::</span><span class="token function">construct</span><span class="token punctuation">(</span><span class="token function">_Getal</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">_Unfancy</span><span class="token punctuation">(</span>_Mylast<span class="token punctuation">)</span><span class="token punctuation">,</span> _STD <span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span>_Valty<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Val<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">_Orphan_range</span><span class="token punctuation">(</span>_Mylast<span class="token punctuation">,</span> _Mylast<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment">/// 元素的引用</span>
+        _Ty<span class="token operator">&amp;</span> _Result <span class="token operator">=</span> <span class="token operator">*</span>_Mylast<span class="token punctuation">;</span>
+        <span class="token operator">++</span>_Mylast<span class="token punctuation">;</span>
+
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">if</span> <span class="token expression">_HAS_CXX17</span></span>
+        <span class="token keyword">return</span> _Result<span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">else</span> <span class="token comment">// ^^^ _HAS_CXX17 ^^^ // vvv !_HAS_CXX17 vvv</span></span>
+        <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> _Result<span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span> <span class="token comment">// _HAS_CXX17</span></span>
+    <span class="token punctuation">&#125;</span></code></pre>
+
+<ul>
+<li><p>扩容</p>
+</li>
+<li><p>ms的STL是1.5倍扩容, 而不是两倍</p>
+</li>
+<li><p>allocate分配空间, construct初始化空间, _Uninitialized_move移动, _Uninitialized_copy拷贝</p>
+</li>
+</ul>
+<pre class="language-cpp" data-language="cpp"><code class="language-cpp">_CONSTEXPR20 size_type <span class="token function">_Calculate_growth</span><span class="token punctuation">(</span><span class="token keyword">const</span> size_type _Newsize<span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// given _Oldcapacity and _Newsize, calculate geometric growth</span>
+    <span class="token keyword">const</span> size_type _Oldcapacity <span class="token operator">=</span> <span class="token function">capacity</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> <span class="token keyword">auto</span> _Max              <span class="token operator">=</span> <span class="token function">max_size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>_Oldcapacity <span class="token operator">></span> _Max <span class="token operator">-</span> _Oldcapacity <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> _Max<span class="token punctuation">;</span> <span class="token comment">// geometric growth would overflow</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">/// 1.5倍扩容</span>
+    <span class="token keyword">const</span> size_type _Geometric <span class="token operator">=</span> _Oldcapacity <span class="token operator">+</span> _Oldcapacity <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>_Geometric <span class="token operator">&lt;</span> _Newsize<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> _Newsize<span class="token punctuation">;</span> <span class="token comment">// geometric growth would be insufficient</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">return</span> _Geometric<span class="token punctuation">;</span> <span class="token comment">// geometric growth is sufficient</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// emplace_back可能发生扩容</span>
+<span class="token keyword">template</span> <span class="token operator">&lt;</span><span class="token keyword">class</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> _Valty<span class="token operator">></span>
+_CONSTEXPR20 pointer <span class="token function">_Emplace_reallocate</span><span class="token punctuation">(</span><span class="token keyword">const</span> pointer _Whereptr<span class="token punctuation">,</span> _Valty<span class="token operator">&amp;&amp;</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span> _Val<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// reallocate and insert by perfectly forwarding _Val at _Whereptr</span>
+    _Alty<span class="token operator">&amp;</span> _Al        <span class="token operator">=</span> <span class="token function">_Getal</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">auto</span><span class="token operator">&amp;</span> _My_data    <span class="token operator">=</span> _Mypair<span class="token punctuation">.</span>_Myval2<span class="token punctuation">;</span>
+    pointer<span class="token operator">&amp;</span> _Myfirst <span class="token operator">=</span> _My_data<span class="token punctuation">.</span>_Myfirst<span class="token punctuation">;</span>
+    pointer<span class="token operator">&amp;</span> _Mylast  <span class="token operator">=</span> _My_data<span class="token punctuation">.</span>_Mylast<span class="token punctuation">;</span>
+
+    <span class="token function">_STL_INTERNAL_CHECK</span><span class="token punctuation">(</span>_Mylast <span class="token operator">==</span> _My_data<span class="token punctuation">.</span>_Myend<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment">// check that we have no unused capacity</span>
+
+    <span class="token keyword">const</span> <span class="token keyword">auto</span> _Whereoff <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>size_type<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Whereptr <span class="token operator">-</span> _Myfirst<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> <span class="token keyword">auto</span> _Oldsize  <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span>size_type<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Mylast <span class="token operator">-</span> _Myfirst<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>_Oldsize <span class="token operator">==</span> <span class="token function">max_size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">_Xlength</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">const</span> size_type _Newsize     <span class="token operator">=</span> _Oldsize <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 计算增长新容量1.5倍</span>
+    <span class="token keyword">const</span> size_type _Newcapacity <span class="token operator">=</span> <span class="token function">_Calculate_growth</span><span class="token punctuation">(</span>_Newsize<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">/// 尝试分配new_vec空间</span>
+    <span class="token keyword">const</span> pointer _Newvec           <span class="token operator">=</span> _Al<span class="token punctuation">.</span><span class="token function">allocate</span><span class="token punctuation">(</span>_Newcapacity<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> pointer _Constructed_last <span class="token operator">=</span> _Newvec <span class="token operator">+</span> _Whereoff <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    pointer _Constructed_first      <span class="token operator">=</span> _Constructed_last<span class="token punctuation">;</span>
+
+    <span class="token comment">/// 开始尝试, _TRY_BEGIN是宏定义</span>
+    _TRY_BEGIN
+    <span class="token comment">/// 尝试分配初值</span>
+    _Alty_traits<span class="token double-colon punctuation">::</span><span class="token function">construct</span><span class="token punctuation">(</span>_Al<span class="token punctuation">,</span> <span class="token function">_Unfancy</span><span class="token punctuation">(</span>_Newvec <span class="token operator">+</span> _Whereoff<span class="token punctuation">)</span><span class="token punctuation">,</span> _STD <span class="token generic-function"><span class="token function">forward</span><span class="token generic class-name"><span class="token operator">&lt;</span>_Valty<span class="token operator">></span></span></span><span class="token punctuation">(</span>_Val<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    _Constructed_first <span class="token operator">=</span> _Newvec <span class="token operator">+</span> _Whereoff<span class="token punctuation">;</span>
+
+    <span class="token comment">/// 很不幸, 要复制或者移动到新位置</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>_Whereptr <span class="token operator">==</span> _Mylast<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token comment">// at back, provide strong guarantee, 处理_Myfirst~ _Mylast</span>
+        <span class="token keyword">if</span> <span class="token keyword">constexpr</span> <span class="token punctuation">(</span>is_nothrow_move_constructible_v<span class="token operator">&lt;</span>_Ty<span class="token operator">></span> <span class="token operator">||</span> <span class="token operator">!</span>is_copy_constructible_v<span class="token operator">&lt;</span>_Ty<span class="token operator">></span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">_Uninitialized_move</span><span class="token punctuation">(</span>_Myfirst<span class="token punctuation">,</span> _Mylast<span class="token punctuation">,</span> _Newvec<span class="token punctuation">,</span> _Al<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">_Uninitialized_copy</span><span class="token punctuation">(</span>_Myfirst<span class="token punctuation">,</span> _Mylast<span class="token punctuation">,</span> _Newvec<span class="token punctuation">,</span> _Al<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span> <span class="token comment">// provide basic guarantee, 处理_Myfirst~ _Whereptr</span>
+        <span class="token function">_Uninitialized_move</span><span class="token punctuation">(</span>_Myfirst<span class="token punctuation">,</span> _Whereptr<span class="token punctuation">,</span> _Newvec<span class="token punctuation">,</span> _Al<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        _Constructed_first <span class="token operator">=</span> _Newvec<span class="token punctuation">;</span>
+        <span class="token function">_Uninitialized_move</span><span class="token punctuation">(</span>_Whereptr<span class="token punctuation">,</span> _Mylast<span class="token punctuation">,</span> _Newvec <span class="token operator">+</span> _Whereoff <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">,</span> _Al<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">/// 如果失败, 释放空间</span>
+    _CATCH_ALL
+
+    <span class="token function">_Destroy_range</span><span class="token punctuation">(</span>_Constructed_first<span class="token punctuation">,</span> _Constructed_last<span class="token punctuation">,</span> _Al<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    _Al<span class="token punctuation">.</span><span class="token function">deallocate</span><span class="token punctuation">(</span>_Newvec<span class="token punctuation">,</span> _Newcapacity<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    _RERAISE<span class="token punctuation">;</span>
+    _CATCH_END
+
+    <span class="token function">_Change_array</span><span class="token punctuation">(</span>_Newvec<span class="token punctuation">,</span> _Newsize<span class="token punctuation">,</span> _Newcapacity<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> _Newvec <span class="token operator">+</span> _Whereoff<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+
+ _CONSTEXPR20 <span class="token keyword">void</span> <span class="token function">reserve</span><span class="token punctuation">(</span>_CRT_GUARDOVERFLOW <span class="token keyword">const</span> size_type _Newcapacity<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// increase capacity to _Newcapacity (without geometric growth), provide strong guarantee</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>_Newcapacity <span class="token operator">></span> <span class="token function">capacity</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token comment">// something to do (reserve() never shrinks)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_Newcapacity <span class="token operator">></span> <span class="token function">max_size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">_Xlength</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token function">_Reallocate_exactly</span><span class="token punctuation">(</span>_Newcapacity<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/// 赋值</span>
+Type <span class="token function">construct</span><span class="token punctuation">(</span>A0 <span class="token operator">&amp;</span>a0<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token generic-function"><span class="token function">construct_</span><span class="token generic class-name"><span class="token operator">&lt;</span>Type<span class="token operator">></span></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">(</span>a0<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></code></pre></div></section></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/%E7%AE%97%E6%B3%95/2021-09-23-%E6%B4%97%E7%89%8C%E7%AE%97%E6%B3%95/" rel="prev" title="洗牌算法"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-left-s-line"></use></svg><span class="post-nav-text">洗牌算法</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/cpp%E8%BF%9B%E9%98%B6/2021-09-20-%E7%BA%A2%E9%BB%91%E6%A0%91%E5%92%8Cmap/" rel="next" title="红黑树和STL"><span class="post-nav-text">红黑树和STL</span><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-right-s-line"></use></svg></a></div></div></div><div class="hty-card" id="comment"><div class="comment-tooltip text-center"><span>如果您有任何关于博客内容的相关讨论，欢迎前往 <a href="https://github.com/YunYouJun/yunyoujun.github.io/discussions" target="_blank">GitHub Discussions</a> 与我交流。</span><br></div><div id="valine-container"></div><script>Yun.utils.getScript("https://cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js", () => {
+  const valineConfig = {"enable":true,"appId":"K4LElSwpTJaHOOTTU6mNGCyr-gzGzoHsz","appKey":"x3d4Sv6rdTYOECKqkxg9r905","placeholder":"填写邮箱，可以收到回复通知哦～","avatar":null,"pageSize":10,"visitor":false,"highlight":true,"recordIP":false,"enableQQ":true,"meta":["nick","mail","link"],"el":"#valine-container","lang":"zh-cn"}
+  valineConfig.path = "/cpp%E8%BF%9B%E9%98%B6/2021-09-21-hash%E5%92%8CSTL/"
+  new Valine(valineConfig)
+}, window.Valine);</script></div></main><footer class="sidebar-translate" id="footer"><div class="beian"><a rel="noopener" href="https://beian.miit.gov.cn/" target="_blank">萌ICP备666666号</a></div><div class="copyright"><span>&copy; 2020 – 2021 </span><a class="with-love" id="animate" target="_blank" rel="noopener" href="https://sponsors.yunyoujun.cn" title="云游君的赞助者们"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-cloud-line"></use></svg></a><span class="author"> larry</span></div><div class="powered"><span>由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v5.4.0</span><span class="footer-separator">|</span><span>主题 - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.6.3</span></div><div class="live_time"><span>本博客已萌萌哒地运行</span><span id="display_live_time"></span><span class="moe-text">(●'◡'●)</span><script>function blog_live_time() {
+  setTimeout(blog_live_time, 1000);
+  const start = new Date('2019-04-12T00:00:00');
+  const now = new Date();
+  const timeDiff = (now.getTime() - start.getTime());
+  const msPerMinute = 60 * 1000;
+  const msPerHour = 60 * msPerMinute;
+  const msPerDay = 24 * msPerHour;
+  const passDay = Math.floor(timeDiff / msPerDay);
+  const passHour = Math.floor((timeDiff % msPerDay) / 60 / 60 / 1000);
+  const passMinute = Math.floor((timeDiff % msPerHour) / 60 / 1000);
+  const passSecond = Math.floor((timeDiff % msPerMinute) / 1000);
+  display_live_time.innerHTML = " " + passDay + " 天 " + passHour + " 小时 " + passMinute + " 分 " + passSecond + " 秒";
+}
+blog_live_time();
+</script></div></footer><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-arrow-up-s-line"></use></svg><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#6200ee" stroke-width="2" stroke-linecap="round"></circle></svg></a><a class="popup-trigger hty-icon-button icon-search" id="search" href="javascript:;" title="搜索"><span class="site-state-item-icon"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-search-line"></use></svg></span></a><script>window.addEventListener("DOMContentLoaded", () => {
+  // Handle and trigger popup window
+  document.querySelector(".popup-trigger").addEventListener("click", () => {
+    document.querySelector(".popup").classList.add("show");
+    setTimeout(() => {
+      document.querySelector(".search-input").focus();
+    }, 100);
+  });
+
+  // Monitor main search box
+  const onPopupClose = () => {
+    document.querySelector(".popup").classList.remove("show");
+  };
+
+  document.querySelector(".popup-btn-close").addEventListener("click", () => {
+    onPopupClose();
+  });
+
+  window.addEventListener("keyup", event => {
+    if (event.key === "Escape") {
+      onPopupClose();
+    }
+  });
+});
+</script><script defer src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script><script defer src="https://cdn.jsdelivr.net/npm/instantsearch.js@4/dist/instantsearch.production.min.js"></script><script defer src="/js/search/algolia-search.js"></script><div class="popup search-popup"><div class="search-header"><span class="popup-btn-close close-icon hty-icon-button"><svg class="icon" aria-hidden="true"><use xlink:href="#icon-close-line"></use></svg></span></div><div class="search-input-container"></div><div class="algolia-results"><div id="algolia-stats"></div><div id="algolia-hits"></div><div class="algolia-pagination" id="algolia-pagination"></div></div></div></div><!-- hexo injector body_end start --><script src="/js/tag-common/index.js"></script><!-- hexo injector body_end end --></body></html>
